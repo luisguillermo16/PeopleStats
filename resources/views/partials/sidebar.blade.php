@@ -177,6 +177,14 @@
                             <small class="badge bg-warning text-dark ms-2">Próximamente</small>
                         </a>
                         @endcan
+                         
+                        @can('ver votantes del concejal')
+                        <a class="nav-link text-white sidebar-link p-2 {{ request()->routeIs('admin.concejales.votantes') ? 'active' : '' }}" 
+                           href="#" title="Próximamente - Votantes del Concejal">
+                            <i class="bi bi-file-earmark-text me-2"></i> Votantes del Concejal
+                            <small class="badge bg-warning text-dark ms-2">Próximamente</small>
+                        </a>
+                        @endcan
                     </div>
                 </div>
             </div>

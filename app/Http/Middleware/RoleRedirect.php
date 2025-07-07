@@ -5,15 +5,14 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Spatie\Permission\Traits\HasRoles;
 
 class RoleRedirect
 {
     public function handle(Request $request, Closure $next)
     {
-        if (Auth::check()) {
-            $user = Auth::user();
+        $user = Auth::user();
 
+        if ($user) {
             if ($user->hasRole('super-admin')) {
                 return redirect()->route('admin');
             } elseif ($user->hasRole('aspirante-alcaldia')) {
@@ -25,6 +24,10 @@ class RoleRedirect
             }
         }
 
-        return $next($request);
+        // Si no tiene ningún rol válido
+        Auth::logout();
+        return redirect()->route('login')->withErrors([
+            'acceso' => 'No tienes roles asignados. Contacta al administrador.',
+        ]);
     }
 }
