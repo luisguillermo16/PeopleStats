@@ -54,431 +54,107 @@
             </div>
         </div>
 
-        <nav class="nav flex-column">
-            <!-- Dashboard -->
-          
+       <nav class="nav flex-column">
 
-            <!-- Gestión de Usuarios -->
-            @can('ver todo dashboard')
-            <a class="nav-link text-white sidebar-link p-3 {{ request()->routeIs('admin') ? 'active' : '' }}" 
-               href="{{ route('admin') }}" title="Próximamente - Gestión de Usuarios">
-                <i class="bi bi-people me-2"></i> Gestión de Usuarios
-               
-            </a>
-            @endcan
-              @can('ver todo dashboard')
-            <a class="nav-link text-white sidebar-link p-3 {{ request()->routeIs('') ? 'active' : '' }}" 
-               href="#" title="Próximamente - Dashboard">
-                <i class="bi bi-speedometer2 me-2"></i> Dashboard
-            </a>
-            @endcan
-            <!-- Gestión de Perfiles -->
-            @canany(['ver perfiles', 'crear perfiles', 'editar perfiles'])
-            <div class="nav-item">
-                <a class="nav-link text-white sidebar-link p-3 {{ request()->routeIs('admin.profiles.*') ? 'active' : '' }}" 
-                   data-bs-toggle="collapse" 
-                   href="#profilesSubmenu" 
-                   role="button" 
-                   aria-expanded="{{ request()->routeIs('admin.profiles.*') ? 'true' : 'false' }}">
-                    <i class="bi bi-person-badge me-2"></i> 
-                    Perfiles
-                    <i class="bi bi-chevron-down ms-auto"></i>
-                </a>
-                <div class="collapse {{ request()->routeIs('admin.profiles.*') ? 'show' : '' }}" id="profilesSubmenu">
-                    <div class="nav flex-column ms-3">
-                        @can('ver perfiles')
-                        <a class="nav-link text-white sidebar-link p-2 {{ request()->routeIs('admin.profiles.index') ? 'active' : '' }}" 
-                           href="#" title="Próximamente - Ver Perfiles">
-                            <i class="bi bi-list me-2"></i> Ver Perfiles
-                            <small class="badge bg-warning text-dark ms-2">Próximamente</small>
-                        </a>
-                        @endcan
-                        
-                        @can('crear perfiles')
-                        <a class="nav-link text-white sidebar-link p-2 {{ request()->routeIs('admin.profiles.create') ? 'active' : '' }}" 
-                           href="#" title="Próximamente - Crear Perfil">
-                            <i class="bi bi-plus-circle me-2"></i> Crear Perfil
-                            <small class="badge bg-warning text-dark ms-2">Próximamente</small>
-                        </a>
-                        @endcan
-                        
-                        @can('editar perfiles')
-                        <a class="nav-link text-white sidebar-link p-2 {{ request()->routeIs('admin.profiles.edit') ? 'active' : '' }}" 
-                           href="#" title="Próximamente - Editar Perfiles">
-                            <i class="bi bi-pencil-square me-2"></i> Editar Perfiles
-                            <small class="badge bg-warning text-dark ms-2">Próximamente</small>
-                        </a>
-                        @endcan
-                    </div>
-                </div>
-            </div>
-            @endcanany
+    <!-- Dashboard -->
+    @can('ver todo dashboard')
+    <a class="nav-link text-white sidebar-link p-3 {{ request()->routeIs('#') ? 'active' : '' }}" 
+       href="{{ route('admin') }}" title="Dashboard">
+        <i class="bi bi-speedometer2 me-2"></i> Dashboard
+    </a>
+    @endcan
+       @can('ver todo dashboard')
+    <a class="nav-link text-white sidebar-link p-3 {{ request()->routeIs('admin') ? 'active' : '' }}" 
+       href="{{ route('admin') }}" title="Gestión de Usuarios">
+         <i class="bi bi-person-badge me-2"></i> Gestión de Usuarios
+    </a>
+    @endcan
 
-            <!-- Gestión de Alcaldes -->
-            @canany(['crear alcaldes', 'ver volantes del alcalde'])
-            <div class="nav-item">
-                <a class="nav-link text-white sidebar-link p-3 {{ request()->routeIs('admin.alcaldes.*') ? 'active' : '' }}" 
-                   data-bs-toggle="collapse" 
-                   href="#alcaldesSubmenu" 
-                   role="button" 
-                   aria-expanded="{{ request()->routeIs('admin.alcaldes.*') ? 'true' : 'false' }}">
-                    <i class="bi bi-person-workspace me-2"></i> 
-                    Alcaldes
-                    <i class="bi bi-chevron-down ms-auto"></i>
-                </a>
-                <div class="collapse {{ request()->routeIs('admin.alcaldes.*') ? 'show' : '' }}" id="alcaldesSubmenu">
-                    <div class="nav flex-column ms-3">
-                        @can('crear alcaldes')
-                        <a class="nav-link text-white sidebar-link p-2 {{ request()->routeIs('admin.alcaldes.create') ? 'active' : '' }}" 
-                           href="#" title="Próximamente - Crear Alcalde">
-                            <i class="bi bi-plus-circle me-2"></i> Crear Alcalde
-                            <small class="badge bg-warning text-dark ms-2">Próximamente</small>
-                        </a>
-                        @endcan
-                        
-                        @can('ver volantes del alcalde')
-                        <a class="nav-link text-white sidebar-link p-2 {{ request()->routeIs('admin.alcaldes.volantes') ? 'active' : '' }}" 
-                           href="#" title="Próximamente - Volantes del Alcalde">
-                            <i class="bi bi-file-earmark-text me-2"></i> Volantes del Alcalde
-                            <small class="badge bg-warning text-dark ms-2">Próximamente</small>
-                        </a>
-                        @endcan
-                    </div>
-                </div>
-            </div>
-            @endcanany
+    <!-- Administración Alcaldes -->
+    @can('crear alcaldes')
+    <a class="nav-link text-white sidebar-link p-3 {{ request()->routeIs('admin.alcaldes.*') ? 'active' : '' }}" 
+       href="#" title="Administrar Alcaldes">
+        <i class="bi bi-person-badge me-2"></i> Crear Alcaldes
+        <small class="badge bg-warning text-dark ms-2">Próximamente</small>
+    </a>
+    @endcan
 
-            <!-- Gestión de Concejales -->
-            @canany(['crear concejales', 'ver volantes del concejal'])
-            <div class="nav-item">
-                <a class="nav-link text-white sidebar-link p-3 {{ request()->routeIs('admin.concejales.*') ? 'active' : '' }}" 
-                   data-bs-toggle="collapse" 
-                   href="#concejalesSubmenu" 
-                   role="button" 
-                   aria-expanded="{{ request()->routeIs('admin.concejales.*') ? 'true' : 'false' }}">
-                    <i class="bi bi-people-fill me-2"></i> 
-                    Concejales
-                    <i class="bi bi-chevron-down ms-auto"></i>
-                </a>
-                <div class="collapse {{ request()->routeIs('admin.concejales.*') ? 'show' : '' }}" id="concejalesSubmenu">
-                    <div class="nav flex-column ms-3">
-                        @can('crear concejales')
-                        <a class="nav-link text-white sidebar-link p-2 {{ request()->routeIs('admin.concejales.create') ? 'active' : '' }}" 
-                           href="#" title="Próximamente - Crear Concejal">
-                            <i class="bi bi-plus-circle me-2"></i> Crear Concejal
-                            <small class="badge bg-warning text-dark ms-2">Próximamente</small>
-                        </a>
-                        @endcan
-                        
-                        @can('ver volantes del concejal')
-                        <a class="nav-link text-white sidebar-link p-2 {{ request()->routeIs('admin.concejales.volantes') ? 'active' : '' }}" 
-                           href="#" title="Próximamente - Volantes del Concejal">
-                            <i class="bi bi-file-earmark-text me-2"></i> Volantes del Concejal
-                            <small class="badge bg-warning text-dark ms-2">Próximamente</small>
-                        </a>
-                        @endcan
-                         
-                        @can('ver votantes del concejal')
-                        <a class="nav-link text-white sidebar-link p-2 {{ request()->routeIs('admin.concejales.votantes') ? 'active' : '' }}" 
-                           href="#" title="Próximamente - Votantes del Concejal">
-                            <i class="bi bi-file-earmark-text me-2"></i> Votantes del Concejal
-                            <small class="badge bg-warning text-dark ms-2">Próximamente</small>
-                        </a>
-                        @endcan
-                    </div>
-                </div>
-            </div>
-            @endcanany
+    <!-- Votaciones Alcaldes -->
+    @can('ver votaciones alcaldes')
+    <a class="nav-link text-white sidebar-link p-3 {{ request()->routeIs('admin.votaciones.alcaldes') ? 'active' : '' }}" 
+       href="#" title="Ver Votaciones Alcaldes">
+        <i class="bi bi-bar-chart-line me-2"></i> Votaciones Alcaldes
+        <small class="badge bg-warning text-dark ms-2">Próximamente</small>
+    </a>
+    @endcan
 
-            <!-- Gestión de Líderes -->
-            @can('crear lideres')
-            <a class="nav-link text-white sidebar-link p-3 {{ request()->routeIs('admin.lideres.*') ? 'active' : '' }}" 
-               href="#" title="Próximamente - Crear Líderes">
-                <i class="bi bi-person-star me-2"></i> 
-                Crear Líderes
-                <small class="badge bg-warning text-dark ms-2">Próximamente</small>
-            </a>
-            @endcan
+    <!-- Concejales vinculados al Alcalde -->
+    @can('crear concejales vinculados al alcalde')
+    <a class="nav-link text-white sidebar-link p-3 {{ request()->routeIs('admin.concejales.vinculados') ? 'active' : '' }}" 
+       href="#" title="Crear Concejales vinculados al Alcalde">
+        <i class="bi bi-people-fill me-2"></i> Crear Concejales vinculados
+        <small class="badge bg-warning text-dark ms-2">Próximamente</small>
+    </a>
+    @endcan
 
-            <!-- Gestión de Volantes -->
-            @canany(['ingresar volantes', 'ver volantes del alcalde', 'ver volantes del concejal'])
-            <div class="nav-item">
-                <a class="nav-link text-white sidebar-link p-3 {{ request()->routeIs('admin.volantes.*') ? 'active' : '' }}" 
-                   data-bs-toggle="collapse" 
-                   href="#volantesSubmenu" 
-                   role="button" 
-                   aria-expanded="{{ request()->routeIs('admin.volantes.*') ? 'true' : 'false' }}">
-                    <i class="bi bi-clipboard-data me-2"></i> 
-                    Volantes
-                    <i class="bi bi-chevron-down ms-auto"></i>
-                </a>
-                <div class="collapse {{ request()->routeIs('admin.volantes.*') ? 'show' : '' }}" id="volantesSubmenu">
-                    <div class="nav flex-column ms-3">
-                        @can('ingresar volantes')
-                        <a class="nav-link text-white sidebar-link p-2 {{ request()->routeIs('admin.volantes.create') ? 'active' : '' }}" 
-                           href="#" title="Próximamente - Ingresar Volantes">
-                            <i class="bi bi-plus-circle me-2"></i> Ingresar Volantes
-                            <small class="badge bg-warning text-dark ms-2">Próximamente</small>
-                        </a>
-                        @endcan
-                        
-                        @can('ver volantes del alcalde')
-                        <a class="nav-link text-white sidebar-link p-2 {{ request()->routeIs('admin.volantes.alcalde') ? 'active' : '' }}" 
-                           href="#" title="Próximamente - Volantes Alcalde">
-                            <i class="bi bi-person-workspace me-2"></i> Volantes Alcalde
-                            <small class="badge bg-warning text-dark ms-2">Próximamente</small>
-                        </a>
-                        @endcan
-                        
-                        @can('ver volantes del concejal')
-                        <a class="nav-link text-white sidebar-link p-2 {{ request()->routeIs('admin.volantes.concejal') ? 'active' : '' }}" 
-                           href="#" title="Próximamente - Volantes Concejal">
-                            <i class="bi bi-people-fill me-2"></i> Volantes Concejal
-                            <small class="badge bg-warning text-dark ms-2">Próximamente</small>
-                        </a>
-                        @endcan
-                    </div>
-                </div>
-            </div>
-            @endcanany
+    <!-- Gestión Concejales -->
+    @can('crear concejales')
+    <a class="nav-link text-white sidebar-link p-3 {{ request()->routeIs('admin.concejales.*') ? 'active' : '' }}" 
+       href="#" title="Crear Concejales">
+        <i class="bi bi-person-plus me-2"></i> Crear Concejales
+        <small class="badge bg-warning text-dark ms-2">Próximamente</small>
+    </a>
+    @endcan
 
-            <!-- Gestión del Sistema -->
-            @canany(['ver logs sistema', 'administrar sistema'])
-            <div class="nav-item">
-                <a class="nav-link text-white sidebar-link p-3 {{ request()->routeIs('admin.sistema.*') ? 'active' : '' }}" 
-                   data-bs-toggle="collapse" 
-                   href="#sistemaSubmenu" 
-                   role="button" 
-                   aria-expanded="{{ request()->routeIs('admin.sistema.*') ? 'true' : 'false' }}">
-                    <i class="bi bi-gear me-2"></i> 
-                    Sistema
-                    <i class="bi bi-chevron-down ms-auto"></i>
-                </a>
-                <div class="collapse {{ request()->routeIs('admin.sistema.*') ? 'show' : '' }}" id="sistemaSubmenu">
-                    <div class="nav flex-column ms-3">
-                        @can('ver logs sistema')
-                        <a class="nav-link text-white sidebar-link p-2 {{ request()->routeIs('admin.sistema.logs') ? 'active' : '' }}" 
-                           href="#" title="Próximamente - Ver Logs del Sistema">
-                            <i class="bi bi-journal-text me-2"></i> Ver Logs del Sistema
-                            <small class="badge bg-warning text-dark ms-2">Próximamente</small>
-                        </a>
-                        @endcan
-                        
-                        @can('administrar sistema')
-                        <a class="nav-link text-white sidebar-link p-2 {{ request()->routeIs('admin.sistema.settings') ? 'active' : '' }}" 
-                           href="#" title="Próximamente - Administrar Sistema">
-                            <i class="bi bi-sliders me-2"></i> Administrar Sistema
-                            <small class="badge bg-warning text-dark ms-2">Próximamente</small>
-                        </a>
-                        @endcan
-                    </div>
-                </div>
-            </div>
-            @endcanany
+    <!-- Ver votantes del Alcalde -->
+    @can('ver votantes del alcalde')
+    <a class="nav-link text-white sidebar-link p-3 {{ request()->routeIs('alcaldia.votantes') ? 'active' : '' }}" 
+       href="#" title="Ver Votantes del Alcalde">
+        <i class="bi bi-people me-2"></i> Ver Votantes Alcalde
+        <small class="badge bg-warning text-dark ms-2">Próximamente</small>
+    </a>
+    @endcan
 
-            <!-- Separador -->
-            <hr class="my-3 opacity-25">
+    <!-- Ver votaciones Concejales -->
+    @can('ver votaciones concejales')
+    <a class="nav-link text-white sidebar-link p-3 {{ request()->routeIs('admin.votaciones.concejales') ? 'active' : '' }}" 
+       href="#" title="Ver Votaciones Concejales">
+        <i class="bi bi-bar-chart-line me-2"></i> Votaciones Concejales
+        <small class="badge bg-warning text-dark ms-2">Próximamente</small>
+    </a>
+    @endcan
 
-            <!-- Accesos Rápidos -->
-            <div class="menu-title">
-                <small class="mb-0">ACCESOS RÁPIDOS</small>
-            </div>
+    <!-- Ver votantes del Concejal -->
+    @can('ver votantes del concejal')
+    <a class="nav-link text-white sidebar-link p-3 {{ request()->routeIs('concejal.votantes') ? 'active' : '' }}" 
+       href="#" title="Ver Votantes del Concejal">
+        <i class="bi bi-people me-2"></i> Ver Votantes Concejal
+        <small class="badge bg-warning text-dark ms-2">Próximamente</small>
+    </a>
+    @endcan
 
-            <!-- Resumen de Volantes -->
-            @canany(['ver volantes del alcalde', 'ver volantes del concejal'])
-            <a class="nav-link text-white sidebar-link p-3 {{ request()->routeIs('admin.dashboard.volantes') ? 'active' : '' }}" 
-               href="#" title="Próximamente - Resumen de Volantes">
-                <i class="bi bi-pie-chart me-2"></i> 
-                Resumen de Volantes
-                <small class="badge bg-warning text-dark ms-2">Próximamente</small>
-            </a>
-            @endcanany
+    <!-- Crear Líderes -->
+    @can('crear lideres')
+    <a class="nav-link text-white sidebar-link p-3 {{ request()->routeIs('admin.lideres.*') ? 'active' : '' }}" 
+       href="#" title="Crear Líderes">
+        <i class="bi bi-person-star me-2"></i> Crear Líderes
+        <small class="badge bg-warning text-dark ms-2">Próximamente</small>
+    </a>
+    @endcan
 
-            <!-- Estadísticas -->
-            @can('ver todo dashboard')
-            <a class="nav-link text-white sidebar-link p-3 {{ request()->routeIs('admin.estadisticas.*') ? 'active' : '' }}" 
-               href="#" title="Próximamente - Estadísticas">
-                <i class="bi bi-bar-chart me-2"></i> 
-                Estadísticas
-                <small class="badge bg-warning text-dark ms-2">Próximamente</small>
-            </a>
-            @endcan
+    <!-- Ingresar Votantes -->
+    @can('ingresar votantes')
+    <a class="nav-link text-white sidebar-link p-3 {{ request()->routeIs('votantes.ingresar') ? 'active' : '' }}" 
+       href="#" title="Ingresar Votantes">
+        <i class="bi bi-person-plus me-2"></i> Ingresar Votantes
+        <small class="badge bg-warning text-dark ms-2">Próximamente</small>
+    </a>
+    @endcan
 
-            <!-- Perfil del Usuario -->
-            <a class="nav-link text-white sidebar-link p-3 {{ request()->routeIs('profile.*') ? 'active' : '' }}" 
-               href="#" title="Próximamente - Mi Perfil">
-                <i class="bi bi-person-circle me-2"></i> Mi Perfil
-                <small class="badge bg-warning text-dark ms-2">Próximamente</small>
-            </a>
-        </nav>
+</nav>
     </div>
 </div>
 
-<!-- Estilos CSS -->
-<style>
-.sidebar {
-    background: linear-gradient(145deg, #2c3e50 0%, #34495e 100%);
-    box-shadow: 2px 0 15px rgba(0,0,0,0.1);
-    border-radius: 0 15px 15px 0;
-    min-height: 100vh;
-}
-
-.sidebar-link {
-    border-radius: 8px;
-    margin: 2px 0;
-    transition: all 0.3s ease;
-    position: relative;
-    border: none;
-    background: none;
-    text-decoration: none;
-}
-
-.sidebar-link:hover {
-    background: rgba(255,255,255,0.1);
-    transform: translateX(5px);
-    color: #ffffff !important;
-}
-
-.sidebar-link.active {
-    background: rgba(255,255,255,0.2);
-    border-left: 4px solid #3498db;
-    color: #ffffff !important;
-}
-
-/* Estilos para links deshabilitados */
-.sidebar-link[href="#"] {
-    opacity: 0.7;
-    cursor: not-allowed;
-}
-
-.sidebar-link[href="#"]:hover {
-    background: rgba(255,255,255,0.05);
-    transform: none;
-}
-
-.user-avatar {
-    width: 40px;
-    height: 40px;
-    background: rgba(255,255,255,0.1);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-}
-
-.user-avatar img {
-    object-fit: cover;
-}
-
-.badge {
-    font-size: 9px;
-    padding: 2px 6px;
-    border-radius: 12px;
-    font-weight: 500;
-}
-
-.collapse .nav-link {
-    font-size: 14px;
-    padding: 8px 16px;
-}
-
-.menu-title {
-    padding: 10px 0 5px 0;
-    margin-top: 20px;
-}
-
-.menu-title small {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 1px;
-}
-
-/* Animaciones para submenús */
-.collapse {
-    transition: all 0.3s ease;
-}
-
-.collapse.show {
-    background: rgba(0,0,0,0.1);
-    border-radius: 8px;
-    margin: 5px 0;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .sidebar {
-        transform: translateX(-100%);
-        transition: transform 0.3s ease;
-        position: fixed;
-        z-index: 1000;
-        width: 100%;
-        border-radius: 0;
-    }
-    
-    .sidebar.show {
-        transform: translateX(0);
-    }
-    
-    .badge {
-        display: none;
-    }
-}
-
-/* Efectos de hover mejorados */
-.sidebar-link:hover i {
-    color: #3498db;
-    transform: scale(1.1);
-    transition: all 0.3s ease;
-}
-
-/* Indicadores de estado */
-.sidebar-link.active::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 4px;
-    height: 70%;
-    background: #3498db;
-    border-radius: 0 4px 4px 0;
-}
-
-/* Notificación de desarrollo */
-.badge.bg-warning {
-    background-color: #ffc107 !important;
-    color: #000 !important;
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.02); }
-    100% { transform: scale(1); }
-}
-
-/* Transiciones suaves para chevrons */
-.bi-chevron-down {
-    transition: transform 0.3s ease;
-}
-
-/* Animaciones de entrada */
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateX(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-.animate-slide-in {
-    animation: slideIn 0.3s ease-out forwards;
-}
-</style>
 
 <!-- JavaScript -->
 <script>

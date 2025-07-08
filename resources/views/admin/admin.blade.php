@@ -30,7 +30,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 @endif
-
+   <link rel="stylesheet" href="{{ asset('dist/css/adminEstilos/admin.css') }}">
 <!-- Botón Nuevo Usuario -->
 <div class="mb-3 text-end">
     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
@@ -98,21 +98,20 @@
                 </td>
                 <td>{{ $user->email }}</td>
                 <td>
-                    @php
-                        $rol = $user->getRoleNames()->first();
-                    @endphp
+                @php
+                    $rol = $user->getRoleNames()->first(); // p. ej., "super-admin"
+                @endphp
 
-                    @if($rol == 'Super Admin')
-                        <span class="badge bg-success">🛡️ Super Admin</span>
-                    @elseif($rol == 'Candidato Alcalde')
-                        <span class="badge bg-primary">👨‍💼 Candidato Alcalde</span>
-                    @elseif($rol == 'Candidato Concejal')
-                        <span class="badge bg-info">👤 Candidato Concejal</span>
-                    @elseif($rol == 'Líder Comunitario')
-                        <span class="badge bg-warning text-dark">👤 Líder Comunitario</span>
-                    @else
-                        <span class="badge bg-secondary">👤 Usuario</span>
-                    @endif
+                @if($rol == 'super-admin')
+                    <span class="badge bg-success">🛡️ Super Admin</span>
+                @elseif($rol == 'aspirante-alcaldia')
+                    <span class="badge bg-primary">👨‍💼 Candidato Alcalde</span>
+                @elseif($rol == 'aspirante-concejo')
+                    <span class="badge bg-info">👤 Candidato Concejal</span>
+                @elseif($rol == 'lider')
+                    <span class="badge bg-warning text-dark">👤 Líder Comunitario</span>
+                @endif
+
                 </td>
                 <td>{{ \Carbon\Carbon::parse($user->created_at)->format('d/m/Y') }}</td>
                 <td>
