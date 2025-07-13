@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AlcaldeController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\UserController;
@@ -37,9 +38,13 @@ Route::middleware(['auth', 'can:acceder admin'])->group(function () {
 
 // 🟨 ASPIRANTE A ALCALDÍA - Panel de alcalde
 Route::middleware(['auth', 'can:crear concejales'])->group(function () {
-    Route::get('/home', [UserController::class, 'home'])->name('home');
-    // Aquí puedes añadir más rutas específicas para alcaldes si las necesitas
+    Route::get('/home', [AlcaldeController::class, 'index'])->name('home');
+    Route::post('/home/users', [AlcaldeController::class, 'store'])->name('home.users.store');
+    Route::put('/home/users/{user}', [AlcaldeController::class, 'update'])->name('home.users.update');
+    Route::delete('/home/users/{user}', [AlcaldeController::class, 'destroy'])->name('home.users.destroy');
+    Route::get('/home/users/{user}', [AlcaldeController::class, 'show'])->name('home.users.show');
 });
+    // Aquí puedes añadir más rutas específicas para alcaldes si las necesitas
 
 
 // 🟧 ASPIRANTE AL CONCEJO - Panel de concejal
@@ -53,11 +58,7 @@ Route::middleware(['auth', 'can:crear lideres'])->group(function () {
 Route::middleware(['auth', 'can:ingresar votantes'])->group(function () {
     Route::get('/homeLider', [UserController::class, 'homeLider'])->name('homeLider');
 
-    // Rutas para votantes (gestión completa)
-    Route::get('/votantes', [VotanteController::class, 'index'])->name('votantes.index');
-    Route::get('/votantes/crear', [VotanteController::class, 'create'])->name('votantes.create');
-    Route::post('/votantes', [VotanteController::class, 'store'])->name('votantes.store');
-    Route::delete('/votantes/{votante}', [VotanteController::class, 'destroy'])->name('votantes.destroy');
+  
 });
 
 

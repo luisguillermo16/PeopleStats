@@ -141,10 +141,7 @@ class UserController extends Controller
     /**
      * Muestra la página de inicio para el usuario alcalde.
      */
-    public function home()
-    {
-        return view('userAlcalde.home');
-    }
+   
 
     public function homeConcejal()
     {
