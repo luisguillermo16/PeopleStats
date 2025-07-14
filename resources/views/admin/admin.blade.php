@@ -92,7 +92,7 @@
                         <div class="user-avatar me-3"><i class="bi bi-person"></i></div>
                         <div>
                             <div class="fw-semibold">{{ $user->name }}</div>
-                            <small class="text-muted">ID: {{ $user->id }}</small>
+                           
                         </div>
                     </div>
                 </td>

@@ -91,18 +91,24 @@
     <!-- Concejales vinculados al Alcalde -->
     @can('crear concejales vinculados al alcalde')
     <a class="nav-link text-white sidebar-link p-3 {{ request()->routeIs('admin.concejales.vinculados') ? 'active' : '' }}" 
-       href="#" title="Crear Concejales vinculados al Alcalde">
+       href="home" title="Crear Concejales vinculados al Alcalde">
         <i class="bi bi-people-fill me-2"></i> Crear Concejales vinculados
-        <small class="badge bg-warning text-dark ms-2">Próximamente</small>
     </a>
     @endcan
-
+  
+ <!-- Concejales vinculados al Alcalde -->
+    @can('dashboardAlcalde')
+    <a class="nav-link text-white sidebar-link p-3 {{ request()->routeIs('admin.concejales.vinculados') ? 'active' : '' }}" 
+        href="{{ route('dashboardAlcalde') }}" title="Crear Concejales vinculados al Alcalde">
+        <i class="bi bi-people-fill me-2"></i> dashboardAlcalde
+    </a>
+    @endcan
     <!-- Gestión Concejales -->
     @can('crear concejales')
-    <a class="nav-link text-white sidebar-link p-3 {{ request()->routeIs('admin.concejales.*') ? 'active' : '' }}" 
-       href="#" title="Crear Concejales">
+    <a class="nav-link text-white sidebar-link p-3 {{ request()->routeIs('home') ? 'active' : '' }}" 
+       href="{{ route('crearConcejal') }}" title="Crear Concejales">
         <i class="bi bi-person-plus me-2"></i> Crear Concejales
-        <small class="badge bg-warning text-dark ms-2">Próximamente</small>
+      
     </a>
     @endcan
 

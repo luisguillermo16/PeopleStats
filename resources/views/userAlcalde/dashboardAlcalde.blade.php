@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('tituloPage', 'no es la vista correcta')
+@section('tituloPage', 'Estadisticas del alcalde')
 
 @section('contenido')
     

@@ -16,7 +16,7 @@ class RoleRedirect
             if ($user->hasRole('super-admin')) {
                 return redirect()->route('admin');
             } elseif ($user->hasRole('aspirante-alcaldia')) {
-                return redirect()->route('home');
+                return redirect()->route('dashboardAlcalde');
             } elseif ($user->hasRole('aspirante-concejo')) {
                 return redirect()->route('homeConcejal');
             } elseif ($user->hasRole('lider')) {

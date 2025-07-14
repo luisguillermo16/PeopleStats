@@ -12,9 +12,19 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('alcaldes', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
-        });
+    $table->id();
+
+    // Relaciona al usuario que es el alcalde
+    $table->foreignId('user_id')->constrained()->onDelete('cascade');
+
+    // Datos políticos extra
+    $table->string('partido_politico')->nullable();
+    $table->string('numero_lista')->nullable();
+
+    $table->boolean('activo')->default(true);
+
+    $table->timestamps();
+});
     }
 
     /**
