@@ -13,8 +13,35 @@ class LiderController extends Controller
 {
     public function index()
     {
-        // Cargar todos los líderes con su usuario
-        $lideres = User::role('lider')->with('lider')->latest()->paginate(10);
+        $userAuth = Auth::user();
+
+        // Si es alcalde: ver sus líderes directos + líderes de concejales que él creó
+        if ($userAuth->hasRole('aspirante-alcaldia')) {
+            // IDs de concejales creados por este alcalde
+            $concejales_ids = User::role('aspirante-concejo')
+                ->where('alcalde_id', $userAuth->id)
+                ->pluck('id');
+
+            // Obtener líderes que estén vinculados a este alcalde o a sus concejales
+            $lideres = User::role('lider')
+                ->where(function ($query) use ($userAuth, $concejales_ids) {
+                    $query->where('alcalde_id', $userAuth->id)
+                          ->orWhereIn('concejal_id', $concejales_ids);
+                })
+                ->with('lider')
+                ->latest()
+                ->paginate(10);
+        }
+        // Si es concejal: ver solo líderes que él creó
+        elseif ($userAuth->hasRole('aspirante-concejo')) {
+            $lideres = User::role('lider')
+                ->where('concejal_id', $userAuth->id)
+                ->with('lider')
+                ->latest()
+                ->paginate(10);
+        } else {
+            return redirect()->back()->with('error', 'No tienes permiso para ver líderes.');
+        }
 
         return view('permisos.crearLider', compact('lideres'));
     }
@@ -27,32 +54,55 @@ class LiderController extends Controller
             'password' => 'required|string|min:6|confirmed',
         ]);
 
-        $concejal = Auth::user()->concejal;
+        $userAuth = Auth::user();
 
-        if (!$concejal) {
-            return redirect()->back()->with('error', 'El usuario autenticado no es un concejal.');
+        if (!$userAuth->hasAnyRole(['aspirante-concejo', 'aspirante-alcaldia', 'super-admin'])) {
+            return redirect()->back()->with('error', 'No tienes permisos para crear líderes.');
         }
 
         $user = User::create([
             'name'        => $request->name,
             'email'       => $request->email,
             'password'    => Hash::make($request->password),
-            'concejal_id' => $concejal->id,
-            'alcalde_id'  => $concejal->alcalde_id,
+            'concejal_id' => $userAuth->hasRole('aspirante-concejo') ? $userAuth->id : null,
+            'alcalde_id'  => $userAuth->hasRole('aspirante-alcaldia') ? $userAuth->id : ($userAuth->alcalde_id ?? null),
         ]);
 
         $user->assignRole('lider');
 
         Lider::create([
             'user_id'     => $user->id,
-            'concejal_id' => $concejal->id,
-            'zona_influencia'     => $request->zona_influencia,
-            'telefono'            => $request->telefono,
-            'afiliacion_politica' => $request->afiliacion_politica,
-            'nivel_liderazgo'     => $request->nivel_liderazgo,
-            'descripcion'         => $request->descripcion,
+            'concejal_id' => $user->concejal_id,
+            'alcalde_id'  => $user->alcalde_id,
         ]);
 
         return redirect()->route('crearLider')->with('success', 'Líder creado exitosamente.');
+    }
+
+    public function show(User $lider)
+    {
+        return view('permisos.verLider', compact('lider'));
+    }
+
+    public function update(Request $request, User $lider)
+    {
+        $request->validate([
+            'name'  => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $lider->id,
+        ]);
+
+        $lider->update([
+            'name'  => $request->name,
+            'email' => $request->email,
+        ]);
+
+        return redirect()->route('crearLider')->with('success', 'Líder actualizado exitosamente.');
+    }
+
+    public function destroy(User $lider)
+    {
+        $lider->delete();
+
+        return redirect()->route('crearLider')->with('success', 'Líder eliminado exitosamente.');
     }
 }

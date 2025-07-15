@@ -36,7 +36,6 @@
     <div class="flex-grow-1">
         <form method="GET" class="input-group" style="max-width: 500px;">
             <input name="search" value="{{ request('search') }}" class="form-control" placeholder="Buscar por nombre, email o zona">
-            <input name="nivel_liderazgo" value="{{ request('nivel_liderazgo') }}" class="form-control" placeholder="Nivel de liderazgo">
             <button class="btn btn-outline-secondary" type="submit">
                 <i class="bi bi-search"></i> Buscar
             </button>
@@ -58,8 +57,7 @@
                 <th>Líder</th>
                 <th>Email</th>
                 <th>Zona de Influencia</th>
-                <th>Nivel</th>
-                <th>Afiliación</th>
+                <th>Creado por</th>
                 <th>Fecha de Registro</th>
                 <th width="150">Acciones</th>
             </tr>
@@ -78,8 +76,17 @@
                 </td>
                 <td>{{ $lider->email }}</td>
                 <td>{{ $lider->lider->zona_influencia ?? 'Sin especificar' }}</td>
-                <td>{{ $lider->lider->nivel_liderazgo ?? '' }}</td>
-                <td>{{ $lider->lider->afiliacion_politica ?? 'Sin afiliación' }}</td>
+                <td>
+                    @if($lider->creadoPorConcejal)
+                        <span class="badge bg-info">{{ $lider->creadoPorConcejal->name }}</span>
+                        <small class="text-muted d-block">Concejal</small>
+                    @elseif($lider->creadoPorAlcalde)
+                        <span class="badge bg-success">{{ $lider->creadoPorAlcalde->name }}</span>
+                        <small class="text-muted d-block">Alcalde</small>
+                    @else
+                        <span class="text-muted">Sin información</span>
+                    @endif
+                </td>
                 <td>{{ $lider->created_at->format('d/m/Y') }}</td>
                 <td>
                     {{-- Botón editar --}}
@@ -88,7 +95,7 @@
                     </button>
 
                     {{-- Eliminar --}}
-                   <form method="POST" action="{{ route('admin.lideres.destroy', $lider) }}" style="display:inline" onsubmit="return confirm('¿Eliminar este líder?')">
+                    <form method="POST" action="{{ route('admin.lideres.destroy', $lider) }}" style="display:inline" onsubmit="return confirm('¿Eliminar este líder?')">
                         @csrf
                         @method('DELETE')
                         <button class="btn btn-sm btn-outline-danger">
@@ -97,100 +104,46 @@
                     </form>
                 </td>
             </tr>
-            
-            {{-- Modal de edición para cada líder --}}
+
+            {{-- Modal de edición --}}
             <div class="modal fade" id="editModal{{ $lider->id }}" tabindex="-1" aria-labelledby="editModalLabel{{ $lider->id }}" aria-hidden="true">
                 <div class="modal-dialog modal-lg">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="editModalLabel{{ $lider->id }}">
+                            <h5 class="modal-title">
                                 <i class="bi bi-pencil me-2"></i>Editar Líder
                             </h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
-                        
                         <form method="POST" action="{{ route('admin.lideres.update', $lider) }}">
                             @csrf
                             @method('PUT')
                             <div class="modal-body">
                                 <div class="row">
-                                    {{-- Fila 1: Nombre y Email --}}
                                     <div class="col-md-6 mb-3">
-                                        <label for="edit_name{{ $lider->id }}" class="form-label">Nombre</label>
-                                        <input type="text" class="form-control" id="edit_name{{ $lider->id }}" name="name" value="{{ $lider->name }}" required>
+                                        <label class="form-label">Nombre</label>
+                                        <input type="text" class="form-control" name="name" value="{{ $lider->name }}" required>
                                     </div>
-                                    
                                     <div class="col-md-6 mb-3">
-                                        <label for="edit_email{{ $lider->id }}" class="form-label">Email</label>
-                                        <input type="email" class="form-control" id="edit_email{{ $lider->id }}" name="email" value="{{ $lider->email }}" required>
+                                        <label class="form-label">Email</label>
+                                        <input type="email" class="form-control" name="email" value="{{ $lider->email }}" required>
                                     </div>
-                                    
-                                    {{-- Fila 2: Zona de Influencia y Nivel de Liderazgo --}}
                                     <div class="col-md-6 mb-3">
-                                        <label for="edit_zona_influencia{{ $lider->id }}" class="form-label">Zona de Influencia</label>
-                                        <select class="form-select" id="edit_zona_influencia{{ $lider->id }}" name="zona_influencia" required>
-                                            <option value="">Seleccionar zona...</option>
-                                            <option value="Norte" {{ ($lider->lider->zona_influencia ?? '') == 'Norte' ? 'selected' : '' }}>Norte</option>
-                                            <option value="Sur" {{ ($lider->lider->zona_influencia ?? '') == 'Sur' ? 'selected' : '' }}>Sur</option>
-                                            <option value="Este" {{ ($lider->lider->zona_influencia ?? '') == 'Este' ? 'selected' : '' }}>Este</option>
-                                            <option value="Oeste" {{ ($lider->lider->zona_influencia ?? '') == 'Oeste' ? 'selected' : '' }}>Oeste</option>
-                                            <option value="Centro" {{ ($lider->lider->zona_influencia ?? '') == 'Centro' ? 'selected' : '' }}>Centro</option>
-                                            <option value="Metropolitana" {{ ($lider->lider->zona_influencia ?? '') == 'Metropolitana' ? 'selected' : '' }}>Metropolitana</option>
-                                            <option value="Rural" {{ ($lider->lider->zona_influencia ?? '') == 'Rural' ? 'selected' : '' }}>Rural</option>
-                                            <option value="Urbana" {{ ($lider->lider->zona_influencia ?? '') == 'Urbana' ? 'selected' : '' }}>Urbana</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <div class="col-md-6 mb-3">
-                                        <label for="edit_nivel_liderazgo{{ $lider->id }}" class="form-label">Nivel de Liderazgo</label>
-                                        <select class="form-select" id="edit_nivel_liderazgo{{ $lider->id }}" name="nivel_liderazgo" required>
-                                            <option value="">Seleccionar nivel...</option>
-                                            <option value="1" {{ ($lider->lider->nivel_liderazgo ?? '') == '1' ? 'selected' : '' }}>Nivel 1 - Básico</option>
-                                            <option value="2" {{ ($lider->lider->nivel_liderazgo ?? '') == '2' ? 'selected' : '' }}>Nivel 2 - Intermedio</option>
-                                            <option value="3" {{ ($lider->lider->nivel_liderazgo ?? '') == '3' ? 'selected' : '' }}>Nivel 3 - Avanzado</option>
-                                            <option value="4" {{ ($lider->lider->nivel_liderazgo ?? '') == '4' ? 'selected' : '' }}>Nivel 4 - Experto</option>
-                                            <option value="5" {{ ($lider->lider->nivel_liderazgo ?? '') == '5' ? 'selected' : '' }}>Nivel 5 - Maestro</option>
-                                        </select>
-                                    </div>
-                                    
-                                    {{-- Fila 3: Afiliación Política y Teléfono --}}
-                                    <div class="col-md-6 mb-3">
-                                        <label for="edit_afiliacion_politica{{ $lider->id }}" class="form-label">Afiliación Política</label>
-                                        <select class="form-select" id="edit_afiliacion_politica{{ $lider->id }}" name="afiliacion_politica">
-                                            <option value="">Sin afiliación</option>
-                                            <option value="Conservador" {{ ($lider->lider->afiliacion_politica ?? '') == 'Conservador' ? 'selected' : '' }}>Conservador</option>
-                                            <option value="Liberal" {{ ($lider->lider->afiliacion_politica ?? '') == 'Liberal' ? 'selected' : '' }}>Liberal</option>
-                                            <option value="Centro Democrático" {{ ($lider->lider->afiliacion_politica ?? '') == 'Centro Democrático' ? 'selected' : '' }}>Centro Democrático</option>
-                                            <option value="Cambio Radical" {{ ($lider->lider->afiliacion_politica ?? '') == 'Cambio Radical' ? 'selected' : '' }}>Cambio Radical</option>
-                                            <option value="Polo Democrático" {{ ($lider->lider->afiliacion_politica ?? '') == 'Polo Democrático' ? 'selected' : '' }}>Polo Democrático</option>
-                                            <option value="Alianza Verde" {{ ($lider->lider->afiliacion_politica ?? '') == 'Alianza Verde' ? 'selected' : '' }}>Alianza Verde</option>
-                                            <option value="FARC" {{ ($lider->lider->afiliacion_politica ?? '') == 'FARC' ? 'selected' : '' }}>FARC</option>
-                                            <option value="Independiente" {{ ($lider->lider->afiliacion_politica ?? '') == 'Independiente' ? 'selected' : '' }}>Independiente</option>
-                                            <option value="Otro" {{ ($lider->lider->afiliacion_politica ?? '') == 'Otro' ? 'selected' : '' }}>Otro</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <div class="col-md-6 mb-3">
-                                        <label for="edit_telefono{{ $lider->id }}" class="form-label">Teléfono</label>
-                                        <input type="tel" class="form-control" id="edit_telefono{{ $lider->id }}" name="telefono" value="{{ $lider->lider->telefono ?? '' }}" placeholder="Ej: +57 300 123 4567">
+                                        <label class="form-label">Teléfono</label>
+                                        <input type="tel" class="form-control" name="telefono" value="{{ $lider->lider->telefono ?? '' }}">
                                     </div>
                                 </div>
                             </div>
-                            
                             <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                    Cancelar
-                                </button>
-                                <button type="submit" class="btn btn-primary">
-                                    Actualizar Líder
-                                </button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-primary">Actualizar Líder</button>
                             </div>
                         </form>
                     </div>
                 </div>
             </div>
         @empty
-            <tr><td colspan="8" class="text-center">No hay líderes registrados.</td></tr>
+            <tr><td colspan="9" class="text-center">No hay líderes registrados.</td></tr>
         @endforelse
         </tbody>
     </table>
@@ -207,42 +160,34 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="createModalLabel">
+                <h5 class="modal-title">
                     <i class="bi bi-person-plus me-2"></i>Agregar Nuevo Líder
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            
             <form method="POST" action="{{ route('admin.lideres.store') }}">
                 @csrf
                 <div class="modal-body">
                     <div class="row">
-                        {{-- Fila 1: Nombre y Email --}}
                         <div class="col-md-6 mb-3">
-                            <label for="name" class="form-label">Nombre</label>
-                            <input type="text" class="form-control" id="name" name="name" required>
+                            <label class="form-label">Nombre</label>
+                            <input type="text" class="form-control" name="name" required>
                         </div>
-                        
                         <div class="col-md-6 mb-3">
-                            <label for="email" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="email" name="email" required>
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" name="email" required>
                         </div>
-                        
-                        {{-- Fila 2: Contraseña y Confirmar Contraseña --}}
                         <div class="col-md-6 mb-3">
-                            <label for="password" class="form-label">Contraseña</label>
-                            <input type="password" class="form-control" id="password" name="password" required>
+                            <label class="form-label">Contraseña</label>
+                            <input type="password" class="form-control" name="password" required>
                         </div>
-                        
                         <div class="col-md-6 mb-3">
-                            <label for="password_confirmation" class="form-label">Confirmar Contraseña</label>
-                            <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" required>
+                            <label class="form-label">Confirmar Contraseña</label>
+                            <input type="password" class="form-control" name="password_confirmation" required>
                         </div>
-                        
-                        {{-- Fila 3: Zona de Influencia y Nivel de Liderazgo --}}
                         <div class="col-md-6 mb-3">
-                            <label for="zona_influencia" class="form-label">Zona de Influencia</label>
-                            <select class="form-select" id="zona_influencia" name="zona_influencia" required>
+                            <label class="form-label">Zona de Influencia</label>
+                            <select class="form-select" name="zona_influencia" required>
                                 <option value="">Seleccionar zona...</option>
                                 <option value="Norte">Norte</option>
                                 <option value="Sur">Sur</option>
@@ -254,23 +199,9 @@
                                 <option value="Urbana">Urbana</option>
                             </select>
                         </div>
-                        
                         <div class="col-md-6 mb-3">
-                            <label for="nivel_liderazgo" class="form-label">Nivel de Liderazgo</label>
-                            <select class="form-select" id="nivel_liderazgo" name="nivel_liderazgo" required>
-                                <option value="">Seleccionar nivel...</option>
-                                <option value="1">Nivel 1 - Básico</option>
-                                <option value="2">Nivel 2 - Intermedio</option>
-                                <option value="3">Nivel 3 - Avanzado</option>
-                                <option value="4">Nivel 4 - Experto</option>
-                                <option value="5">Nivel 5 - Maestro</option>
-                            </select>
-                        </div>
-                        
-                        {{-- Fila 4: Afiliación Política y Teléfono --}}
-                        <div class="col-md-6 mb-3">
-                            <label for="afiliacion_politica" class="form-label">Afiliación Política</label>
-                            <select class="form-select" id="afiliacion_politica" name="afiliacion_politica">
+                            <label class="form-label">Afiliación Política</label>
+                            <select class="form-select" name="afiliacion_politica">
                                 <option value="">Sin afiliación</option>
                                 <option value="Conservador">Conservador</option>
                                 <option value="Liberal">Liberal</option>
@@ -283,21 +214,15 @@
                                 <option value="Otro">Otro</option>
                             </select>
                         </div>
-                        
                         <div class="col-md-6 mb-3">
-                            <label for="telefono" class="form-label">Teléfono</label>
-                            <input type="tel" class="form-control" id="telefono" name="telefono" placeholder="Ej: +57 300 123 4567">
+                            <label class="form-label">Teléfono</label>
+                            <input type="tel" class="form-control" name="telefono" placeholder="Ej: +57 300 123 4567">
                         </div>
                     </div>
                 </div>
-                
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        Cancelar
-                    </button>
-                    <button type="submit" class="btn btn-primary">
-                        Crear Líder
-                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Crear Líder</button>
                 </div>
             </form>
         </div>
@@ -308,18 +233,18 @@
 
 @section('scripts')
 <script>
-// Seleccionar/deseleccionar todos los checkboxes
-document.getElementById('selectAll').addEventListener('change', function() {
-    const checkboxes = document.querySelectorAll('.user-checkbox');
-    checkboxes.forEach(checkbox => {
-        checkbox.checked = this.checked;
+    // Seleccionar/deseleccionar todos los checkboxes
+    document.getElementById('selectAll').addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('.user-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
     });
-});
 
-// Limpiar formulario cuando se cierre el modal
-document.getElementById('createModal').addEventListener('hidden.bs.modal', function () {
-    const form = this.querySelector('form');
-    form.reset();
-});
+    // Limpiar formulario al cerrar el modal
+    document.getElementById('createModal').addEventListener('hidden.bs.modal', function () {
+        const form = this.querySelector('form');
+        form.reset();
+    });
 </script>
 @endsection
