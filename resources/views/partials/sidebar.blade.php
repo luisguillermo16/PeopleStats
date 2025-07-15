@@ -142,7 +142,7 @@
     <!-- Crear Líderes -->
     @can('crear lideres')
     <a class="nav-link text-white sidebar-link p-3 {{ request()->routeIs('admin.lideres.*') ? 'active' : '' }}" 
-       href="#" title="Crear Líderes">
+       href="{{ route('crearLider') }}" title="Crear Líderes">
         <i class="bi bi-person-star me-2"></i> Crear Líderes
         <small class="badge bg-warning text-dark ms-2">Próximamente</small>
     </a>

@@ -23,19 +23,18 @@ class ConcejalController extends Controller
         if ($request->filled('search')) {
             $s = $request->input('search');
             $query->where(function ($q) use ($s) {
-                $q->where('name', 'like', "%$s%")
-                  ->orWhere('email', 'like', "%$s%")
+                $q->where('name',  'like', "%$s%")
+                  ->orWhere('email','like', "%$s%")
                   ->orWhereHas('concejal', fn ($c) =>
-                        $c->where('partido_politico', 'like', "%$s%"));
+                        $c->where('partido_politico','like', "%$s%"));
             });
         }
 
         // Filtro por número de lista exacto
         if ($request->filled('numero_lista')) {
             $numeroLista = $request->input('numero_lista');
-            $query->whereHas('concejal', function ($q) use ($numeroLista) {
-                $q->where('numero_lista', $numeroLista);
-            });
+            $query->whereHas('concejal', fn ($c) =>
+                $c->where('numero_lista', $numeroLista));
         }
 
         $concejales = $query->paginate(10)->withQueryString();
@@ -44,24 +43,33 @@ class ConcejalController extends Controller
     }
 
     /**
+     * Vista principal para concejales/líderes.
+     * Ruta: /homeConcejal
+     */
+    public function home()
+    {
+        return view('userConcejal.homeConcejal');
+    }
+
+    /**
      * Crear un nuevo concejal vinculado al alcalde.
      */
     public function store(Request $request)
     {
         $request->validate([
-            'name'              => 'required|string|max:255',
-            'email'             => 'required|email|max:255|unique:users',
-            'password'          => 'required|string|min:8|confirmed',
-            'partido_politico'  => 'nullable|string|max:255',
-            'numero_lista'      => 'nullable|integer|min:1',
+            'name'             => 'required|string|max:255',
+            'email'            => 'required|email|max:255|unique:users',
+            'password'         => 'required|string|min:8|confirmed',
+            'partido_politico' => 'nullable|string|max:255',
+            'numero_lista'     => 'nullable|integer|min:1',
         ]);
 
         try {
             $user = User::create([
-                'name'        => $request->name,
-                'email'       => $request->email,
-                'password'    => Hash::make($request->password),
-                'alcalde_id'  => auth()->id(),
+                'name'       => $request->name,
+                'email'      => $request->email,
+                'password'   => Hash::make($request->password),
+                'alcalde_id' => auth()->id(),
             ]);
 
             $user->assignRole('aspirante-concejo');
@@ -74,9 +82,9 @@ class ConcejalController extends Controller
                 'activo'           => true,
             ]);
 
-            return redirect()->back()->with('success', 'Concejal creado exitosamente');
+            return back()->with('success', 'Concejal creado exitosamente');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Error al crear concejal: ' . $e->getMessage());
+            return back()->with('error', 'Error al crear concejal: '.$e->getMessage());
         }
     }
 
@@ -86,50 +94,45 @@ class ConcejalController extends Controller
     public function update(Request $request, User $concejal)
     {
         if (!$concejal->hasRole('aspirante-concejo')) {
-            return redirect()->back()->with('error', 'Usuario no válido como concejal');
+            return back()->with('error', 'Usuario no válido como concejal');
         }
 
         $request->validate([
-            'name'              => 'required|string|max:255',
-            'email'             => [
-                'required', 'email', 'max:255',
+            'name'             => 'required|string|max:255',
+            'email'            => [
+                'required','email','max:255',
                 Rule::unique('users')->ignore($concejal->id),
             ],
-            'password'          => 'nullable|string|min:8|confirmed',
-            'partido_politico'  => 'nullable|string|max:255',
-            'numero_lista'      => 'nullable|integer|min:1',
+            'password'         => 'nullable|string|min:8|confirmed',
+            'partido_politico' => 'nullable|string|max:255',
+            'numero_lista'     => 'nullable|integer|min:1',
         ]);
 
         try {
-            $data = [
-                'name'  => $request->name,
-                'email' => $request->email,
-            ];
+            $concejal->update([
+                'name'     => $request->name,
+                'email'    => $request->email,
+                'password' => $request->filled('password')
+                                ? Hash::make($request->password)
+                                : $concejal->password,
+            ]);
 
-            if ($request->filled('password')) {
-                $data['password'] = Hash::make($request->password);
-            }
-
-            $concejal->update($data);
-
-            $info = [
+            $dataExtra = [
                 'partido_politico' => $request->partido_politico,
                 'numero_lista'     => $request->numero_lista,
             ];
 
-            if ($concejal->concejal) {
-                $concejal->concejal->update($info);
-            } else {
-                Concejal::create($info + [
+            $concejal->concejal
+                ? $concejal->concejal->update($dataExtra)
+                : Concejal::create($dataExtra + [
                     'user_id'    => $concejal->id,
                     'alcalde_id' => auth()->id(),
                     'activo'     => true,
                 ]);
-            }
 
-            return redirect()->back()->with('success', 'Concejal actualizado exitosamente');
+            return back()->with('success', 'Concejal actualizado exitosamente');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Error al actualizar concejal: ' . $e->getMessage());
+            return back()->with('error', 'Error al actualizar concejal: '.$e->getMessage());
         }
     }
 
@@ -139,21 +142,17 @@ class ConcejalController extends Controller
     public function destroy(User $concejal)
     {
         if (!$concejal->hasRole('aspirante-concejo')) {
-            return redirect()->back()->with('error', 'Usuario no válido como concejal');
+            return back()->with('error', 'Usuario no válido como concejal');
         }
 
         try {
-            if ($concejal->concejal) {
-                $concejal->concejal->delete();
-            }
-
+            $concejal->concejal?->delete();
             $concejal->removeRole('aspirante-concejo');
-
             $concejal->delete();
 
-            return redirect()->back()->with('success', 'Concejal eliminado exitosamente');
+            return back()->with('success', 'Concejal eliminado exitosamente');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Error al eliminar concejal: ' . $e->getMessage());
+            return back()->with('error', 'Error al eliminar concejal: '.$e->getMessage());
         }
     }
 }
