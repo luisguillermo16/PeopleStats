@@ -5,37 +5,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('tituloPage', 'Panel de Administración')</title>
-
+    
     <!-- Bootstrap CSS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ asset('dist/css/adminEstilos/admin.css') }}">
+    
+    <style>
+        /* Incluir aquí los estilos CSS corregidos del artifact anterior */
+        /* O crear un archivo CSS separado con esos estilos */
+    </style>
 </head>
 <body>
-    <div class="container-fluid">
-        <div class="row">
-            
-            {{-- Sidebar --}}
-            @include('partials.sidebar')
-
-            {{-- Contenido principal --}}
-            <div class="col-md-9 col-lg-10 main-content">
-                <div class="p-4">
-                    <div class="admin-header">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h2 class="mb-1">
-                                    @yield('tituloPage', 'Titulo de pagina')
-                                </h2>
-                            </div>
-                        </div>
+    {{-- Sidebar --}}
+    @include('partials.sidebar')
+    
+    {{-- Contenido principal --}}
+    <div class="main-content">
+        <div class="p-4">
+            <div class="admin-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="mb-1">
+                            @yield('tituloPage', 'Titulo de pagina')
+                        </h2>
                     </div>
-                    
-                    @yield('contenido')
-                
-
                 </div>
             </div>
+            
+            @yield('contenido')
         </div>
     </div>
 
