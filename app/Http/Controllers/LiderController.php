@@ -16,22 +16,16 @@ class LiderController extends Controller
         $userAuth = Auth::user();
 
         // Si es alcalde: ver sus líderes directos + líderes de concejales que él creó
-        if ($userAuth->hasRole('aspirante-alcaldia')) {
-            // IDs de concejales creados por este alcalde
-            $concejales_ids = User::role('aspirante-concejo')
-                ->where('alcalde_id', $userAuth->id)
-                ->pluck('id');
+     if ($userAuth->hasRole('aspirante-alcaldia')) {
+    // Mostrar solo los líderes que fueron creados directamente por el alcalde
+    $lideres = User::role('lider')
+        ->where('alcalde_id', $userAuth->id)
+        ->whereNull('concejal_id') // 🔒 Muy importante: excluye líderes de concejales
+        ->with('lider')
+        ->latest()
+        ->paginate(10);
+}
 
-            // Obtener líderes que estén vinculados a este alcalde o a sus concejales
-            $lideres = User::role('lider')
-                ->where(function ($query) use ($userAuth, $concejales_ids) {
-                    $query->where('alcalde_id', $userAuth->id)
-                          ->orWhereIn('concejal_id', $concejales_ids);
-                })
-                ->with('lider')
-                ->latest()
-                ->paginate(10);
-        }
         // Si es concejal: ver solo líderes que él creó
         elseif ($userAuth->hasRole('aspirante-concejo')) {
             $lideres = User::role('lider')

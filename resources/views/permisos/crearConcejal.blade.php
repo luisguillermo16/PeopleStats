@@ -225,19 +225,7 @@
 </div>
 
 <!-- Paginación Responsive -->
-@if($concejales->hasPages())
-    <div class="p-3 d-flex flex-column flex-md-row justify-content-between align-items-center">
-        <small class="text-muted mb-2 mb-md-0">
-            <span class="d-none d-sm-inline">Mostrando </span>
-            {{ $concejales->firstItem() }}-{{ $concejales->lastItem() }} 
-            <span class="d-none d-sm-inline">de </span>
-            <span class="d-sm-none">/</span>
-            {{ $concejales->total() }}
-            <span class="d-none d-sm-inline"> concejales</span>
-        </small>
-        {{ $concejales->links() }}
-    </div>
-@endif
+<x-paginacion :collection="$concejales" />
 
 {{-- Modal de creación - Responsive --}}
 <div class="modal fade" id="createModal" tabindex="-1">

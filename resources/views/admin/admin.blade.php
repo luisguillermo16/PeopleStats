@@ -249,30 +249,7 @@
     </div>
 
     {{-- Paginación Responsive --}}
-    @if ($users->hasPages())
-        <div class="d-flex justify-content-between align-items-center mt-4">
-            {{-- Información de resultados --}}
-            <div class="d-none d-md-block">
-                <small class="text-muted">
-                    Mostrando {{ $users->firstItem() }} a {{ $users->lastItem() }}
-                    de {{ $users->total() }} usuarios
-                </small>
-            </div>
-
-            {{-- Información móvil --}}
-            <div class="d-md-none">
-                <small class="text-muted">
-                    {{ $users->firstItem() }}-{{ $users->lastItem() }} de {{ $users->total() }}
-                </small>
-            </div>
-
-            {{-- Enlaces de paginación --}}
-            <div class="pagination-wrapper">
-                {{ $users->appends(request()->query())->links('pagination::bootstrap-4') }}
-            </div>
-        </div>
-    @endif
-
+    <x-paginacion :collection="$users" />
 
 
     {{-- Modal Agregar Usuario - Responsive --}}

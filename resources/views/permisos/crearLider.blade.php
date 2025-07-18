@@ -91,12 +91,12 @@
                 <td class="d-none d-md-table-cell">
                     <input type="checkbox" class="form-check-input item-checkbox">
                 </td>
-                
+               
                 <!-- Información principal -->
                 <td>
                     <div class="d-flex align-items-center">
                         <div class="user-avatar me-3">
-                            <i class="bi bi-person-badge fs-4"></i>
+                            <i class="bi bi-person fs-4"></i>
                         </div>
                         <div>
                             <div class="fw-semibold">{{ $lider->name }}</div>
@@ -225,20 +225,7 @@
     </table>
 </div>
 
-{{-- Paginación responsive --}}
-@if($lideres->hasPages())
-    <div class="p-3 d-flex flex-column flex-md-row justify-content-between align-items-center">
-        <small class="text-muted mb-2 mb-md-0">
-            <span class="d-none d-sm-inline">Mostrando </span>
-            {{ $lideres->firstItem() }}-{{ $lideres->lastItem() }} 
-            <span class="d-none d-sm-inline">de </span>
-            <span class="d-sm-none">/</span>
-            {{ $lideres->total() }}
-            <span class="d-none d-sm-inline"> líderes</span>
-        </small>
-        {{ $lideres->links() }}
-    </div>
-@endif
+<x-paginacion :collection="$lideres" />
 
 {{-- Modal para crear nuevo líder - Responsive --}}
 <div class="modal fade" id="createModal" tabindex="-1">
