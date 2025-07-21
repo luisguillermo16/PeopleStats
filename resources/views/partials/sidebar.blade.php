@@ -204,13 +204,14 @@
                 @can('ingresar votantes')
                 <li class="nav-item">
                     <a class="nav-link text-white sidebar-link {{ request()->routeIs('votantes.ingresar') ? 'active' : '' }}" 
-                       href="#" title="Ingresar Votantes">
+                        href="{{ route('ingresarVotantes') }}" title="Ingresar Votantes">
                         <i class="bi bi-person-plus me-2"></i>
                         Ingresar Votantes
-                        <small class="badge bg-warning text-dark ms-2">Próximamente</small>
+                      
                     </a>
                 </li>
                 @endcan
+                
             </ul>
         </nav>
     </div>
