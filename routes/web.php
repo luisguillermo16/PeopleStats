@@ -36,17 +36,13 @@ Route::post('/check-email',      [LoginController::class,'checkEmail'])->name('c
 | Permiso: acceder admin
 | Gestiona todos los usuarios del sistema.
 */
-Route::middleware(['auth','can:acceder admin'])
-    ->prefix('admin')
-    ->name('admin.')
-    ->group(function () {
-
-        Route::get('/',                [UserController::class,'index' ])->name('index');
-        Route::post('/users',          [UserController::class,'store' ])->name('users.store');
-        Route::put ('/users/{user}',   [UserController::class,'update'])->name('users.update');
-        Route::delete('/users/{user}', [UserController::class,'destroy'])->name('users.destroy');
-        Route::get ('/users/{user}',   [UserController::class,'show' ])->name('users.show');
-    });
+Route::middleware(['auth', 'can:acceder admin'])->group(function () {
+    Route::get('/admin', [UserController::class, 'index'])->name('admin');
+    Route::post('/admin/users', [UserController::class, 'store'])->name('admin.users.store');
+    Route::put('/admin/users/{user}', [UserController::class, 'update'])->name('admin.users.update');
+    Route::delete('/admin/users/{user}', [UserController::class, 'destroy'])->name('admin.users.destroy');
+    Route::get('/admin/users/{user}', [UserController::class, 'show'])->name('admin.users.show');
+});
 
 
 /*
@@ -156,7 +152,7 @@ Route::middleware(['auth','can:ingresar votantes'])->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::fallback(function () {
-    if (!auth()->check()) {
+    if (!\Illuminate\Support\Facades\Auth::check()) {
         return redirect()->route('login')
             ->with('error', 'Debes iniciar sesión para acceder a esta página.');
     }

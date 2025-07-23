@@ -113,9 +113,7 @@
                             <!-- Info adicional en móvil -->
                             <div class="d-md-none">
                                 <small class="text-muted">{{ $concejal->email }}</small>
-                                @if($concejal->concejal->partido_politico)
-                                    <div><small class="text-muted">{{ $concejal->concejal->partido_politico }}</small></div>
-                                @endif
+                              
                             </div>
                         </div>
                     </div>
