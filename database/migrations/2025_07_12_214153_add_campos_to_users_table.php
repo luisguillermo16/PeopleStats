@@ -12,13 +12,17 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            // Jerarquía: Alcalde -> Concejal -> Líder
-            $table->foreignId('alcalde_id')->nullable()->after('password')->constrained('users')->onDelete('cascade');
-            $table->foreignId('concejal_id')->nullable()->after('alcalde_id')->constrained('users')->onDelete('cascade');
-            
-            // Índices para optimización
-            $table->index('alcalde_id');
-            $table->index('concejal_id');
+
+            // Verifica si no existen antes de agregarlas
+            if (!Schema::hasColumn('users', 'alcalde_id')) {
+                $table->foreignId('alcalde_id')->nullable()->after('password')->constrained('users')->onDelete('cascade');
+                $table->index('alcalde_id');
+            }
+
+            if (!Schema::hasColumn('users', 'concejal_id')) {
+                $table->foreignId('concejal_id')->nullable()->after('alcalde_id')->constrained('users')->onDelete('cascade');
+                $table->index('concejal_id');
+            }
         });
     }
 
@@ -28,11 +32,18 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropForeign(['alcalde_id']);
-            $table->dropForeign(['concejal_id']);
-            $table->dropIndex(['alcalde_id']);
-            $table->dropIndex(['concejal_id']);
-            $table->dropColumn(['alcalde_id', 'concejal_id']);
+            // Elimina claves foráneas solo si las columnas existen
+            if (Schema::hasColumn('users', 'alcalde_id')) {
+                $table->dropForeign(['alcalde_id']);
+                $table->dropIndex(['alcalde_id']);
+                $table->dropColumn('alcalde_id');
+            }
+
+            if (Schema::hasColumn('users', 'concejal_id')) {
+                $table->dropForeign(['concejal_id']);
+                $table->dropIndex(['concejal_id']);
+                $table->dropColumn('concejal_id');
+            }
         });
     }
 };

@@ -19,21 +19,21 @@ class ConcejalController extends Controller
             ->where('alcalde_id', auth()->id())
             ->role('aspirante-concejo');
 
-        // Filtro por búsqueda general (nombre, email, partido político)
+        // Filtro por búsqueda general
         if ($request->filled('search')) {
             $s = $request->input('search');
             $query->where(function ($q) use ($s) {
-                $q->where('name',  'like', "%$s%")
-                  ->orWhere('email','like', "%$s%")
-                  ->orWhereHas('concejal', fn ($c) =>
-                        $c->where('partido_politico','like', "%$s%"));
+                $q->where('name', 'like', "%$s%")
+                  ->orWhere('email', 'like', "%$s%")
+                  ->orWhereHas('concejal', fn($c) =>
+                        $c->where('partido_politico', 'like', "%$s%"));
             });
         }
 
-        // Filtro por número de lista exacto
+        // Filtro por número de lista
         if ($request->filled('numero_lista')) {
             $numeroLista = $request->input('numero_lista');
-            $query->whereHas('concejal', fn ($c) =>
+            $query->whereHas('concejal', fn($c) =>
                 $c->where('numero_lista', $numeroLista));
         }
 
@@ -44,7 +44,6 @@ class ConcejalController extends Controller
 
     /**
      * Vista principal para concejales/líderes.
-     * Ruta: /homeConcejal
      */
     public function home()
     {
@@ -57,35 +56,34 @@ class ConcejalController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name'             => 'required|string|max:255',
-            'email'            => 'required|email|max:255|unique:users',
-            'password'         => 'required|string|min:8|confirmed',
-            'partido_politico' => 'nullable|string|max:255',
-            'numero_lista'     => 'nullable|integer|min:1',
+            'name'             => 'required|string',
+            'email'            => 'required|email|unique:users,email',
+            'password'         => 'required|string|min:6',
+            'partido_politico' => 'required|string',
+            'numero_lista'     => 'nullable|integer',
         ]);
 
-        try {
-            $user = User::create([
-                'name'       => $request->name,
-                'email'      => $request->email,
-                'password'   => Hash::make($request->password),
-                'alcalde_id' => auth()->id(),
-            ]);
+        // Crear el usuario
+        $user = User::create([
+            'name'       => $request->name,
+            'email'      => $request->email,
+            'password'   => Hash::make($request->password),
+            'alcalde_id' => auth()->id(),
+        ]);
 
-            $user->assignRole('aspirante-concejo');
+        // ✅ Asignar rol al nuevo usuario
+        $user->assignRole('aspirante-concejo');
 
-            Concejal::create([
-                'user_id'          => $user->id,
-                'alcalde_id'       => auth()->id(),
-                'partido_politico' => $request->partido_politico,
-                'numero_lista'     => $request->numero_lista,
-                'activo'           => true,
-            ]);
+        // Crear el concejal asociado
+        Concejal::create([
+            'user_id'          => $user->id,
+            'alcalde_id'       => auth()->id(),
+            'partido_politico' => $request->partido_politico,
+            'numero_lista'     => $request->numero_lista,
+            'activo'           => true,
+        ]);
 
-            return back()->with('success', 'Concejal creado exitosamente');
-        } catch (\Exception $e) {
-            return back()->with('error', 'Error al crear concejal: '.$e->getMessage());
-        }
+        return redirect()->back()->with('success', 'Concejal creado con éxito.');
     }
 
     /**

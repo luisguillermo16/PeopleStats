@@ -20,7 +20,6 @@ class VotanteController extends Controller
 
         $concejalOpciones = [];
 
-        // 🔹 Si el líder fue creado directamente por un alcalde
         if (is_null($lider->concejal_id) && !is_null($lider->alcalde_id)) {
             $concejalOpciones = Concejal::where('alcalde_id', $lider->alcalde_id)->get();
         }
@@ -43,10 +42,8 @@ class VotanteController extends Controller
         ];
 
         if (!is_null($lider->concejal_id)) {
-            // 🔹 Líder creado por concejal
             $rules['tambien_vota_alcalde'] = 'required|in:1,0';
         } elseif (!is_null($lider->alcalde_id)) {
-            // 🔹 Líder creado por alcalde
             $rules['concejal_id'] = 'nullable|exists:concejales,id';
         }
 
@@ -65,19 +62,35 @@ class VotanteController extends Controller
         $votante->user_id = Auth::id();
         $votante->lider_id = $lider->user_id;
 
-        // 🔹 Jerarquía
+        // 🔹 Jerarquía: líder creado por un concejal
         if (!is_null($lider->concejal_id)) {
-            $votante->concejal_id = $lider->concejal_id;
+
+            // ✅ Validar que ese concejal exista antes de asignarlo
+            $concejal = Concejal::find($lider->concejal_id);
+            if (!$concejal) {
+                return redirect()->back()->with('error', 'El concejal vinculado al líder no existe.');
+            }
+
+            $votante->concejal_id = $concejal->id;
 
             if ($request->tambien_vota_alcalde == '1' && !is_null($lider->alcalde_id)) {
                 $votante->alcalde_id = $lider->alcalde_id;
             }
-        } elseif (!is_null($lider->alcalde_id)) {
+        }
+
+        // 🔹 Jerarquía: líder creado por un alcalde
+        elseif (!is_null($lider->alcalde_id)) {
             $votante->alcalde_id = $lider->alcalde_id;
 
             if ($request->filled('concejal_id')) {
-    $votante->concejal_id = $request->concejal_id;
-}
+                // ✅ Validar que concejal_id enviado desde formulario también existe
+                $concejal = Concejal::find($request->concejal_id);
+                if (!$concejal) {
+                    return redirect()->back()->with('error', 'El concejal seleccionado no existe.');
+                }
+
+                $votante->concejal_id = $concejal->id;
+            }
         }
 
         $votante->save();
@@ -94,10 +107,8 @@ class VotanteController extends Controller
         }
 
         $votantes = Votante::where('lider_id', $lider->user_id)->get();
-
         $concejalOpciones = [];
 
-        // 🔹 Si el líder fue creado por un alcalde, cargar concejales
         if (is_null($lider->concejal_id) && !is_null($lider->alcalde_id)) {
             $concejalOpciones = Concejal::where('alcalde_id', $lider->alcalde_id)->get();
         }
