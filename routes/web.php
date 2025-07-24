@@ -7,6 +7,7 @@ use App\Http\Controllers\AlcaldeController;
 use App\Http\Controllers\ConcejalController;
 use App\Http\Controllers\LiderController;
 use App\Http\Controllers\VotanteController;
+use App\Http\Controllers\DashboardController;  // <-- Aquí importamos el controlador nuevo
 use App\Models\User;
 
 /*
@@ -56,7 +57,7 @@ Route::middleware(['auth','can:crear concejales'])->group(function () {
 
     // Dashboard del alcalde
     Route::get('/dashboardAlcalde', [AlcaldeController::class,'index'])->name('dashboardAlcalde');
-
+    
     // Vista tabla de concejales
     Route::get('/crearConcejal',    [ConcejalController::class,'index'])->name('crearConcejal');
 
@@ -76,6 +77,13 @@ Route::middleware(['auth','can:crear concejales'])->group(function () {
     Route::patch ('/admin/concejales/{concejal}/toggle-status', [ConcejalController::class,'toggleStatus'])->name('admin.concejales.toggle-status');
     Route::delete('/admin/concejales/destroy-multiple',         [ConcejalController::class,'destroyMultiple'])->name('admin.concejales.destroy-multiple');
     Route::get   ('/admin/concejales/{concejal}/edit-data',     [ConcejalController::class,'edit'])->name('admin.concejales.edit-data');
+
+    // ===== RUTAS DEL DASHBOARD =====
+    // Card votantes alcalde (vista completa)
+    Route::get('/dashboard/card-votantes-alcalde', [DashboardController::class, 'cardVotantesAlcalde'])->name('dashboard.cardVotantesAlcalde');
+    
+    // Datos AJAX para actualización en tiempo real
+    Route::get('/dashboard/votantes-data-ajax', [DashboardController::class, 'votantesDataAjax'])->name('dashboard.votantesDataAjax');
 });
 
 
@@ -144,7 +152,6 @@ Route::middleware(['auth','can:ingresar votantes'])->group(function () {
     // Buscar votante por cédula (AJAX para validar duplicados o consultar si ya existe en otro concejal)
     Route::get('/buscar-votante', [VotanteController::class, 'buscarPorCedula'])->name('votantes.buscar');
 });
-
 
 /*
 |--------------------------------------------------------------------------
