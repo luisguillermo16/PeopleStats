@@ -154,7 +154,7 @@
                             <option value="">Seleccione</option>
                             @foreach($concejalOpciones as $concejal)
                                 <option value="{{ $concejal->id }}">
-                                    {{ $concejal->nombre ?? $concejal->user->name ?? 'Sin nombre' }}
+                                    {{ $concejal->name ?? $concejal->user->name ?? 'Sin nombre' }}
                                 </option>
                             @endforeach
                         </select>

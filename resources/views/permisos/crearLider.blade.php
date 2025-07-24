@@ -294,8 +294,8 @@
                         <div class="col-12">
                             <label class="form-label fw-semibold">Teléfono</label>
                             <input name="telefono" type="tel" class="form-control" 
-                                   value="{{ old('telefono') }}" 
-                                   placeholder="Ej: +57 300 123 4567">
+                                value="{{ old('telefono') }}" 
+                                placeholder="Ej: +57 300 123 4567">
                         </div>
                     </div>
                 </div>

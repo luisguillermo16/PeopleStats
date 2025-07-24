@@ -28,11 +28,7 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
 
-    // Relación con la tabla líderes
-    public function lider()
-    {
-        return $this->hasOne(Lider::class);
-    }
+ 
 
     // ✅ Relación: Un usuario puede ser un concejal
     public function concejal()

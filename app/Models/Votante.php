@@ -16,12 +16,11 @@ class Votante extends Model
         'cedula',
         'telefono',
         'mesa',
-        'donacion',
         'user_id',
         'lider_id',
         'concejal_id',
         'alcalde_id',
-        'tambien_vota_alcalde',
+     
     ];
     public static function validarVotanteUnico($cedula, $user_id)
     {
