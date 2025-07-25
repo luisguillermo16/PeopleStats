@@ -22,7 +22,7 @@ class RolesAndPermissionsSeeder extends Seeder
         Permission::firstOrCreate(['name' => 'ingresar votantes']);
         Permission::firstOrCreate(['name' => 'ver votantes del alcalde']);
         Permission::firstOrCreate(['name' => 'ver votantes del concejal']);
-         Permission::firstOrCreate(['name' => 'dashboardAlcalde']);
+         Permission::firstOrCreate(['name' => 'ver dashboard']);
         
         // Otros permisos comunes
         Permission::firstOrCreate(['name' => 'ver todo dashboard']);
@@ -44,7 +44,7 @@ class RolesAndPermissionsSeeder extends Seeder
         // Rol Alcalde
         $roleAlcalde = Role::firstOrCreate(['name' => 'aspirante-alcaldia']);
         $roleAlcalde->syncPermissions([
-            'dashboardAlcalde',
+            'ver dashboard',
             'ver votantes del alcalde',
             'crear concejales',
             'crear lideres',
@@ -55,9 +55,10 @@ class RolesAndPermissionsSeeder extends Seeder
         // Rol Concejal
         $roleConcejal = Role::firstOrCreate(['name' => 'aspirante-concejo']);
         $roleConcejal->syncPermissions([
+            'ver dashboard',
             'ver votantes del concejal',
             'crear lideres',
-            'ingresar votantes',
+            
     
         ]);
 

@@ -7,9 +7,9 @@ use App\Http\Controllers\AlcaldeController;
 use App\Http\Controllers\ConcejalController;
 use App\Http\Controllers\LiderController;
 use App\Http\Controllers\VotanteController;
-use App\Http\Controllers\DashboardController;  // <-- Aquí importamos el controlador nuevo
-use App\Models\User;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AlcaldeVotanteController;
+use App\Models\User;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,7 +17,6 @@ use App\Http\Controllers\AlcaldeVotanteController;
 |--------------------------------------------------------------------------
 */
 Route::get('/', fn () => redirect()->route('login'));
-
 
 /*
 |--------------------------------------------------------------------------
@@ -30,6 +29,14 @@ Route::post('/validar-registro', [LoginController::class,'registro'])->name('val
 Route::post('/logout',           [LoginController::class,'logout' ])->name('logout');
 Route::post('/check-email',      [LoginController::class,'checkEmail'])->name('check-email');
 
+/*
+|--------------------------------------------------------------------------
+| DASHBOARD (para todos los roles que tengan permiso ver dashboard)
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', 'can:ver dashboard'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -46,23 +53,21 @@ Route::middleware(['auth', 'can:acceder admin'])->group(function () {
     Route::get('/admin/users/{user}', [UserController::class, 'show'])->name('admin.users.show');
 });
 
-
 /*
 |--------------------------------------------------------------------------
 | ALCALDE (gestiona Concejales)
 |--------------------------------------------------------------------------
 | Permiso: crear concejales
-| Desde aquí el alcalde crea y administra sus concejales.
 */
 Route::middleware(['auth','can:crear concejales'])->group(function () {
-
-    // Dashboard del alcalde
-    Route::get('/dashboardAlcalde', [AlcaldeController::class,'index'])->name('dashboardAlcalde');
+    
+    // Reporte del alcalde
     Route::get('/reporteAlcalde', function () {
-    return view('userAlcalde.reporteAlcalde');
-})->name('reporteAlcalde');
+        return view('userAlcalde.reporteAlcalde');
+    })->name('reporteAlcalde');
+
     // Vista tabla de concejales
-    Route::get('/crearConcejal',    [ConcejalController::class,'index'])->name('crearConcejal');
+    Route::get('/crearConcejal', [ConcejalController::class,'index'])->name('crearConcejal');
 
     // Model binding seguro: {concejal} siempre será un User con rol aspirante-concejo
     Route::bind('concejal', function ($value) {
@@ -71,42 +76,37 @@ Route::middleware(['auth','can:crear concejales'])->group(function () {
         return $user;
     });
 
-    // CRUD concejales (sin index/create porque ya usamos /crearConcejal)
-    Route::post  ('/admin/concejales',              [ConcejalController::class,'store'  ])->name('admin.concejales.store');
-    Route::put   ('/admin/concejales/{concejal}',   [ConcejalController::class,'update' ])->name('admin.concejales.update');
-    Route::delete('/admin/concejales/{concejal}',   [ConcejalController::class,'destroy'])->name('admin.concejales.destroy');
+    // CRUD concejales
+    Route::post  ('/admin/concejales',            [ConcejalController::class,'store' ])->name('admin.concejales.store');
+    Route::put   ('/admin/concejales/{concejal}', [ConcejalController::class,'update'])->name('admin.concejales.update');
+    Route::delete('/admin/concejales/{concejal}', [ConcejalController::class,'destroy'])->name('admin.concejales.destroy');
 
-    // Extras
+    // Extras concejales
     Route::patch ('/admin/concejales/{concejal}/toggle-status', [ConcejalController::class,'toggleStatus'])->name('admin.concejales.toggle-status');
     Route::delete('/admin/concejales/destroy-multiple',         [ConcejalController::class,'destroyMultiple'])->name('admin.concejales.destroy-multiple');
     Route::get   ('/admin/concejales/{concejal}/edit-data',     [ConcejalController::class,'edit'])->name('admin.concejales.edit-data');
 
-   
+    // Ver votantes del alcalde
     Route::get('/votantes-alcalde', [AlcaldeVotanteController::class, 'index'])->name('votantesAlcalde');
-    
- 
-   
 });
-
 
 /*
 |--------------------------------------------------------------------------
 | CONCEJAL (gestiona Líderes)
 |--------------------------------------------------------------------------
 | Permiso: crear lideres
-| Concejales gestionan líderes; también usamos este grupo para la vista homeConcejal.
 */
 Route::middleware(['auth','can:crear lideres'])->group(function () {
 
     // Home concejal
-    Route::get('/homeConcejal',   [ConcejalController::class,'home'])->name('homeConcejal');
+    Route::get('/homeConcejal', [ConcejalController::class,'home'])->name('homeConcejal');
 
     // Vista tabla de líderes
-    Route::get('/crearLider',     [LiderController::class, 'index'])->name('crearLider');
+    Route::get('/crearLider',   [LiderController::class, 'index'])->name('crearLider');
 
     // Model binding seguro: {lider} = User con rol lider
     Route::bind('lider', function ($value) {
-        $user = User::with('votantesRegistrados')->find($value); // cargamos algo útil; ajusta si tienes relación lider
+        $user = User::with('votantesRegistrados')->find($value);
         if (!$user || !$user->hasRole('lider')) abort(404, 'Usuario no válido como líder');
         return $user;
     });
@@ -119,16 +119,14 @@ Route::middleware(['auth','can:crear lideres'])->group(function () {
 
     // Extras líderes
     Route::patch ('/lideres/{lider}/toggle-status', [LiderController::class,'toggleStatus'])->name('admin.lideres.toggle-status');
-    Route::delete('/lideres/destroy-multiple',       [LiderController::class,'destroyMultiple'])->name('admin.lideres.destroy-multiple');
+    Route::delete('/lideres/destroy-multiple',      [LiderController::class,'destroyMultiple'])->name('admin.lideres.destroy-multiple');
 });
-
 
 /*
 |--------------------------------------------------------------------------
 | LÍDER (gestiona Votantes)
 |--------------------------------------------------------------------------
 | Permiso: ingresar votantes
-| Los líderes registran votantes a su concejal; opcionalmente marcan apoyo al alcalde.
 */
 Route::middleware(['auth','can:ingresar votantes'])->group(function () {
 
@@ -138,20 +136,20 @@ Route::middleware(['auth','can:ingresar votantes'])->group(function () {
     // Listado de votantes del líder autenticado
     Route::get('/ingresarVotantes', [VotanteController::class, 'index'])->name('ingresarVotantes');
 
-    // Formulario para ingresar votantes (esta es la ruta que usas en el sidebar)
+    // Formulario para ingresar votantes
     Route::get('/votantes/ingresar', [VotanteController::class, 'create'])->name('votantes.ingresar');
 
     // Guardar nuevo votante
     Route::post('/votantes', [VotanteController::class, 'store'])->name('votantes.store');
 
-    // Editar / actualizar votante (solo dueño)
+    // Editar / actualizar votante
     Route::get('/votantes/{votante}/editar', [VotanteController::class, 'edit'])->name('votantes.edit');
     Route::put('/votantes/{votante}',        [VotanteController::class, 'update'])->name('votantes.update');
 
     // Eliminar votante
     Route::delete('/votantes/{votante}', [VotanteController::class, 'destroy'])->name('votantes.destroy');
 
-    // Buscar votante por cédula (AJAX para validar duplicados o consultar si ya existe en otro concejal)
+    // Buscar votante por cédula (AJAX)
     Route::get('/buscar-votante', [VotanteController::class, 'buscarPorCedula'])->name('votantes.buscar');
 });
 

@@ -6,7 +6,7 @@ use App\Models\User;
 use Illuminate\View\Component;
 use Illuminate\Support\Facades\Auth;
 
-class CardConcejalesAlcalde extends Component
+class CardConcejales extends Component
 {
     public $totalConcejales;
     public $estado;
@@ -34,6 +34,6 @@ class CardConcejalesAlcalde extends Component
 
     public function render()
     {
-        return view('components.card-concejales-alcalde');
+        return view('components.card-concejales');
     }
 }

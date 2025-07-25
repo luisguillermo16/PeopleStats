@@ -131,12 +131,12 @@
                 @endcan
               
                 <!-- Dashboard Alcalde -->
-                @can('dashboardAlcalde')
+                @can('ver dashboard')
                 <li class="nav-item">
-                    <a class="nav-link text-white sidebar-link {{ request()->routeIs('dashboardAlcalde') ? 'active' : '' }}" 
-                        href="{{ route('dashboardAlcalde') }}" title="Dashboard Alcalde">
+                    <a class="nav-link text-white sidebar-link {{ request()->routeIs('dashboar') ? 'active' : '' }}" 
+                        href="{{ route('dashboard') }}" title="Dashboard">
                         <i class="bi bi-people-fill me-2"></i>
-                        Dashboard Alcalde
+                        Dashboard 
                     </a>
                 </li>
                 @endcan
