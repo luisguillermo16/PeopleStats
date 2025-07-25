@@ -17,20 +17,11 @@
                     </div>
                     <div class="d-flex align-items-end">
                         <h2 class="mb-0 fw-bold text-primary">{{ $totalConcejales }}</h2>
-                        <span class="badge bg-info bg-opacity-10 text-info ms-2">
-                            <i class="bi bi-dash"></i>{{ $estado }}
-                        </span>
                     </div>
                 </div>
             </div>
-            <div class="progress mt-3" style="height: 4px;">
-                <div class="progress-bar bg-primary" style="width: {{ $progreso }}%"></div>
-            </div>
-            <small class="text-muted mt-2 d-block">
-                <i class="bi bi-info-circle me-1"></i>
-                <span class="d-none d-sm-inline">{{ $progreso }}% del cupo disponible</span>
-                <span class="d-sm-none">{{ $progreso }}% cupo</span>
-            </small>
+            
+            
         </div>
     </div>
 </div>

@@ -156,7 +156,7 @@
                 @can('ver votantes del alcalde')
                 <li class="nav-item">
                     <a class="nav-link text-white sidebar-link {{ request()->routeIs('alcaldia.votantes') ? 'active' : '' }}" 
-                       href="#" title="Ver Votantes del Alcalde">
+                         href="{{ route('votantesAlcalde') }}" title="Ver Votantes del Alcalde">
                         <i class="bi bi-people me-2"></i>
                         Ver Votantes Alcalde
                         <small class="badge bg-warning text-dark ms-2">Próximamente</small>

@@ -9,6 +9,7 @@ use App\Http\Controllers\LiderController;
 use App\Http\Controllers\VotanteController;
 use App\Http\Controllers\DashboardController;  // <-- Aquí importamos el controlador nuevo
 use App\Models\User;
+use App\Http\Controllers\AlcaldeVotanteController;
 
 /*
 |--------------------------------------------------------------------------
@@ -57,7 +58,9 @@ Route::middleware(['auth','can:crear concejales'])->group(function () {
 
     // Dashboard del alcalde
     Route::get('/dashboardAlcalde', [AlcaldeController::class,'index'])->name('dashboardAlcalde');
-    
+    Route::get('/reporteAlcalde', function () {
+    return view('userAlcalde.reporteAlcalde');
+})->name('reporteAlcalde');
     // Vista tabla de concejales
     Route::get('/crearConcejal',    [ConcejalController::class,'index'])->name('crearConcejal');
 
@@ -78,12 +81,11 @@ Route::middleware(['auth','can:crear concejales'])->group(function () {
     Route::delete('/admin/concejales/destroy-multiple',         [ConcejalController::class,'destroyMultiple'])->name('admin.concejales.destroy-multiple');
     Route::get   ('/admin/concejales/{concejal}/edit-data',     [ConcejalController::class,'edit'])->name('admin.concejales.edit-data');
 
-    // ===== RUTAS DEL DASHBOARD =====
-    // Card votantes alcalde (vista completa)
-    Route::get('/dashboard/card-votantes-alcalde', [DashboardController::class, 'cardVotantesAlcalde'])->name('dashboard.cardVotantesAlcalde');
+   
+    Route::get('/votantes-alcalde', [AlcaldeVotanteController::class, 'index'])->name('votantesAlcalde');
     
-    // Datos AJAX para actualización en tiempo real
-    Route::get('/dashboard/votantes-data-ajax', [DashboardController::class, 'votantesDataAjax'])->name('dashboard.votantesDataAjax');
+ 
+   
 });
 
 

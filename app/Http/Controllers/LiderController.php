@@ -18,7 +18,7 @@ class LiderController extends Controller
     if ($userAuth->hasRole('aspirante-alcaldia')) {
         $lideres = User::role('lider')
             ->where('alcalde_id', $userAuth->id)
-            ->whereNull('concejal_id')
+            
             ->latest()
             ->paginate(10);
     } elseif ($userAuth->hasRole('aspirante-concejo')) {

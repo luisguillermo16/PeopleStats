@@ -98,7 +98,7 @@
                 <div class="row g-3">
                     <!-- Botón: Gestionar Votantes -->
                     <div class="col-6 col-md-3">
-                        <a href="{{ route('ingresarVotantes') }}" class="btn btn-outline-success w-100 py-3 text-decoration-none">
+                        <a href="{{ route('votantesAlcalde') }}" class="btn btn-outline-success w-100 py-3 text-decoration-none">
                             <i class="bi bi-people fs-4 d-block mb-2"></i>
                             <span class="d-none d-lg-inline">Gestionar Votantes</span>
                             <span class="d-lg-none">Votantes</span>
@@ -125,7 +125,7 @@
                     
                     <!-- Botón: Reportes -->
                     <div class="col-6 col-md-3">
-                        <a href="#" class="btn btn-outline-info w-100 py-3 text-decoration-none">
+                        <a href="{{ route('reporteAlcalde') }}" class="btn btn-outline-info w-100 py-3 text-decoration-none">
                             <i class="bi bi-bar-chart fs-4 d-block mb-2"></i>
                             <span class="d-none d-lg-inline">Ver Reportes</span>
                             <span class="d-lg-none">Reportes</span>

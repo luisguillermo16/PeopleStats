@@ -48,6 +48,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'ver votantes del alcalde',
             'crear concejales',
             'crear lideres',
+            
 
         ]);
 
@@ -56,6 +57,7 @@ class RolesAndPermissionsSeeder extends Seeder
         $roleConcejal->syncPermissions([
             'ver votantes del concejal',
             'crear lideres',
+            'ingresar votantes',
     
         ]);
 
