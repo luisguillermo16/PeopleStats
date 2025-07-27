@@ -10,6 +10,7 @@ use App\Http\Controllers\VotanteController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AlcaldeVotanteController;
 use App\Http\Controllers\VerVotanteController;
+use App\Http\Controllers\LugarVotacionController;
 use App\Models\User;
 
 /*
@@ -39,7 +40,7 @@ Route::middleware(['auth', 'can:ver dashboard'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 });
 
-    Route::get('/ver-votantes', [VerVotanteController::class, 'index'])->name('verVotantes')->middleware('auth');
+Route::get('/ver-votantes', [VerVotanteController::class, 'index'])->name('verVotantes')->middleware('auth');
 
 /*
 |--------------------------------------------------------------------------
@@ -88,8 +89,6 @@ Route::middleware(['auth','can:crear concejales'])->group(function () {
     Route::patch ('/admin/concejales/{concejal}/toggle-status', [ConcejalController::class,'toggleStatus'])->name('admin.concejales.toggle-status');
     Route::delete('/admin/concejales/destroy-multiple',         [ConcejalController::class,'destroyMultiple'])->name('admin.concejales.destroy-multiple');
     Route::get   ('/admin/concejales/{concejal}/edit-data',     [ConcejalController::class,'edit'])->name('admin.concejales.edit-data');
-
-    
 });
 
 /*
@@ -153,6 +152,21 @@ Route::middleware(['auth','can:ingresar votantes'])->group(function () {
 
     // Buscar votante por cédula (AJAX)
     Route::get('/buscar-votante', [VotanteController::class, 'buscarPorCedula'])->name('votantes.buscar');
+});
+
+/*
+|--------------------------------------------------------------------------
+| PUNTOS DE VOTACIÓN (gestionados por Alcalde o Concejal)
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', 'can:crear puntos de votacion'])->group(function () {
+    Route::get('/lugares', [LugarVotacionController::class, 'index'])->name('lugares');
+    Route::get('/lugares/crear', [LugarVotacionController::class, 'create'])->name('crearPuntosVotacion');
+    Route::post('/lugares', [LugarVotacionController::class, 'store'])->name('storePuntosVotacion');
+    Route::get('/lugares/{lugar}/editar', [LugarVotacionController::class, 'edit'])->name('editPuntosVotacion');
+
+    Route::put('/lugares/{lugar}', [LugarVotacionController::class, 'update'])->name('updatePuntosVotacion');
+    Route::delete('/lugares/{lugar}', [LugarVotacionController::class, 'destroy'])->name('destroyPuntosVotacion');
 });
 
 /*

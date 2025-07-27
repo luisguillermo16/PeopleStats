@@ -22,7 +22,8 @@ class RolesAndPermissionsSeeder extends Seeder
         Permission::firstOrCreate(['name' => 'ingresar votantes']);
         Permission::firstOrCreate(['name' => 'ver votantes']);
         Permission::firstOrCreate(['name' => 'ver votantes del concejal']);
-         Permission::firstOrCreate(['name' => 'ver dashboard']);
+        Permission::firstOrCreate(['name' => 'ver dashboard']);
+        Permission::firstOrCreate(['name' => 'crear puntos de votacion']);
         
         // Otros permisos comunes
         Permission::firstOrCreate(['name' => 'ver todo dashboard']);
@@ -48,6 +49,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'ver votantes',
             'crear concejales',
             'crear lideres',
+            'crear puntos de votacion',
             
 
         ]);
@@ -58,6 +60,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'ver dashboard',
             'ver votantes',
             'crear lideres',
+            'crear puntos de votacion',
             
     
         ]);

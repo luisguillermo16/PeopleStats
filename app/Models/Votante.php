@@ -20,8 +20,14 @@ class Votante extends Model
         'lider_id',
         'concejal_id',
         'alcalde_id',
-     
+        'lugar_votacion_id', 
+        'tambien_vota_alcalde', // agregado al fillable
     ];
+
+    protected $casts = [
+        'tambien_vota_alcalde' => 'boolean',
+    ];
+
     public static function validarVotanteUnico($cedula, $user_id)
     {
         return self::where('cedula', $cedula)
@@ -29,31 +35,29 @@ class Votante extends Model
                    ->exists();
     }
 
-    protected $casts = [
-        'tambien_vota_alcalde' => 'boolean',
-    ];
-
-    // Relación con el usuario que registró al votante
+    // Relaciones
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    // Relación con el líder (opcional, si tienes modelo)
     public function lider()
     {
         return $this->belongsTo(User::class, 'lider_id');
     }
 
-    // Relación con concejal
     public function concejal()
     {
-        return $this->belongsTo(Concejal::class);
+        return $this->belongsTo(User::class, 'concejal_id');
     }
 
-    // Relación con alcalde
     public function alcalde()
     {
-        return $this->belongsTo(Alcalde::class);
+        return $this->belongsTo(User::class, 'alcalde_id');
+    }
+
+    public function lugarVotacion()
+    {
+        return $this->belongsTo(LugarVotacion::class, 'lugar_votacion_id');
     }
 }

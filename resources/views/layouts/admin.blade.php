@@ -39,6 +39,6 @@
     {{-- Scripts --}}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script src="{{ asset('dist/js/adminJs/admin.js') }}"></script>
-    @yield('scripts')
+  @stack('scripts')
 </body>
 </html>

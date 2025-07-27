@@ -162,6 +162,15 @@
                     </a>
                 </li>
                 @endcan
+                  @can('crear puntos de votacion')
+                <li class="nav-item">
+                    <a class="nav-link text-white sidebar-link {{ request()->routeIs('alcaldia.votantes') ? 'active' : '' }}" 
+                         href="{{ route('crearPuntosVotacion') }}" title="Crear Puntos de Votación">
+                        <i class="bi bi-map-fill me-2"> </i>
+                        Crear Puntos de Votación
+                    </a>
+                </li>
+                @endcan
 
                 <!-- Ver votaciones Concejales -->
                 @can('ver votaciones concejales')
