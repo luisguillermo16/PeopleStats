@@ -16,6 +16,7 @@ class ConcejalController extends Controller
     public function index(Request $request)
     {
         $query = User::with(['roles', 'concejal'])
+            ->withCount('votantes') // <-- Conteo de votantes
             ->where('alcalde_id', auth()->id())
             ->role('aspirante-concejo');
 
@@ -71,7 +72,7 @@ class ConcejalController extends Controller
             'alcalde_id' => auth()->id(),
         ]);
 
-        // ✅ Asignar rol al nuevo usuario
+        // Asignar rol
         $user->assignRole('aspirante-concejo');
 
         // Crear el concejal asociado

@@ -90,6 +90,7 @@
                 <th class="d-none d-md-table-cell">Email</th>
                 <th class="d-none d-lg-table-cell">Partido</th>
                 <th class="d-none d-lg-table-cell">N° Lista</th>
+                <th class="d-none d-sm-table-cell">Votantes</th>
                 <th class="d-none d-sm-table-cell">Fecha</th>
                 <th width="150">Acciones</th>
             </tr>
@@ -123,8 +124,11 @@
                 <td class="d-none d-md-table-cell">{{ $concejal->email }}</td>
                 <td class="d-none d-lg-table-cell">{{ $concejal->concejal->partido_politico ?? 'Sin partido' }}</td>
                 <td class="d-none d-lg-table-cell">{{ $concejal->concejal->numero_lista ?? 'N/A' }}</td>
+                 <td class="d-none d-sm-table-cell"> 
+                    <span class="badge bg-primary">{{ $concejal->votantes_count ?? 0 }}</span>
+                </td>
                 <td class="d-none d-sm-table-cell">{{ $concejal->created_at->format('d/m/Y') }}</td>
-                
+               
                 <!-- Acciones -->
                 <td>
                     <div class="btn-group" role="group">

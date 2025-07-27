@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
-use App\Models\Votante; // Importa el modelo Votante
+use App\Models\Votante;
 
 class User extends Authenticatable
 {
@@ -29,7 +29,7 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
 
-    // Relaciones existentes
+    // Relación con concejal
     public function concejal()
     {
         return $this->hasOne(Concejal::class);
@@ -60,9 +60,15 @@ class User extends Authenticatable
         return $this->hasMany(User::class, 'alcalde_id');
     }
 
-    // RELACIÓN NUEVA: votantes registrados por este líder
+    // Votantes registrados por este líder
     public function votantesRegistrados()
     {
-        return $this->hasMany(Votante::class, 'lider_id'); // Asegúrate que 'lider_id' sea la FK correcta en votantes
+        return $this->hasMany(Votante::class, 'lider_id');
+    }
+
+    // Votantes vinculados a este concejal (para withCount)
+    public function votantes()
+    {
+        return $this->hasMany(Votante::class, 'concejal_id');
     }
 }

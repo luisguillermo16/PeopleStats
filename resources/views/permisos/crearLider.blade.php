@@ -80,6 +80,7 @@
                 <th class="d-none d-md-table-cell">Email</th>
                 <th class="d-none d-lg-table-cell">Zona de Influencia</th>
                 <th class="d-none d-lg-table-cell">Creado por</th>
+                 <th class="d-none d-lg-table-cell">Votantes</th>
                 <th class="d-none d-sm-table-cell">Fecha</th>
                 <th width="150">Acciones</th>
             </tr>
@@ -125,6 +126,11 @@
                     @else
                         <span class="text-muted">Sin información</span>
                     @endif
+                </td>
+                   <td class="d-none d-sm-table-cell">
+                    <span class="badge bg-primary">
+                        {{ $lider->votantesRegistrados->count() }}
+                    </span>
                 </td>
                 <td class="d-none d-sm-table-cell">{{ $lider->created_at->format('d/m/Y') }}</td>
                 
