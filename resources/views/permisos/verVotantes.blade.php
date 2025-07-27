@@ -41,7 +41,7 @@
         </h2>
         <p class="text-muted mb-0">
             <span class="d-none d-md-inline">Gestiona y visualiza los votantes registrados bajo tu candidatura</span>
-            <span class="d-md-none">{{ $votantes->count() }} votantes registrados</span>
+           
         </p>
     </div>
 </div>
@@ -164,7 +164,7 @@
                 <th width="50" class="d-none d-md-table-cell">
                     <input type="checkbox" id="selectAll" class="form-check-input">
                 </th>
-                <th>Votante</th>
+                <th>Votantes</th>
                 <th class="d-none d-md-table-cell">Cédula</th>
                 <th class="d-none d-lg-table-cell">Teléfono</th>
                 <th class="d-none d-sm-table-cell">Mesa</th>

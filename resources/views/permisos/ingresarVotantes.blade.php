@@ -50,7 +50,6 @@
                     <th class="d-none d-md-table-cell">Cédula</th>
                     <th class="d-none d-lg-table-cell">Teléfono</th>
                     <th class="d-none d-lg-table-cell">Mesa</th>
-                    <th class="d-none d-sm-table-cell">Fecha</th>
                     <th width="150">Acciones</th>
                 </tr>
             </thead>
@@ -67,18 +66,21 @@
                         <td class="d-none d-md-table-cell">{{ $votante->cedula }}</td>
                         <td class="d-none d-lg-table-cell">{{ $votante->telefono }}</td>
                         <td class="d-none d-lg-table-cell">{{ $votante->mesa }}</td>
-                        <td class="d-none d-sm-table-cell">{{ $votante->created_at->format('d/m/Y') }}</td>
                         <td>
                             <div class="btn-group">
-                                <button class="btn btn-sm btn-outline-primary" title="Editar">
+                                <!-- Botón Editar -->
+                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editModal{{ $votante->id }}" title="Editar">
                                     <i class="bi bi-pencil"></i>
                                 </button>
-                                <form method="POST" action="{{ route('votantes.destroy', $votante) }}" onsubmit="return confirm('¿Eliminar este votante?')">
-                                    @csrf @method('DELETE')
-                                    <button class="btn btn-sm btn-outline-danger" title="Eliminar">
+
+                                <!-- Botón Eliminar -->
+                             {{-- <form method="POST" action="{{ route('votantes.destroy', $votante) }}" onsubmit="return confirm('¿Eliminar este votante?')" style="display:inline;">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
                                         <i class="bi bi-trash"></i>
                                     </button>
-                                </form>
+                                </form> --}}    
                             </div>
                         </td>
                     </tr>
@@ -94,125 +96,189 @@
         </table>
     </div>
 
-    {{-- Paginación 
-    @if($votantes->hasPages())
-        <div class="p-3 d-flex flex-column flex-md-row justify-content-between align-items-center">
-            <small class="text-muted mb-2 mb-md-0">
-                Mostrando {{ $votantes->firstItem() }}-{{ $votantes->lastItem() }} de {{ $votantes->total() }} votantes
-            </small>
-            {{ $votantes->links() }}
-        </div>
-    @endif--}}
-<!-- Modal para crear votante -->
-<div class="modal fade" id="createModal" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-            <form method="POST" action="{{ route('votantes.store') }}">
-                @csrf
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="bi bi-plus-circle me-2"></i>
-                        <span class="d-none d-sm-inline">Agregar Nuevo Votante</span>
-                        <span class="d-sm-none">Nuevo</span>
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-
-                <div class="modal-body p-4">
-                    <div class="row g-3">
-                        <div class="col-12 col-md-6">
-                            <label class="form-label fw-semibold">Nombre</label>
-                            <input name="nombre" type="text" class="form-control" value="{{ old('nombre') }}" required>
-                        </div>
-
-                        <div class="col-12 col-md-6">
-                            <label class="form-label fw-semibold">Cédula</label>
-                            <input name="cedula" type="text" class="form-control" value="{{ old('cedula') }}" required>
-                        </div>
-
-                        <div class="col-12 col-md-6">
-                            <label class="form-label fw-semibold">Teléfono</label>
-                            <input name="telefono" type="text" class="form-control" value="{{ old('telefono') }}">
-                        </div>
-
-                        <div class="col-12 col-md-6">
-                            <label class="form-label fw-semibold">Mesa</label>
-                            <input name="mesa" type="text" class="form-control" value="{{ old('mesa') }}">
-                        </div>
-
-                        <div class="col-12 col-md-6">
-                            <label class="form-label fw-semibold">Donación</label>
-                            <input name="donacion" type="text" class="form-control" value="{{ old('donacion') }}">
-                        </div>
-
-
-                    {{-- Caso A: Líder de un Alcalde --}}
-                    @if(is_null($lider->concejal_id))
-                      <div class="col-12 col-md-6">
-                        <label class="form-label fw-semibold">Seleccione un concejal</label>
-                        <select name="concejal_id" class="form-control">
-                            <option value="">Seleccione</option>
-                            @foreach($concejalOpciones as $concejal)
-                                <option value="{{ $concejal->id }}">
-                                    {{ $concejal->name ?? $concejal->user->name ?? 'Sin nombre' }}
-                                </option>
-                            @endforeach
-                        </select>
+    {{-- Modal para crear votante --}}
+    <div class="modal fade" id="createModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <form method="POST" action="{{ route('votantes.store') }}">
+                    @csrf
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="bi bi-plus-circle me-2"></i>
+                            <span class="d-none d-sm-inline">Agregar Nuevo Votante</span>
+                            <span class="d-sm-none">Nuevo</span>
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-                    @endif
 
-                    {{-- Caso B: Líder de un Concejal --}}
-                    @if(!is_null($lider->concejal_id))
-                        <div class="col-12 col-md-6">
-                            <label class="form-label fw-semibold">¿También vota al alcalde?</label>
-                            <select name="tambien_vota_alcalde" class="form-select" required>
-                                <option value="">Seleccione</option>
-                                <option value="1" {{ old('tambien_vota_alcalde') == '1' ? 'selected' : '' }}>Sí</option>
-                                <option value="0" {{ old('tambien_vota_alcalde') == '0' ? 'selected' : '' }}>No</option>
-                            </select>
+                    <div class="modal-body p-4">
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-semibold">Nombre</label>
+                                <input name="nombre" type="text" class="form-control" value="{{ old('nombre') }}" required>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-semibold">Cédula</label>
+                                <input name="cedula" type="text" class="form-control" value="{{ old('cedula') }}" required>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-semibold">Teléfono</label>
+                                <input name="telefono" type="text" class="form-control" value="{{ old('telefono') }}">
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-semibold">Mesa</label>
+                                <input name="mesa" type="text" class="form-control" value="{{ old('mesa') }}">
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-semibold">Donación</label>
+                                <input name="donacion" type="text" class="form-control" value="{{ old('donacion') }}">
+                            </div>
+
+                            {{-- Caso A: Líder de un Alcalde --}}
+                            @if(is_null($lider->concejal_id))
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label fw-semibold">¿También vota por el concejal?</label>
+                                    <select name="concejal_id" class="form-control">
+                                        <option value="">Seleccione</option>
+                                        @foreach($concejalOpciones as $concejal)
+                                            <option value="{{ $concejal->id }}">
+                                                {{ $concejal->name ?? $concejal->user->name ?? 'Sin nombre' }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            @endif
+
+                            {{-- Caso B: Líder de un Concejal --}}
+                            @if(!is_null($lider->concejal_id))
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label fw-semibold">¿También vota al alcalde?</label>
+                                    <select name="tambien_vota_alcalde" class="form-select" required>
+                                        <option value="">Seleccione</option>
+                                        <option value="1" {{ old('tambien_vota_alcalde') == '1' ? 'selected' : '' }}>Sí</option>
+                                        <option value="0" {{ old('tambien_vota_alcalde') == '0' ? 'selected' : '' }}>No</option>
+                                    </select>
+                                </div>
+                            @endif
                         </div>
-                    @endif
                     </div>
-                </div>
 
-                <div class="modal-footer p-4">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <span class="d-none d-sm-inline">Cancelar</span>
-                        <span class="d-sm-none">❌</span>
-                    </button>
-                    <button type="submit" class="btn btn-primary">
-                        <span class="d-none d-sm-inline">Guardar Votante</span>
-                        <span class="d-sm-none">✓</span>
-                    </button>
-                </div>
-            </form>
+                    <div class="modal-footer p-4">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <span class="d-none d-sm-inline">Cancelar</span>
+                            <span class="d-sm-none">❌</span>
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <span class="d-none d-sm-inline">Guardar Votante</span>
+                            <span class="d-sm-none">✓</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
-</div>
 
-   
+    {{-- Modales para editar votantes --}}
+    @foreach ($votantes as $votante)
+    <div class="modal fade" id="editModal{{ $votante->id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <form method="POST" action="{{ route('votantes.update', $votante) }}">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="bi bi-pencil me-2"></i>
+                            <span class="d-none d-sm-inline">Editar Votante: {{ $votante->nombre }}</span>
+                            <span class="d-sm-none">Editar</span>
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="modal-body p-4">
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-semibold">Nombre</label>
+                                <input name="nombre" type="text" class="form-control" value="{{ old('nombre', $votante->nombre) }}" required>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-semibold">Cédula</label>
+                                <input name="cedula" type="text" class="form-control" value="{{ old('cedula', $votante->cedula) }}" required>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-semibold">Teléfono</label>
+                                <input name="telefono" type="text" class="form-control" value="{{ old('telefono', $votante->telefono) }}">
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-semibold">Mesa</label>
+                                <input name="mesa" type="text" class="form-control" value="{{ old('mesa', $votante->mesa) }}">
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-semibold">Donación</label>
+                                <input name="donacion" type="text" class="form-control" value="{{ old('donacion', $votante->donacion) }}">
+                            </div>
+
+                            {{-- Caso A: Líder de un Alcalde --}}
+                            @if(is_null($lider->concejal_id))
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label fw-semibold">¿También vota por el concejal?</label>
+                                    <select name="concejal_id" class="form-control">
+                                        <option value="">Seleccione</option>
+                                        @foreach($concejalOpciones as $concejal)
+                                            <option value="{{ $concejal->id }}" {{ (old('concejal_id', $votante->concejal_id) == $concejal->id) ? 'selected' : '' }}>
+                                                {{ $concejal->name ?? $concejal->user->name ?? 'Sin nombre' }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            @endif
+
+                            {{-- Caso B: Líder de un Concejal --}}
+                            @if(!is_null($lider->concejal_id))
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label fw-semibold">¿También vota al alcalde?</label>
+                                    <select name="tambien_vota_alcalde" class="form-select" required>
+                                        <option value="">Seleccione</option>
+                                        <option value="1" {{ (old('tambien_vota_alcalde', $votante->tambien_vota_alcalde) == '1') ? 'selected' : '' }}>Sí</option>
+                                        <option value="0" {{ (old('tambien_vota_alcalde', $votante->tambien_vota_alcalde) == '0') ? 'selected' : '' }}>No</option>
+                                    </select>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+
+                    <div class="modal-footer p-4">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <span class="d-none d-sm-inline">Cancelar</span>
+                            <span class="d-sm-none">❌</span>
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <span class="d-none d-sm-inline">Guardar Cambios</span>
+                            <span class="d-sm-none">✓</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    @endforeach
+
+    {{-- Paginación Responsive --}}
+    <x-paginacion :collection="$votantes" />
 
 @endsection
 
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const votarPorConcejal = document.getElementById('votar_por_concejal');
-        const selectorConcejal = document.getElementById('selector_concejal');
-
-        function toggleConcejalSelector() {
-            if (votarPorConcejal.value === 'si') {
-                selectorConcejal.style.display = 'block';
-            } else {
-                selectorConcejal.style.display = 'none';
-            }
-        }
-
-        votarPorConcejal.addEventListener('change', toggleConcejalSelector);
-
-        // Ejecutar en caso de validación fallida y reenvío del formulario
-        toggleConcejalSelector();
-
         const selectAllCheckbox = document.getElementById('selectAll');
         const itemCheckboxes = document.querySelectorAll('.item-checkbox');
 
@@ -222,9 +288,16 @@
             });
         }
 
-        @if ($errors->any() && old('_token'))
+        // Abrir modal de creación si hay errores en el formulario de creación
+        @if ($errors->any() && old('_token') && !session('editModalId'))
             const createModal = new bootstrap.Modal(document.getElementById('createModal'));
             createModal.show();
+        @endif
+
+        // Abrir modal de edición si se pasa editModalId en sesión (opcional)
+        @if(session('editModalId'))
+            const editModal = new bootstrap.Modal(document.getElementById('editModal{{ session('editModalId') }}'));
+            editModal.show();
         @endif
     });
 </script>

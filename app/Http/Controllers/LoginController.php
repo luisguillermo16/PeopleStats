@@ -102,9 +102,9 @@ class LoginController extends Controller
         } elseif ($user->hasRole('aspirante-alcaldia')) {
             return redirect()->route('dashboard');
         } elseif ($user->hasRole('aspirante-concejo')) {
-            return redirect()->route('homeConcejal');
+            return redirect()->route('dashboard');
         } elseif ($user->hasRole('lider')) {
-            return redirect()->route('homeLider');
+            return redirect()->route('dashboard');
         }
 
         Auth::logout();

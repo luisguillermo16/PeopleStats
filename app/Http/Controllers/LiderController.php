@@ -82,10 +82,15 @@ class LiderController extends Controller
         return redirect()->route('crearLider')->with('success', 'Líder actualizado exitosamente.');
     }
 
-    public function destroy(User $lider)
-    {
-        $lider->delete();
+   public function destroy(User $lider)
+{
+       $lider->votantesRegistrados()->update(['lider_id' => null]);
+    // Eliminar votantes asociados a este líder (si existen)
+    $lider->votantesRegistrados()->delete();
 
-        return redirect()->route('crearLider')->with('success', 'Líder eliminado exitosamente.');
-    }
+    // Luego eliminar el líder
+    $lider->delete();
+
+    return redirect()->route('crearLider')->with('success', 'Líder eliminado exitosamente.');
+}
 }

@@ -153,13 +153,12 @@
                 @endcan
 
                 <!-- Ver votantes del Alcalde -->
-                @can('ver votantes del alcalde')
+                @can('ver votantes')
                 <li class="nav-item">
                     <a class="nav-link text-white sidebar-link {{ request()->routeIs('alcaldia.votantes') ? 'active' : '' }}" 
-                         href="{{ route('votantesAlcalde') }}" title="Ver Votantes del Alcalde">
+                         href="{{ route('verVotantes') }}" title="Ver Votantes ">
                         <i class="bi bi-people me-2"></i>
-                        Ver Votantes Alcalde
-                        <small class="badge bg-warning text-dark ms-2">Próximamente</small>
+                        Ver Votantes
                     </a>
                 </li>
                 @endcan
@@ -195,7 +194,7 @@
                        href="{{ route('crearLider') }}" title="Crear Líderes">
                         <i class="bi bi-person-star me-2"></i>
                         Crear Líderes
-                        <small class="badge bg-warning text-dark ms-2">Próximamente</small>
+                       
                     </a>
                 </li>
                 @endcan

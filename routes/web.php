@@ -9,6 +9,7 @@ use App\Http\Controllers\LiderController;
 use App\Http\Controllers\VotanteController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AlcaldeVotanteController;
+use App\Http\Controllers\VerVotanteController;
 use App\Models\User;
 
 /*
@@ -37,6 +38,8 @@ Route::post('/check-email',      [LoginController::class,'checkEmail'])->name('c
 Route::middleware(['auth', 'can:ver dashboard'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 });
+
+    Route::get('/ver-votantes', [VerVotanteController::class, 'index'])->name('verVotantes')->middleware('auth');
 
 /*
 |--------------------------------------------------------------------------
@@ -86,8 +89,7 @@ Route::middleware(['auth','can:crear concejales'])->group(function () {
     Route::delete('/admin/concejales/destroy-multiple',         [ConcejalController::class,'destroyMultiple'])->name('admin.concejales.destroy-multiple');
     Route::get   ('/admin/concejales/{concejal}/edit-data',     [ConcejalController::class,'edit'])->name('admin.concejales.edit-data');
 
-    // Ver votantes del alcalde
-    Route::get('/votantes-alcalde', [AlcaldeVotanteController::class, 'index'])->name('votantesAlcalde');
+    
 });
 
 /*

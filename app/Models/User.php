@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
+use App\Models\Votante; // Importa el modelo Votante
 
 class User extends Authenticatable
 {
@@ -28,41 +29,40 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
 
- 
-
-    // ✅ Relación: Un usuario puede ser un concejal
+    // Relaciones existentes
     public function concejal()
     {
         return $this->hasOne(Concejal::class);
     }
 
-    // ✅ Relación: Un usuario puede ser un alcalde (si tienes modelo Alcalde)
     public function alcalde()
     {
         return $this->hasOne(User::class, 'id', 'alcalde_id');
     }
 
-    // ✅ Relación: Obtener el concejal que creó este líder
     public function creadoPorConcejal()
     {
         return $this->belongsTo(User::class, 'concejal_id');
     }
 
-    // ✅ Relación: Obtener el alcalde que creó este líder
     public function creadoPorAlcalde()
     {
         return $this->belongsTo(User::class, 'alcalde_id');
     }
 
-    // ✅ Relación inversa: líderes creados por este concejal
     public function lideresCreados()
     {
         return $this->hasMany(User::class, 'concejal_id');
     }
 
-    // ✅ Relación inversa: líderes bajo este alcalde
     public function lideresAlcaldia()
     {
         return $this->hasMany(User::class, 'alcalde_id');
+    }
+
+    // RELACIÓN NUEVA: votantes registrados por este líder
+    public function votantesRegistrados()
+    {
+        return $this->hasMany(Votante::class, 'lider_id'); // Asegúrate que 'lider_id' sea la FK correcta en votantes
     }
 }

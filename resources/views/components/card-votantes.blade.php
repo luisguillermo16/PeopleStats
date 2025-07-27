@@ -1,3 +1,4 @@
+@if ($rol === 'aspirante-alcaldia' || $rol === 'aspirante-concejo')
 <div class="col-12 col-md-6 col-xl-4">
     <div class="card border-0 shadow-sm h-100">
         <div class="card-body p-4">
@@ -34,3 +35,24 @@
         </div>
     </div>
 </div>
+@endif
+@if ($rol === 'lider')
+    <div class="col-12 col-md-6 col-xl-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+                <h6 class="card-title fw-semibold">Total de Votantes Registrados por ti</h6>
+                <h2 class="fw-bold text-success">{{ number_format($totalVotantes) }}</h2>
+                <span class="badge bg-success bg-opacity-10 text-success">
+                    <i class="bi bi-arrow-up-short"></i>+{{ $crecimiento }}%
+                </span>
+                <div class="progress mt-3" style="height: 4px;">
+                    <div class="progress-bar bg-success" style="width: {{ $porcentajeObjetivo }}%"></div>
+                </div>
+                <small class="text-muted mt-2 d-block">
+                    <i class="bi bi-info-circle me-1"></i>
+                    {{ $porcentajeObjetivo }}% del objetivo alcanzado
+                </small>
+            </div>
+        </div>
+    </div>
+@endif
