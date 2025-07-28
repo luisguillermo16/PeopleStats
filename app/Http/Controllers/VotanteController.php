@@ -8,9 +8,16 @@ use App\Models\LugarVotacion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Maatwebsite\Excel\Facades\Excel;  
+use App\Imports\VotantesImport;
 
 class VotanteController extends Controller
 {
+    // =============================
+    // MÉTODOS PRIVADOS DE APOYO
+    // =============================
     private function getLider()
     {
         return User::role('lider')->where('id', Auth::id())->first();
@@ -32,6 +39,9 @@ class VotanteController extends Controller
         });
     }
 
+    // =============================
+    // FORMULARIO DE CREACIÓN
+    // =============================
     public function create()
     {
         $lider = $this->getLider();
@@ -51,6 +61,9 @@ class VotanteController extends Controller
         return view('votantes.create', compact('lider', 'concejalOpciones', 'lugares'));
     }
 
+    // =============================
+    // GUARDAR NUEVO VOTANTE
+    // =============================
     public function store(Request $request)
     {
         $lider = $this->getLider();
@@ -81,11 +94,10 @@ class VotanteController extends Controller
         $votante = new Votante($request->only('nombre', 'cedula', 'telefono', 'mesa', 'lugar_votacion_id'));
         $votante->lider_id = $lider->id;
 
+        // Lógica para asignar alcalde/concejal
         if ($lider->concejal_id) {
             $votante->concejal_id = $lider->concejal_id;
-            if ($request->tambien_vota_alcalde && $lider->alcalde_id) {
-                $votante->alcalde_id = $lider->alcalde_id;
-            }
+            $votante->alcalde_id = ($request->tambien_vota_alcalde == '1' && $lider->alcalde_id) ? $lider->alcalde_id : null;
         } elseif ($lider->alcalde_id) {
             $votante->alcalde_id = $lider->alcalde_id;
             if ($request->filled('concejal_id')) {
@@ -98,6 +110,9 @@ class VotanteController extends Controller
         return redirect()->route('ingresarVotantes')->with('success', 'Votante registrado correctamente.');
     }
 
+    // =============================
+    // LISTAR VOTANTES
+    // =============================
     public function index()
     {
         $lider = $this->getLider();
@@ -118,6 +133,9 @@ class VotanteController extends Controller
         return view('permisos.ingresarVotantes', compact('votantes', 'lider', 'concejalOpciones', 'lugares'));
     }
 
+    // =============================
+    // EDITAR VOTANTE
+    // =============================
     public function edit(Votante $votante)
     {
         $lider = $this->getLider();
@@ -148,57 +166,63 @@ class VotanteController extends Controller
         ));
     }
 
+    // =============================
+    // ACTUALIZAR VOTANTE
+    // =============================
     public function update(Request $request, $id)
-{
-    $votante = Votante::findOrFail($id);
-    $lider = $this->getLider();
+    {
+        $votante = Votante::findOrFail($id);
+        $lider = $this->getLider();
 
-    if (!$lider || $votante->lider_id !== $lider->id) {
-        return redirect()->back()->with('error', 'No tienes permiso para actualizar este votante.');
+        if (!$lider || $votante->lider_id !== $lider->id) {
+            return redirect()->back()->with('error', 'No tienes permiso para actualizar este votante.');
+        }
+
+        $rules = [
+            'nombre' => 'required|string|max:255',
+            'cedula' => 'required|string|max:20|unique:votantes,cedula,' . $votante->id,
+            'telefono' => 'required|string|max:20',
+            'mesa' => 'required|string|max:255',
+            'lugar_votacion_id' => 'required|exists:lugares_votacion,id',
+        ];
+
+        if ($lider->concejal_id) {
+            $rules['tambien_vota_alcalde'] = 'required|in:1,0';
+        } elseif ($lider->alcalde_id) {
+            $rules['concejal_id'] = 'nullable|exists:users,id';
+        }
+
+        $validator = Validator::make($request->all(), $rules, [
+            'cedula.unique' => 'Esta cédula ya ha sido registrada.',
+            'concejal_id.exists' => 'El concejal seleccionado no es válido.',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput()
+                ->with('editModalId', $votante->id);
+        }
+
+        $votante->fill($request->only('nombre', 'cedula', 'telefono', 'mesa', 'lugar_votacion_id'));
+
+        // Lógica para actualizar alcalde/concejal
+        if ($lider->concejal_id) {
+            $votante->concejal_id = $lider->concejal_id;
+            $votante->alcalde_id = ($request->tambien_vota_alcalde == '1' && $lider->alcalde_id) ? $lider->alcalde_id : null;
+        } elseif ($lider->alcalde_id) {
+            $votante->alcalde_id = $lider->alcalde_id;
+            $votante->concejal_id = $request->filled('concejal_id') ? $request->concejal_id : null;
+        }
+
+        $votante->save();
+
+        return redirect()->route('ingresarVotantes')->with('success', 'Votante actualizado correctamente.');
     }
 
-    $rules = [
-        'nombre' => 'required|string|max:255',
-        'cedula' => 'required|string|max:20|unique:votantes,cedula,' . $votante->id,
-        'telefono' => 'required|string|max:20',
-        'mesa' => 'required|string|max:255',
-        'lugar_votacion_id' => 'required|exists:lugares_votacion,id',
-    ];
-
-    if ($lider->concejal_id) {
-        $rules['tambien_vota_alcalde'] = 'required|in:1,0';
-    } elseif ($lider->alcalde_id) {
-        $rules['concejal_id'] = 'nullable|exists:users,id';
-    }
-
-    // Validación manual
-    $validator = Validator::make($request->all(), $rules, [
-        'cedula.unique' => 'Esta cédula ya ha sido registrada.',
-        'concejal_id.exists' => 'El concejal seleccionado no es válido.',
-    ]);
-
-    if ($validator->fails()) {
-        return redirect()->back()
-            ->withErrors($validator)
-            ->withInput()
-            ->with('editModalId', $votante->id); // 👈 Forzamos reabrir el modal de edición
-    }
-
-    $votante->fill($request->only('nombre', 'cedula', 'telefono', 'mesa', 'lugar_votacion_id'));
-
-    if ($lider->concejal_id) {
-        $votante->concejal_id = $lider->concejal_id;
-        $votante->alcalde_id = ($request->tambien_vota_alcalde == '1' && $lider->alcalde_id) ? $lider->alcalde_id : null;
-    } elseif ($lider->alcalde_id) {
-        $votante->alcalde_id = $lider->alcalde_id;
-        $votante->concejal_id = $request->filled('concejal_id') ? $request->concejal_id : null;
-    }
-
-    $votante->save();
-
-    return redirect()->route('ingresarVotantes')->with('success', 'Votante actualizado correctamente.');
-}
-
+    // =============================
+    // ELIMINAR VOTANTE
+    // =============================
     public function destroy($id)
     {
         $votante = Votante::findOrFail($id);
@@ -211,5 +235,41 @@ class VotanteController extends Controller
         $votante->delete();
 
         return redirect()->route('ingresarVotantes')->with('success', 'Votante eliminado correctamente.');
+    }
+
+    // =============================
+    // DESCARGAR PLANTILLA EXCEL
+    // =============================
+    
+
+    // =============================
+    // IMPORTAR EXCEL
+    // =============================
+    public function import(Request $request)
+    {
+        $lider = $this->getLider();
+
+        if (!$lider) {
+            return redirect()->back()->with('error', 'No se encontró el líder asociado al usuario.');
+        }
+
+        $request->validate([
+            'excel_file' => 'required|file|mimes:xlsx,xls'
+        ]);
+
+        try {
+            $import = new VotantesImport($lider);
+            Excel::import($import, $request->file('excel_file'));
+
+            // Mensaje detallado
+            $mensaje = "{$import->importados} votantes importados correctamente.";
+            if ($import->saltados > 0) {
+                $mensaje .= " {$import->saltados} registros fueron ignorados por cédulas duplicadas o lugares inválidos.";
+            }
+
+            return redirect()->route('ingresarVotantes')->with('success', $mensaje);
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Error al importar: ' . $e->getMessage());
+        }
     }
 }

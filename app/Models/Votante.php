@@ -21,12 +21,10 @@ class Votante extends Model
         'concejal_id',
         'alcalde_id',
         'lugar_votacion_id', 
-        'tambien_vota_alcalde', // agregado al fillable
+        
     ];
 
-    protected $casts = [
-        'tambien_vota_alcalde' => 'boolean',
-    ];
+   
 
     public static function validarVotanteUnico($cedula, $user_id)
     {

@@ -37,6 +37,12 @@
         <i class="bi bi-plus-circle me-2"></i> Nuevo Votante
     </button>
 </div>
+<form action="{{ route('votantes.import') }}" method="POST" enctype="multipart/form-data">
+    @csrf
+    <input type="file" name="excel_file" required>
+    <button type="submit">Importar Excel</button>
+</form>
+
 
 {{-- Tabla --}}
 <div class="table-responsive">
@@ -68,10 +74,10 @@
                     <td class="d-none d-lg-table-cell">{{ $votante->lugarVotacion->nombre ?? 'Sin asignar' }}</td>
                     <td class="d-none d-lg-table-cell">{{ $votante->mesa }}</td>
                     <td class="d-none d-lg-table-cell">
-                        @if(is_null($lider->concejal_id))
+                      @if(is_null($lider->concejal_id))
                             {{ $votante->concejal?->name ?? $votante->concejal?->user?->name ?? 'No' }}
                         @else
-                            {{ $votante->tambien_vota_alcalde ? 'Sí' : 'No' }}
+                            {{ $votante->alcalde_id ? 'Sí' : 'No' }}
                         @endif
                     </td>
                     <td>
@@ -229,8 +235,8 @@
                                     <label class="form-label">¿También vota al alcalde?</label>
                                     <select name="tambien_vota_alcalde" class="form-select" required>
                                         <option value="">Seleccione</option>
-                                        <option value="1" {{ $votante->tambien_vota_alcalde ? 'selected' : '' }}>Sí</option>
-                                        <option value="0" {{ !$votante->tambien_vota_alcalde ? 'selected' : '' }}>No</option>
+                                       <option value="1" {{ $votante->alcalde_id ? 'selected' : '' }}>Sí</option>
+                                        <option value="0" {{ !$votante->alcalde_id ? 'selected' : '' }}>No</option>
                                     </select>
                                 </div>
                             @endif
