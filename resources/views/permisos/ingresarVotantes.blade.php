@@ -31,17 +31,45 @@
     </div>
 @endif
 
-{{-- Botón Nuevo --}}
-<div class="mb-3 text-end">
-    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">
-        <i class="bi bi-plus-circle me-2"></i> Nuevo Votante
+
+{{-- Botones de acción --}}
+<div class="mb-3 d-flex flex-column flex-md-row gap-2 justify-content-md-end">
+    {{-- Botón Importar Excel --}}
+    <div class="d-flex align-items-center">
+        <form action="{{ route('votantes.import') }}" method="POST" enctype="multipart/form-data" class="d-flex flex-column flex-sm-row gap-2 align-items-center">
+            @csrf
+            <div class="position-relative">
+                <input type="file" 
+                       id="excel_file" 
+                       name="excel_file" 
+                       class="form-control d-none" 
+                       accept=".xlsx,.xls,.csv"
+                       required>
+                <button type="button" 
+                        class="btn btn-outline-success btn-sm" 
+                        onclick="document.getElementById('excel_file').click()">
+                    <i class="bi bi-file-earmark-excel me-1"></i>
+                    <span class="d-none d-sm-inline">Seleccionar</span> Excel
+                </button>
+            </div>
+            <button type="submit" 
+                    class="btn btn-success btn-sm" 
+                    id="importBtn" 
+                    disabled>
+                <i class="bi bi-upload me-1"></i>
+                <span class="d-none d-sm-inline">Importar</span>
+                <span class="d-sm-none">Import</span>
+            </button>
+        </form>
+    </div>
+    
+    {{-- Botón Nuevo Votante --}}
+    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createModal">
+        <i class="bi bi-plus-circle me-1"></i>
+        <span class="d-none d-sm-inline">Nuevo Votante</span>
+        <span class="d-sm-none">Nuevo</span>
     </button>
 </div>
-<form action="{{ route('votantes.import') }}" method="POST" enctype="multipart/form-data">
-    @csrf
-    <input type="file" name="excel_file" required>
-    <button type="submit">Importar Excel</button>
-</form>
 
 
 {{-- Tabla --}}
@@ -288,7 +316,52 @@ document.addEventListener('DOMContentLoaded', function () {
         new bootstrap.Modal(document.getElementById('editModal{{ session('editModalId') }}')).show();
     @endif
 });
+document.addEventListener('DOMContentLoaded', function () {
+    const fileInput = document.getElementById('excel_file');
+    const importBtn = document.getElementById('importBtn');
+    const selectBtn = document.querySelector('button[onclick*="excel_file"]');
 
+    fileInput.addEventListener('change', function () {
+        const fileName = this.files[0]?.name || '';
+
+        if (fileName) {
+            // Habilitar botón de importar
+            importBtn.disabled = false;
+
+            // Truncar nombre si es muy largo
+            const shortName = fileName.length > 20 ? fileName.substring(0, 20) + '...' : fileName;
+
+            // Cambiar contenido del botón
+            selectBtn.innerHTML = `
+                <i class="bi bi-file-earmark-excel me-1"></i>
+                <span class="d-none d-sm-inline">${shortName}</span>
+            `;
+
+            selectBtn.classList.remove('btn-outline-success');
+            selectBtn.classList.add('btn-success');
+        } else {
+            // Restaurar estado original
+            importBtn.disabled = true;
+
+            selectBtn.innerHTML = `
+                <i class="bi bi-file-earmark-excel me-1"></i>
+                <span class="d-none d-sm-inline">Seleccionar</span> Excel
+            `;
+
+            selectBtn.classList.remove('btn-success');
+            selectBtn.classList.add('btn-outline-success');
+        }
+    });
+
+    // Validación al enviar
+    const form = document.querySelector('form[action*="import"]');
+    form.addEventListener('submit', function (e) {
+        if (!fileInput.files.length) {
+            e.preventDefault();
+            alert('Por favor seleccione un archivo Excel para importar.');
+        }
+    });
+});
 
 </script>
 @endpush
