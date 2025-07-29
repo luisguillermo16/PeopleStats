@@ -1,6 +1,6 @@
 @if ($rol === 'aspirante-alcaldia' || $rol === 'aspirante-concejo')
 <div class="col-12 col-md-6 col-xl-4">
-    <div class="card border-0 shadow-sm h-100">
+     <div class="card border-0 shadow-sm h-100 hover-shadow">
         <div class="card-body p-4">
             <div class="d-flex align-items-center justify-content-between">
                 <div>
@@ -18,9 +18,7 @@
                     </div>
                     <div class="d-flex align-items-end">
                         <h2 class="mb-0 fw-bold text-success">{{ number_format($totalVotantes) }}</h2>
-                        <span class="badge bg-success bg-opacity-10 text-success ms-2">
-                            <i class="bi bi-arrow-up-short"></i>+{{ $crecimiento }}%
-                        </span>
+                      
                     </div>
                 </div>
             </div>
@@ -42,9 +40,7 @@
             <div class="card-body p-4">
                 <h6 class="card-title fw-semibold">Total de Votantes Registrados por ti</h6>
                 <h2 class="fw-bold text-success">{{ number_format($totalVotantes) }}</h2>
-                <span class="badge bg-success bg-opacity-10 text-success">
-                    <i class="bi bi-arrow-up-short"></i>+{{ $crecimiento }}%
-                </span>
+              
                 <div class="progress mt-3" style="height: 4px;">
                     <div class="progress-bar bg-success" style="width: {{ $porcentajeObjetivo }}%"></div>
                 </div>
@@ -56,3 +52,12 @@
         </div>
     </div>
 @endif
+<style>
+.hover-shadow {
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+.hover-shadow:hover {
+    box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.15);
+    transform: translateY(-3px);
+}
+</style>

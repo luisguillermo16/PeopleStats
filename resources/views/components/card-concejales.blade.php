@@ -1,5 +1,5 @@
 <div class="col-12 col-md-6 col-xl-4">
-    <div class="card border-0 shadow-sm h-100">
+    <div class="card border-0 shadow-sm h-100 hover-shadow">
         <div class="card-body p-4">
             <div class="d-flex align-items-center justify-content-between">
                 <div>
@@ -25,3 +25,12 @@
         </div>
     </div>
 </div>
+<style>
+.hover-shadow {
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+.hover-shadow:hover {
+    box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.15); /* Sombra más fuerte */
+    transform: translateY(-3px); /* Se eleva un poco */
+}
+</style>

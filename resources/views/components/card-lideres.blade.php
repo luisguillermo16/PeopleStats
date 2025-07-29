@@ -1,5 +1,5 @@
 <div class="col-12 col-md-6 col-xl-4">
-    <div class="card border-0 shadow-sm h-100">
+    <div class="card border-0 shadow-sm h-100 hover-shadow">
         <div class="card-body p-4">
             <div class="d-flex align-items-center justify-content-between">
                 <div>
@@ -17,19 +17,19 @@
                     </div>
                     <div class="d-flex align-items-end">
                         <h2 class="mb-0 fw-bold text-warning">{{ number_format($totalLideres) }}</h2>
-                        <span class="badge bg-warning bg-opacity-10 text-warning ms-2">
-                            <i class="bi bi-arrow-up-short"></i> {{ $estado }}
-                        </span>
                     </div>
                 </div>
             </div>
-            <div class="progress mt-3" style="height: 4px;">
-                <div class="progress-bar bg-warning" style="width: {{ $progreso }}%"></div>
-            </div>
-            <small class="text-muted mt-2 d-block">
-                <i class="bi bi-info-circle me-1"></i>
-                {{ $progreso }}% del objetivo alcanzado
-            </small>
         </div>
     </div>
 </div>
+
+<style>
+.hover-shadow {
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+.hover-shadow:hover {
+    box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.15);
+    transform: translateY(-3px);
+}
+</style>

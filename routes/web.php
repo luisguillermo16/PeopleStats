@@ -166,7 +166,7 @@ Route::middleware(['auth', 'can:crear puntos de votacion'])->group(function () {
     Route::get('/lugares/crear', [LugarVotacionController::class, 'create'])->name('crearPuntosVotacion');
     Route::post('/lugares', [LugarVotacionController::class, 'store'])->name('storePuntosVotacion');
     Route::get('/lugares/{lugar}/editar', [LugarVotacionController::class, 'edit'])->name('editPuntosVotacion');
-
+Route::get('/debug-lugares', [LugarVotacionController::class, 'debug'])->name('debug.lugares');
     Route::put('/lugares/{lugar}', [LugarVotacionController::class, 'update'])->name('updatePuntosVotacion');
     Route::delete('/lugares/{lugar}', [LugarVotacionController::class, 'destroy'])->name('destroyPuntosVotacion');
     

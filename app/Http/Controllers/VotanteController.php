@@ -8,9 +8,7 @@ use App\Models\LugarVotacion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use Maatwebsite\Excel\Facades\Excel;  
+use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\VotantesImport;
 
 class VotanteController extends Controller
@@ -18,6 +16,7 @@ class VotanteController extends Controller
     // =============================
     // MÉTODOS PRIVADOS DE APOYO
     // =============================
+
     private function getLider()
     {
         return User::role('lider')->where('id', Auth::id())->first();
@@ -28,16 +27,34 @@ class VotanteController extends Controller
         return User::role('aspirante-concejo')->where('alcalde_id', $alcaldeId)->get();
     }
 
-    private function getLugares()
-    {
-        return LugarVotacion::with('mesas')->orderBy('nombre')->get()->map(function ($lugar) {
+    /**
+     * Filtra lugares de votación según el líder actual
+     */
+    private function getLugaresFiltrados($lider)
+{
+    return LugarVotacion::with('mesas')
+        ->when($lider->concejal_id, function ($query) use ($lider) {
+            $query->where('concejal_id', $lider->concejal_id);
+        })
+        ->when($lider->alcalde_id && !$lider->concejal_id, function ($query) use ($lider) {
+            $query->where('alcalde_id', $lider->alcalde_id);
+        })
+        ->orderBy('nombre')
+        ->get()
+        ->map(function ($lugar) {
             return [
                 'id' => $lugar->id,
                 'nombre' => $lugar->nombre,
-                'mesas' => $lugar->mesas->pluck('numero')->unique()->values()->toArray(),
+                // Devuelve mesas con id y numero
+                'mesas' => $lugar->mesas->map(function ($mesa) {
+                    return [
+                        'id' => $mesa->id,
+                        'numero' => $mesa->numero
+                    ];
+                })->toArray(),
             ];
         });
-    }
+}
 
     // =============================
     // FORMULARIO DE CREACIÓN
@@ -56,7 +73,7 @@ class VotanteController extends Controller
             $concejalOpciones = $this->getConcejales($lider->alcalde_id);
         }
 
-        $lugares = $this->getLugares();
+        $lugares = $this->getLugaresFiltrados($lider);
 
         return view('votantes.create', compact('lider', 'concejalOpciones', 'lugares'));
     }
@@ -128,7 +145,7 @@ class VotanteController extends Controller
             $concejalOpciones = $this->getConcejales($lider->alcalde_id);
         }
 
-        $lugares = LugarVotacion::with('mesas')->orderBy('nombre')->get();
+        $lugares = $this->getLugaresFiltrados($lider);
 
         return view('permisos.ingresarVotantes', compact('votantes', 'lider', 'concejalOpciones', 'lugares'));
     }
@@ -146,7 +163,7 @@ class VotanteController extends Controller
 
         $votantes = Votante::where('lider_id', $lider->id)->paginate(10);
         $concejalOpciones = $this->getConcejales($lider->alcalde_id ?? null);
-        $lugares = $this->getLugares();
+        $lugares = $this->getLugaresFiltrados($lider);
 
         $totalVotantes = Votante::where('lider_id', $lider->id)->count();
         $totalMesas = Votante::where('lider_id', $lider->id)->distinct('mesa')->count('mesa');
@@ -238,11 +255,6 @@ class VotanteController extends Controller
     }
 
     // =============================
-    // DESCARGAR PLANTILLA EXCEL
-    // =============================
-    
-
-    // =============================
     // IMPORTAR EXCEL
     // =============================
     public function import(Request $request)
@@ -261,7 +273,6 @@ class VotanteController extends Controller
             $import = new VotantesImport($lider);
             Excel::import($import, $request->file('excel_file'));
 
-            // Mensaje detallado
             $mensaje = "{$import->importados} votantes importados correctamente.";
             if ($import->saltados > 0) {
                 $mensaje .= " {$import->saltados} registros fueron ignorados por cédulas duplicadas o lugares inválidos.";

@@ -28,9 +28,9 @@ class CardVotantes extends Component
             $this->totalVotantes = 0;
         }
 
-        $this->crecimiento = 15;
+      
 
-        $objetivo = 1000;
+        $objetivo = 15000;
         $this->porcentajeObjetivo = $objetivo > 0
             ? round(($this->totalVotantes / $objetivo) * 100, 2)
             : 0;
