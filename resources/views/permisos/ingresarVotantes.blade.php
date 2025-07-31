@@ -126,6 +126,7 @@
 
 {{-- Modal Crear --}}
 <div class="modal fade" id="createModal" tabindex="-1" aria-hidden="true">
+    
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <form method="POST" action="{{ route('votantes.store') }}">

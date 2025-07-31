@@ -51,8 +51,9 @@
                 <div class="col-6 col-md-3">
                     <select name="creador" class="form-select">
                         <option value="">Todos los creadores</option>
-                        <option value="alcalde" {{ request('creador') == 'alcalde' ? 'selected' : '' }}>Alcaldes</option>
-                        <option value="concejal" {{ request('creador') == 'concejal' ? 'selected' : '' }}>Concejales</option>
+                        <option value="aspirante-alcaldia" {{ request('creador') == 'aspirante-alcaldia' ? 'selected' : '' }}>Aspirantes Alcaldía</option>
+                        <option value="aspirante-concejo" {{ request('creador') == 'aspirante-concejo' ? 'selected' : '' }}>Aspirantes Concejo</option>
+                        <option value="lider" {{ request('creador') == 'lider' ? 'selected' : '' }}>Líderes</option>
                     </select>
                 </div>
                 
@@ -138,11 +139,11 @@
                                 <td class="d-none d-lg-table-cell">
                                     @if($lugar->alcalde_id)
                                         <span class="badge bg-success">
-                                            <i class="bi bi-person-badge me-1"></i>Alcalde
+                                            <i class="bi bi-person-badge me-1"></i>Aspirante Alcaldía
                                         </span>
                                     @elseif($lugar->concejal_id)
                                         <span class="badge bg-info">
-                                            <i class="bi bi-person me-1"></i>Concejal
+                                            <i class="bi bi-person me-1"></i>Aspirante Concejo
                                         </span>
                                     @else
                                         <span class="badge bg-secondary">No definido</span>
@@ -255,10 +256,10 @@
                         <!-- Dirección -->
                         <div class="col-12">
                             <label for="direccion" class="form-label fw-semibold">
-                                <i class="bi bi-geo me-1"></i>Dirección <span class="text-muted">(opcional)</span>
+                                <i class="bi bi-geo me-1"></i>Dirección
                             </label>
                             <textarea name="direccion" id="direccion" class="form-control" rows="2" 
-                                      placeholder="Ej: Calle 15 #8-25, Barrio Centro">{{ old('direccion') }}</textarea>
+                                      placeholder="Ej: Calle 15 #8-25, Barrio Centro" required>{{ old('direccion') }}</textarea>
                         </div>
 
                         <!-- Mesas -->
@@ -283,8 +284,6 @@
                             </button>
                         </div>
                     </div>
-
-                    <input type="hidden" name="alcalde_id" value="{{ auth()->user()->id }}">
                 </div>
 
                 <div class="modal-footer p-4">
@@ -303,7 +302,7 @@
     </div>
 </div>
 
-<!-- Modal Editar Punto de Votación -->
+<!-- Modal Editar Punto de Votación CORREGIDO -->
 <div class="modal fade" id="editarPuntoModal" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
@@ -334,32 +333,22 @@
                             <label class="form-label fw-semibold">
                                 <i class="bi bi-geo me-1"></i>Dirección
                             </label>
-                            <textarea name="direccion" id="editar-direccion" class="form-control" rows="2"></textarea>
+                            <textarea name="direccion" id="editar-direccion" class="form-control" rows="2" required></textarea>
                         </div>
                         
-                        <!-- Mesas existentes -->
+                        <!-- Mesas -->
                         <div class="col-12">
                             <label class="form-label fw-semibold">
-                                <i class="bi bi-table me-1"></i>Mesas Existentes
+                                <i class="bi bi-table me-1"></i>Mesas de Votación
                             </label>
-                            <div id="editar-mesas-container" class="border rounded p-3 bg-light">
-                                <!-- Se llenarán dinámicamente -->
+                            <div id="editar-mesas-container">
+                                <!-- Se llenarán dinámicamente con inputs name="mesas[]" -->
                             </div>
-                        </div>
-                        
-                        <!-- Nuevas mesas -->
-                        <div class="col-12">
-                            <label class="form-label fw-semibold">
-                                <i class="bi bi-plus-circle me-1"></i>Agregar Nuevas Mesas
-                            </label>
-                            <div id="editar-mesas-nuevas-container"></div>
-                            <button type="button" class="btn btn-sm btn-outline-primary" id="btn-agregar-mesa-nueva-editar">
-                                <i class="bi bi-plus me-1"></i>Agregar mesa
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="btn-agregar-mesa-editar">
+                                <i class="bi bi-plus me-1"></i>Agregar otra mesa
                             </button>
                         </div>
                     </div>
-                    
-                    <input type="hidden" name="alcalde_id" value="{{ auth()->user()->id }}">
                 </div>
                 
                 <div class="modal-footer p-4">
@@ -415,6 +404,23 @@ document.addEventListener('DOMContentLoaded', function() {
         container.appendChild(newMesa);
     });
     
+    // Agregar mesa en modal de EDICIÓN (CORREGIDO)
+    document.getElementById('btn-agregar-mesa-editar').addEventListener('click', function() {
+        const container = document.getElementById('editar-mesas-container');
+        const newMesa = document.createElement('div');
+        newMesa.className = 'input-group mb-2';
+        newMesa.innerHTML = `
+            <span class="input-group-text bg-light">
+                <i class="bi bi-table"></i>
+            </span>
+            <input type="text" name="mesas[]" class="form-control" placeholder="Número de Mesa" required>
+            <button type="button" class="btn btn-outline-danger btn-remove-mesa">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        `;
+        container.appendChild(newMesa);
+    });
+    
     // Remover mesa (modal creación y edición)
     document.addEventListener('click', function(e) {
         if (e.target.closest('.btn-remove-mesa')) {
@@ -428,24 +434,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Agregar mesa en modal de edición
-    document.getElementById('btn-agregar-mesa-nueva-editar').addEventListener('click', function() {
-        const container = document.getElementById('editar-mesas-nuevas-container');
-        const newMesa = document.createElement('div');
-        newMesa.className = 'input-group mb-2';
-        newMesa.innerHTML = `
-            <span class="input-group-text bg-light">
-                <i class="bi bi-table"></i>
-            </span>
-            <input type="text" name="mesas_nuevas[]" class="form-control" placeholder="Número de Mesa" required>
-            <button type="button" class="btn btn-outline-danger btn-remove-mesa">
-                <i class="bi bi-x-lg"></i>
-            </button>
-        `;
-        container.appendChild(newMesa);
-    });
-    
-    // Manejar botón editar
+    // Manejar botón editar (CORREGIDO)
     document.addEventListener('click', function(e) {
         if (e.target.closest('.btn-editar')) {
             const btn = e.target.closest('.btn-editar');
@@ -462,48 +451,46 @@ document.addEventListener('DOMContentLoaded', function() {
             const updateRoute = "{{ route('updatePuntosVotacion', '__ID__') }}".replace('__ID__', id);
             document.getElementById('form-editar-punto').action = updateRoute;
             
-            // Mostrar mesas existentes
+            // Mostrar mesas existentes como inputs editables
             const mesasContainer = document.getElementById('editar-mesas-container');
             mesasContainer.innerHTML = '';
             
             if (mesas.length > 0) {
-                mesas.forEach(mesa => {
+                mesas.forEach((mesa, index) => {
                     const mesaElement = document.createElement('div');
-                    mesaElement.className = 'badge bg-primary me-2 mb-2';
+                    mesaElement.className = 'input-group mb-2';
                     mesaElement.innerHTML = `
-                        <i class="bi bi-table me-1"></i>${mesa.numero}
-                        <button type="button" class="btn-close btn-close-white ms-2" style="font-size: 0.6em;" 
-                                onclick="eliminarMesaExistente(${mesa.id}, this)"></button>
+                        <span class="input-group-text bg-light">
+                            <i class="bi bi-table"></i>
+                        </span>
+                        <input type="text" name="mesas[]" class="form-control" value="${mesa.numero}" required>
+                        <button type="button" class="btn btn-outline-danger btn-remove-mesa">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
                     `;
                     mesasContainer.appendChild(mesaElement);
                 });
             } else {
-                mesasContainer.innerHTML = '<p class="text-muted mb-0">No hay mesas registradas</p>';
+                // Si no hay mesas, agregar al menos una vacía
+                const mesaElement = document.createElement('div');
+                mesaElement.className = 'input-group mb-2';
+                mesaElement.innerHTML = `
+                    <span class="input-group-text bg-light">
+                        <i class="bi bi-table"></i>
+                    </span>
+                    <input type="text" name="mesas[]" class="form-control" placeholder="Número de Mesa" required>
+                    <button type="button" class="btn btn-outline-danger btn-remove-mesa">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                `;
+                mesasContainer.appendChild(mesaElement);
             }
-            
-            // Limpiar nuevas mesas
-            document.getElementById('editar-mesas-nuevas-container').innerHTML = '';
             
             // Mostrar modal
             const editModal = new bootstrap.Modal(document.getElementById('editarPuntoModal'));
             editModal.show();
         }
     });
-
-    // Función para marcar mesa existente para eliminar
-    window.eliminarMesaExistente = function(mesaId, btn) {
-        // Crear input oculto para marcar mesa a eliminar
-        const inputEliminar = document.createElement('input');
-        inputEliminar.type = 'hidden';
-        inputEliminar.name = 'mesas_eliminar[]';
-        inputEliminar.value = mesaId;
-
-        // Agregar input al formulario
-        document.getElementById('form-editar-punto').appendChild(inputEliminar);
-
-        // Remover visualmente la mesa
-        btn.closest('.badge').remove();
-    };
     
     // Manejo responsive de tablas
     function handleTableResponsive() {
@@ -522,7 +509,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-
 <style>
 @media (max-width: 767px) {
     .btn-group {
@@ -540,7 +526,5 @@ document.addEventListener('DOMContentLoaded', function() {
         margin: 0.5rem;
     }
 }
-
-
 </style>
 @endsection

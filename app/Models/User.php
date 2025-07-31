@@ -71,4 +71,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(Votante::class, 'concejal_id');
     }
+    public function lugaresCreadosComoAlcalde()
+{
+    return $this->hasMany(LugarVotacion::class, 'alcalde_id');
+}
+
+public function lugaresCreadosComoConcejal()
+{
+    return $this->hasMany(LugarVotacion::class, 'concejal_id');
+}
+
 }

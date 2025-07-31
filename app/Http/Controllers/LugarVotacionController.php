@@ -2,277 +2,347 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use App\Models\LugarVotacion;
 use App\Models\Mesa;
 use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class LugarVotacionController extends Controller
 {
     /**
-     * Lista todos los lugares de votación filtrados por el usuario actual
+     * Mostrar listado de lugares de votación según rol del usuario.
+     * Incluye validación cruzada entre alcaldes y concejales ligados.
      */
     public function index()
     {
-        $usuario = Auth::user();
-        
-        if (!$usuario) {
-            return redirect()->back()->with('error', 'Usuario no autenticado.');
+        $user = Auth::user();
+        if (!$user) {
+            return redirect()->route('login');
         }
 
-        // NUEVO ENFOQUE: El usuario ES el concejal/alcalde, no TIENE un concejal/alcalde
-        // Filtrar lugares donde el usuario actual sea el concejal o alcalde asignado
-        $lugares = LugarVotacion::with('mesas')
-            ->where(function ($query) use ($usuario) {
-                // Lugares donde el usuario actual es el concejal asignado
-                $query->where('concejal_id', $usuario->id);
-                
-                // O lugares donde el usuario actual es el alcalde asignado
-                $query->orWhere('alcalde_id', $usuario->id);
-            })
-            ->orderBy('created_at', 'desc')
-            ->get();
+        try {
+            $lugares = collect();
 
-        // Debug info
-        \Log::info('Filtro de lugares:', [
-            'usuario_id' => $usuario->id,
-            'usuario_email' => $usuario->email,
-            'total_lugares_filtrados' => $lugares->count(),
-            'lugares_encontrados' => $lugares->pluck('nombre')->toArray()
-        ]);
+            if ($user->hasRole('aspirante-alcaldia') || $user->hasRole('alcalde')) {
+                // IDs usuarios ligados: el mismo usuario + alcalde o aspirantes ligados
+                $usuariosIds = [$user->id];
 
-        return view('permisos.crearPuntosVotacion', compact('lugares'));
-    }
-
-    /**
-     * Método para testing - eliminar después del diagnóstico
-     */
-    public function debug()
-    {
-        $usuario = Auth::user();
-        
-        if (!$usuario) {
-            return response()->json(['error' => 'Usuario no autenticado']);
-        }
-
-        // Información del usuario
-        $userInfo = [
-            'ID Usuario' => $usuario->id,
-            'Nombre' => $usuario->name ?? 'N/A',
-            'Email' => $usuario->email ?? 'N/A',
-            'Alcalde ID (campo)' => $usuario->alcalde_id ?? 'NULL',
-            'Concejal ID (campo)' => $usuario->concejal_id ?? 'NULL',
-            'Es concejal/alcalde por ID' => 'Se busca en lugares donde concejal_id = ' . $usuario->id . ' o alcalde_id = ' . $usuario->id
-        ];
-
-        // Todos los lugares
-        $lugares = LugarVotacion::all()->map(function($lugar) {
-            return [
-                'ID' => $lugar->id,
-                'Nombre' => $lugar->nombre,
-                'Alcalde ID' => $lugar->alcalde_id ?? 'NULL',
-                'Concejal ID' => $lugar->concejal_id ?? 'NULL',
-                'Direccion' => $lugar->direccion ?? 'N/A'
-            ];
-        });
-
-        // NUEVO FILTRO: Lugares donde el usuario ES el concejal/alcalde
-        $lugaresFiltradosNuevo = LugarVotacion::where(function ($query) use ($usuario) {
-            $query->where('concejal_id', $usuario->id)
-                  ->orWhere('alcalde_id', $usuario->id);
-        })->get()->map(function($lugar) {
-            return [
-                'ID' => $lugar->id,
-                'Nombre' => $lugar->nombre,
-                'Alcalde ID' => $lugar->alcalde_id ?? 'NULL',
-                'Concejal ID' => $lugar->concejal_id ?? 'NULL'
-            ];
-        });
-
-        // FILTRO ANTERIOR: Lugares donde el usuario TIENE concejal_id/alcalde_id
-        $lugaresFiltradosAnterior = [];
-        if ($usuario->alcalde_id || $usuario->concejal_id) {
-            $lugaresFiltradosAnterior = LugarVotacion::where(function ($query) use ($usuario) {
-                if ($usuario->concejal_id) {
-                    $query->where('concejal_id', $usuario->concejal_id);
+                if ($user->hasRole('aspirante-alcaldia')) {
+                    // Si es aspirante, agrega el alcalde_id
+                    if ($user->alcalde_id) {
+                        $usuariosIds[] = $user->alcalde_id;
+                    }
+                } else {
+                    // Si es alcalde, buscar aspirantes ligados a este alcalde
+                    $aspirantesLigadosIds = User::role('aspirante-alcaldia')
+                        ->where('alcalde_id', $user->id)
+                        ->pluck('id')
+                        ->toArray();
+                    $usuariosIds = array_merge($usuariosIds, $aspirantesLigadosIds);
                 }
-                if ($usuario->alcalde_id) {
-                    if ($usuario->concejal_id) {
-                        $query->orWhere('alcalde_id', $usuario->alcalde_id);
-                    } else {
-                        $query->where('alcalde_id', $usuario->alcalde_id);
+
+                // NUEVA FUNCIONALIDAD: También obtener concejales ligados a este alcalde
+                $concejalesTotalesIds = [];
+                
+                foreach ($usuariosIds as $alcaldeId) {
+                    // Buscar concejales que tengan alcalde_id igual a este alcalde
+                    $concejalesLigados = User::whereIn('rol_id', function($query) {
+                            $query->select('id')
+                                  ->from('roles')
+                                  ->whereIn('name', ['aspirante-concejo', 'concejal']);
+                        })
+                        ->where('alcalde_id', $alcaldeId)
+                        ->pluck('id')
+                        ->toArray();
+                    
+                    $concejalesTotalesIds = array_merge($concejalesTotalesIds, $concejalesLigados);
+                }
+
+                // Obtener lugares de votación de alcaldes Y concejales ligados
+                $lugares = LugarVotacion::with('mesas')
+                    ->where(function($query) use ($usuariosIds, $concejalesTotalesIds) {
+                        $query->whereIn('alcalde_id', $usuariosIds);
+                        if (!empty($concejalesTotalesIds)) {
+                            $query->orWhereIn('concejal_id', $concejalesTotalesIds);
+                        }
+                    })
+                    ->get();
+
+            } elseif ($user->hasRole('aspirante-concejo') || $user->hasRole('concejal')) {
+                // Mismo comportamiento para concejal
+                $usuariosIds = [$user->id];
+
+                if ($user->hasRole('aspirante-concejo')) {
+                    if ($user->concejal_id) {
+                        $usuariosIds[] = $user->concejal_id;
+                    }
+                } else {
+                    $aspirantesConcejoIds = User::role('aspirante-concejo')
+                        ->where('concejal_id', $user->id)
+                        ->pluck('id')
+                        ->toArray();
+                    $usuariosIds = array_merge($usuariosIds, $aspirantesConcejoIds);
+                }
+
+                // NUEVA FUNCIONALIDAD: También obtener lugares del alcalde al que está ligado
+                $alcaldeIds = [];
+                
+                foreach ($usuariosIds as $concejalId) {
+                    $concejal = User::find($concejalId);
+                    
+                    if ($concejal && $concejal->alcalde_id) {
+                        $alcaldeIds[] = $concejal->alcalde_id;
+                        
+                        // También agregar aspirantes ligados a ese alcalde
+                        $aspirantesAlcaldiaIds = User::role('aspirante-alcaldia')
+                            ->where('alcalde_id', $concejal->alcalde_id)
+                            ->pluck('id')
+                            ->toArray();
+                        $alcaldeIds = array_merge($alcaldeIds, $aspirantesAlcaldiaIds);
                     }
                 }
-            })->get()->map(function($lugar) {
-                return [
-                    'ID' => $lugar->id,
-                    'Nombre' => $lugar->nombre,
-                    'Alcalde ID' => $lugar->alcalde_id ?? 'NULL',
-                    'Concejal ID' => $lugar->concejal_id ?? 'NULL'
-                ];
-            });
-        }
 
-        return response()->json([
-            'usuario_info' => $userInfo,
-            'total_lugares_en_bd' => $lugares->count(),
-            'todos_los_lugares' => $lugares,
-            'NUEVO_FILTRO' => [
-                'descripcion' => 'Lugares donde usuario.id = lugar.concejal_id O usuario.id = lugar.alcalde_id',
-                'total' => count($lugaresFiltradosNuevo),
-                'lugares' => $lugaresFiltradosNuevo,
-                'sql' => 'WHERE concejal_id = ' . $usuario->id . ' OR alcalde_id = ' . $usuario->id
-            ],
-            'FILTRO_ANTERIOR' => [
-                'descripcion' => 'Lugares donde lugar.concejal_id = usuario.concejal_id O lugar.alcalde_id = usuario.alcalde_id',
-                'total' => count($lugaresFiltradosAnterior),
-                'lugares' => $lugaresFiltradosAnterior,
-                'problema' => 'Usuario no tiene concejal_id ni alcalde_id definidos'
-            ]
-        ]);
+                // Eliminar duplicados
+                $alcaldeIds = array_unique($alcaldeIds);
+
+                // Obtener lugares de votación de concejales Y alcaldes ligados
+                $lugares = LugarVotacion::with('mesas')
+                    ->where(function($query) use ($usuariosIds, $alcaldeIds) {
+                        $query->whereIn('concejal_id', $usuariosIds);
+                        if (!empty($alcaldeIds)) {
+                            $query->orWhereIn('alcalde_id', $alcaldeIds);
+                        }
+                    })
+                    ->get();
+
+            } else {
+                // Otros roles ven todos los lugares
+                $lugares = LugarVotacion::with('mesas')->get();
+            }
+
+            return view('permisos.crearPuntosVotacion', compact('lugares'));
+        } catch (\Exception $e) {
+            $lugares = collect();
+            return view('permisos.crearPuntosVotacion', compact('lugares'))
+                ->with('error', 'Error al cargar los lugares de votación: ' . $e->getMessage());
+        }
     }
 
     /**
-     * Muestra formulario para crear un nuevo lugar (modal lo maneja)
+     * Verificar si un usuario puede editar/eliminar un lugar específico
+     */
+    private function canUserModifyLugar($user, $lugar)
+    {
+        // Si es super admin u otros roles con permisos completos
+        if ($user->hasRole(['super-admin', 'admin'])) {
+            return true;
+        }
+
+        // Verificación para roles de alcaldía
+        if ($user->hasRole('aspirante-alcaldia') || $user->hasRole('alcalde')) {
+            // Puede editar si el lugar fue creado por él
+            if ($lugar->alcalde_id === $user->id) {
+                return true;
+            }
+
+            // Puede editar si fue creado por su alcalde/aspirante ligado
+            if ($user->hasRole('aspirante-alcaldia') && $user->alcalde_id && $lugar->alcalde_id === $user->alcalde_id) {
+                return true;
+            }
+
+            // Puede editar si fue creado por un aspirante ligado a él
+            if ($user->hasRole('alcalde')) {
+                $aspirantesLigados = User::role('aspirante-alcaldia')
+                    ->where('alcalde_id', $user->id)
+                    ->pluck('id')
+                    ->toArray();
+                
+                if (in_array($lugar->alcalde_id, $aspirantesLigados)) {
+                    return true;
+                }
+            }
+        }
+
+        // Verificación para roles de concejo
+        if ($user->hasRole('aspirante-concejo') || $user->hasRole('concejal')) {
+            // Puede editar si el lugar fue creado por él
+            if ($lugar->concejal_id === $user->id) {
+                return true;
+            }
+
+            // Puede editar si fue creado por su concejal/aspirante ligado
+            if ($user->hasRole('aspirante-concejo') && $user->concejal_id && $lugar->concejal_id === $user->concejal_id) {
+                return true;
+            }
+
+            // Puede editar si fue creado por un aspirante ligado a él
+            if ($user->hasRole('concejal')) {
+                $aspirantesLigados = User::role('aspirante-concejo')
+                    ->where('concejal_id', $user->id)
+                    ->pluck('id')
+                    ->toArray();
+                
+                if (in_array($lugar->concejal_id, $aspirantesLigados)) {
+                    return true;
+                }
+            }
+
+            // NUEVA VALIDACIÓN: Puede editar si está ligado al alcalde que creó el lugar
+            if ($user->alcalde_id && $lugar->alcalde_id === $user->alcalde_id) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Mostrar formulario para crear un nuevo lugar de votación.
      */
     public function create()
     {
-        $usuario = Auth::user();
-        
-        $lugares = LugarVotacion::with('mesas')
-            ->where(function ($query) use ($usuario) {
-                $query->where('concejal_id', $usuario->id)
-                      ->orWhere('alcalde_id', $usuario->id);
-            })
-            ->orderBy('created_at', 'desc')
-            ->get();
-            
-        return view('permisos.crearPuntosVotacion', compact('lugares'));
+        return $this->index(); // Reutiliza la misma lógica
     }
 
     /**
-     * Guarda un nuevo lugar con sus mesas
+     * Guardar un nuevo lugar de votación junto con sus mesas.
      */
     public function store(Request $request)
     {
         $request->validate([
-            'nombre'      => 'required|string|max:255',
-            'direccion'   => 'nullable|string|max:500',
-            'alcalde_id'  => 'nullable|integer|exists:users,id',
-            'concejal_id' => 'nullable|integer|exists:users,id',
-            'mesas'       => 'required|array|min:1',
-            'mesas.*'     => 'required|string|max:50',
+            'nombre' => 'required|string',
+            'direccion' => 'required|string',
+            'mesas' => 'required|array',
+            'mesas.*' => 'required|numeric'
         ]);
+
+        $user = Auth::user();
 
         $lugar = LugarVotacion::create([
-            'nombre'      => $request->nombre,
-            'direccion'   => $request->direccion,
-            'alcalde_id'  => $request->alcalde_id,
-            'concejal_id' => $request->concejal_id,
+            'nombre' => $request->nombre,
+            'direccion' => $request->direccion,
+            'alcalde_id' => ($user->hasRole('aspirante-alcaldia') || $user->hasRole('alcalde')) ? $user->id : null,
+            'concejal_id' => ($user->hasRole('aspirante-concejo') || $user->hasRole('concejal')) ? $user->id : null,
         ]);
 
-        // Procesar mesas
-        foreach ($request->mesas as $mesa) {
-            $mesasSeparadas = array_map('trim', explode(',', $mesa));
-            foreach ($mesasSeparadas as $mesaNumero) {
-                if (!empty($mesaNumero)) {
-                    $lugar->mesas()->create(['numero' => $mesaNumero]);
-                }
-            }
+        foreach ($request->mesas as $numero) {
+            Mesa::create([
+                'numero' => $numero,
+                'lugar_votacion_id' => $lugar->id,
+            ]);
         }
 
-        return redirect()->route('lugares')->with('success', 'Punto de votación creado correctamente.');
+        return redirect()->back()->with('success', 'Lugar de votación creado correctamente.');
     }
 
     /**
-     * Editar un lugar (misma vista pero con datos)
+     * Mostrar formulario para editar un lugar de votación y sus mesas.
      */
-    public function edit(LugarVotacion $lugar)
+    public function edit($id)
     {
-        $usuario = Auth::user();
-        
-        // Verificar permisos: el lugar debe pertenecer al usuario
-        if ($lugar->concejal_id != $usuario->id && $lugar->alcalde_id != $usuario->id) {
-            return redirect()->back()->with('error', 'No tiene permisos para editar este lugar de votación.');
+        $user = Auth::user();
+        $lugar = LugarVotacion::with('mesas')->findOrFail($id);
+
+        if (!$this->canUserModifyLugar($user, $lugar)) {
+            abort(403, 'No tienes permisos para editar este lugar de votación.');
         }
-        
-        $lugares = LugarVotacion::with('mesas')
-            ->where(function ($query) use ($usuario) {
-                $query->where('concejal_id', $usuario->id)
-                      ->orWhere('alcalde_id', $usuario->id);
-            })
-            ->get();
-            
-        return view('permisos.crearPuntosVotacion', compact('lugares', 'lugar'));
+
+        $mesasArray = $lugar->mesas->pluck('numero')->toArray();
+        return view('permisos.crearPuntosVotacion', compact('lugar', 'mesasArray'));
     }
 
     /**
-     * Actualizar datos del lugar y manejar mesas
+     * Actualizar un lugar de votación y sus mesas.
      */
-    public function update(Request $request, LugarVotacion $lugar)
+    public function update(Request $request, $id)
     {
-        $usuario = Auth::user();
-        
-        // Verificar permisos
-        if ($lugar->concejal_id != $usuario->id && $lugar->alcalde_id != $usuario->id) {
-            return redirect()->back()->with('error', 'No tiene permisos para actualizar este lugar de votación.');
-        }
-
-        // Validación básica
         $request->validate([
-            'nombre'      => 'required|string|max:255',
-            'direccion'   => 'nullable|string|max:500',
-            'alcalde_id'  => 'nullable|integer|exists:users,id',
-            'concejal_id' => 'nullable|integer|exists:users,id',
+            'nombre' => 'required|string|max:255',
+            'direccion' => 'required|string|max:500',
+            'mesas' => 'required|array|min:1',
+            'mesas.*' => 'required|numeric|min:1',
         ]);
 
-        // Actualizar lugar
-        $lugar->update($request->only(['nombre', 'direccion', 'alcalde_id', 'concejal_id']));
+        $user = Auth::user();
 
-        /**
-         * 1. Eliminar mesas seleccionadas
-         */
-        if ($request->has('mesas_eliminar')) {
-            foreach ($request->mesas_eliminar as $mesaId) {
-                $mesa = $lugar->mesas()->find($mesaId);
-                if ($mesa) {
-                    $mesa->delete();
-                }
+        DB::beginTransaction();
+        try {
+            $lugar = LugarVotacion::findOrFail($id);
+
+            if (!$this->canUserModifyLugar($user, $lugar)) {
+                abort(403, 'No tienes permisos para actualizar este lugar de votación.');
             }
-        }
 
-        /**
-         * 2. Agregar mesas nuevas
-         */
-        if ($request->has('mesas_nuevas')) {
-            foreach ($request->mesas_nuevas as $mesaNueva) {
-                $mesasSeparadas = array_map('trim', explode(',', $mesaNueva));
-                foreach ($mesasSeparadas as $numero) {
-                    if (!empty($numero)) {
-                        $lugar->mesas()->create(['numero' => $numero]);
-                    }
-                }
+            $lugar->update([
+                'nombre' => $request->nombre,
+                'direccion' => $request->direccion,
+            ]);
+
+            Mesa::where('lugar_votacion_id', $lugar->id)->delete();
+
+            foreach ($request->mesas as $numero) {
+                Mesa::create([
+                    'numero' => $numero,
+                    'lugar_votacion_id' => $lugar->id,
+                ]);
             }
-        }
 
-        return redirect()->route('lugares')->with('success', 'Punto de votación actualizado correctamente.');
+            DB::commit();
+            return redirect()->route('lugares')->with('success', 'Lugar actualizado correctamente.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Error al actualizar el lugar: ' . $e->getMessage());
+        }
     }
 
     /**
-     * Eliminar un lugar y sus mesas asociadas
+     * Eliminar un lugar de votación y sus mesas.
      */
-    public function destroy(LugarVotacion $lugar)
+    public function destroy($id)
     {
-        $usuario = Auth::user();
-        
-        // Verificar permisos
-        if ($lugar->concejal_id != $usuario->id && $lugar->alcalde_id != $usuario->id) {
-            return redirect()->back()->with('error', 'No tiene permisos para eliminar este lugar de votación.');
+        $user = Auth::user();
+        $lugar = LugarVotacion::findOrFail($id);
+
+        if (!$this->canUserModifyLugar($user, $lugar)) {
+            abort(403, 'No tienes permisos para eliminar este lugar de votación.');
         }
 
+        Mesa::where('lugar_votacion_id', $lugar->id)->delete();
         $lugar->delete();
 
-        return redirect()->route('lugares')->with('success', 'Punto de votación eliminado correctamente.');
+        return redirect()->back()->with('success', 'Lugar de votación eliminado.');
+    }
+
+    /**
+     * Método para depuración y diagnóstico rápido.
+     */
+    public function debug()
+    {
+        try {
+            $user = Auth::user();
+
+            $debug_info = [
+                'user_authenticated' => (bool) $user,
+                'user_id' => $user?->id,
+                'user_roles' => $user ? $user->getRoleNames() : [],
+                'user_alcalde_id' => $user?->alcalde_id,
+                'user_concejal_id' => $user?->concejal_id,
+                'can_crear_puntos' => $user ? $user->can('crear puntos de votacion') : false,
+                'lugar_votacion_table_exists' => \Schema::hasTable('lugar_votacions'),
+                'mesa_table_exists' => \Schema::hasTable('mesas'),
+                'total_lugares' => LugarVotacion::count(),
+                'total_mesas' => Mesa::count(),
+            ];
+
+            return response()->json($debug_info);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+        }
     }
 }

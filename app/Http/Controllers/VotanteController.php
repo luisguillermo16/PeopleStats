@@ -29,23 +29,110 @@ class VotanteController extends Controller
 
     /**
      * Filtra lugares de votación según el líder actual
+     * El líder solo puede ver lugares creados por sus superiores directos
      */
     private function getLugaresFiltrados($lider)
-{
-    return LugarVotacion::with('mesas')
-        ->when($lider->concejal_id, function ($query) use ($lider) {
+    {
+        $query = LugarVotacion::with('mesas');
+        
+        // CASO 1: Líder ligado a un concejal específico
+        // Debe ver lugares creados por ESE concejal
+        if (!is_null($lider->concejal_id)) {
             $query->where('concejal_id', $lider->concejal_id);
-        })
-        ->when($lider->alcalde_id && !$lider->concejal_id, function ($query) use ($lider) {
+        }
+        // CASO 2: Líder ligado solo a un alcalde (sin concejal específico)  
+        // Debe ver lugares creados por ESE alcalde
+        elseif (!is_null($lider->alcalde_id) && is_null($lider->concejal_id)) {
             $query->where('alcalde_id', $lider->alcalde_id);
-        })
-        ->orderBy('nombre')
-        ->get()
-        ->map(function ($lugar) {
+        }
+        // CASO 3: Líder ligado tanto a alcalde como a concejal
+        // Debe ver lugares creados por AMBOS (su concejal Y su alcalde)
+        elseif (!is_null($lider->alcalde_id) && !is_null($lider->concejal_id)) {
+            $query->where(function($q) use ($lider) {
+                $q->where('concejal_id', $lider->concejal_id)
+                  ->orWhere('alcalde_id', $lider->alcalde_id);
+            });
+        }
+        // CASO 4: Líder sin ligaciones - no puede ver ningún lugar
+        else {
+            $query->whereRaw('1 = 0'); // No devuelve resultados
+        }
+        
+        return $query->orderBy('nombre')
+            ->get()
+            ->map(function ($lugar) {
+                return [
+                    'id' => $lugar->id,
+                    'nombre' => $lugar->nombre,
+                    'alcalde_creador' => $lugar->alcalde_id,
+                    'concejal_creador' => $lugar->concejal_id,
+                    'mesas' => $lugar->mesas->map(function ($mesa) {
+                        return [
+                            'id' => $mesa->id,
+                            'numero' => $mesa->numero
+                        ];
+                    })->toArray(),
+                ];
+            });
+    }
+
+    /**
+     * MÉTODO ALTERNATIVO: Filtrado más explícito y con logs para debug
+     */
+    private function getLugaresFiltradosConDebug($lider)
+    {
+        \Log::info('=== FILTRADO DE LUGARES PARA LÍDER ===', [
+            'lider_id' => $lider->id,
+            'alcalde_id' => $lider->alcalde_id,
+            'concejal_id' => $lider->concejal_id
+        ]);
+
+        $query = LugarVotacion::with('mesas');
+        
+        if (!is_null($lider->concejal_id)) {
+            // Líder ligado a concejal específico - solo ve lugares de ESE concejal
+            $query->where('concejal_id', $lider->concejal_id);
+            \Log::info('🎯 Filtrado: Solo lugares creados por concejal_id = ' . $lider->concejal_id);
+            
+        } elseif (!is_null($lider->alcalde_id) && is_null($lider->concejal_id)) {
+            // Líder ligado solo a alcalde - solo ve lugares de ESE alcalde
+            $query->where('alcalde_id', $lider->alcalde_id);
+            \Log::info('🎯 Filtrado: Solo lugares creados por alcalde_id = ' . $lider->alcalde_id);
+            
+        } elseif (!is_null($lider->alcalde_id) && !is_null($lider->concejal_id)) {
+            // Líder ligado a AMBOS - ve lugares de su concejal Y su alcalde
+            $query->where(function($q) use ($lider) {
+                $q->where('concejal_id', $lider->concejal_id)
+                  ->orWhere('alcalde_id', $lider->alcalde_id);
+            });
+            \Log::info('🎯 Filtrado: Lugares de concejal_id = ' . $lider->concejal_id . ' O alcalde_id = ' . $lider->alcalde_id);
+            
+        } else {
+            // Líder sin ligaciones - no puede ver ningún lugar
+            $query->whereRaw('1 = 0');
+            \Log::warning('⚠️ Líder sin alcalde_id ni concejal_id - sin lugares disponibles', ['lider_id' => $lider->id]);
+        }
+        
+        $lugares = $query->orderBy('nombre')->get();
+        
+        \Log::info('📊 RESULTADO: ' . $lugares->count() . ' lugares encontrados');
+        
+        foreach ($lugares as $lugar) {
+            \Log::info('📍 Lugar encontrado:', [
+                'id' => $lugar->id,
+                'nombre' => $lugar->nombre,
+                'creado_por_alcalde' => $lugar->alcalde_id,
+                'creado_por_concejal' => $lugar->concejal_id,
+                'mesas_count' => $lugar->mesas->count()
+            ]);
+        }
+        
+        return $lugares->map(function ($lugar) {
             return [
                 'id' => $lugar->id,
                 'nombre' => $lugar->nombre,
-                // Devuelve mesas con id y numero
+                'creado_por_alcalde' => $lugar->alcalde_id,
+                'creado_por_concejal' => $lugar->concejal_id,
                 'mesas' => $lugar->mesas->map(function ($mesa) {
                     return [
                         'id' => $mesa->id,
@@ -54,7 +141,7 @@ class VotanteController extends Controller
                 })->toArray(),
             ];
         });
-}
+    }
 
     // =============================
     // FORMULARIO DE CREACIÓN
@@ -94,7 +181,7 @@ class VotanteController extends Controller
             'cedula' => 'required|string|max:20|unique:votantes,cedula',
             'telefono' => 'required|string|max:20',
             'mesa' => 'required|string|max:255',
-            'lugar_votacion_id' => 'required|exists:lugares_votacion,id',
+            'lugares_votacion_id' => 'required|exists:lugar_votacions,id', // Corregido el nombre de la tabla
         ];
 
         if ($lider->concejal_id) {
@@ -108,7 +195,7 @@ class VotanteController extends Controller
             'concejal_id.exists' => 'El concejal seleccionado no es válido.',
         ]);
 
-        $votante = new Votante($request->only('nombre', 'cedula', 'telefono', 'mesa', 'lugar_votacion_id'));
+        $votante = new Votante($request->only('nombre', 'cedula', 'telefono', 'mesa', 'lugares_votacion_id'));
         $votante->lider_id = $lider->id;
 
         // Lógica para asignar alcalde/concejal
@@ -200,7 +287,7 @@ class VotanteController extends Controller
             'cedula' => 'required|string|max:20|unique:votantes,cedula,' . $votante->id,
             'telefono' => 'required|string|max:20',
             'mesa' => 'required|string|max:255',
-            'lugar_votacion_id' => 'required|exists:lugares_votacion,id',
+            'lugares_votacion_id' => 'required|exists:lugar_votacions,id', // Corregido el nombre de la tabla
         ];
 
         if ($lider->concejal_id) {
@@ -221,7 +308,7 @@ class VotanteController extends Controller
                 ->with('editModalId', $votante->id);
         }
 
-        $votante->fill($request->only('nombre', 'cedula', 'telefono', 'mesa', 'lugar_votacion_id'));
+        $votante->fill($request->only('nombre', 'cedula', 'telefono', 'mesa', 'lugares_votacion_id'));
 
         // Lógica para actualizar alcalde/concejal
         if ($lider->concejal_id) {
@@ -282,5 +369,29 @@ class VotanteController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Error al importar: ' . $e->getMessage());
         }
+    }
+
+    // =============================
+    // MÉTODO DE DEBUG
+    // =============================
+    public function debug()
+    {
+        $lider = $this->getLider();
+        
+        if (!$lider) {
+            return response()->json(['error' => 'Líder no encontrado']);
+        }
+
+        $lugares = $this->getLugaresFiltradosConDebug($lider);
+        
+        return response()->json([
+            'lider' => [
+                'id' => $lider->id,
+                'alcalde_id' => $lider->alcalde_id,
+                'concejal_id' => $lider->concejal_id,
+            ],
+            'lugares_count' => count($lugares),
+            'lugares' => $lugares
+        ]);
     }
 }

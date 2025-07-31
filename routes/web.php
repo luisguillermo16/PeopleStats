@@ -161,15 +161,28 @@ Route::middleware(['auth','can:ingresar votantes'])->group(function () {
 | PUNTOS DE VOTACIÓN (gestionados por Alcalde o Concejal)
 |--------------------------------------------------------------------------
 */
+
 Route::middleware(['auth', 'can:crear puntos de votacion'])->group(function () {
+    // Ruta principal - Mostrar lista de puntos de votación
     Route::get('/lugares', [LugarVotacionController::class, 'index'])->name('lugares');
-    Route::get('/lugares/crear', [LugarVotacionController::class, 'create'])->name('crearPuntosVotacion');
-    Route::post('/lugares', [LugarVotacionController::class, 'store'])->name('storePuntosVotacion');
-    Route::get('/lugares/{lugar}/editar', [LugarVotacionController::class, 'edit'])->name('editPuntosVotacion');
-Route::get('/debug-lugares', [LugarVotacionController::class, 'debug'])->name('debug.lugares');
-    Route::put('/lugares/{lugar}', [LugarVotacionController::class, 'update'])->name('updatePuntosVotacion');
-    Route::delete('/lugares/{lugar}', [LugarVotacionController::class, 'destroy'])->name('destroyPuntosVotacion');
     
+    // Ruta para mostrar formulario de creación (opcional, ya que usas modal)
+    Route::get('/lugares/crear', [LugarVotacionController::class, 'create'])->name('crearPuntosVotacion');
+    
+    // Ruta para almacenar nuevo punto de votación
+    Route::post('/lugares', [LugarVotacionController::class, 'store'])->name('storePuntosVotacion');
+    
+    // Ruta para mostrar formulario de edición (opcional, ya que usas modal)
+    Route::get('/lugares/{id}/editar', [LugarVotacionController::class, 'edit'])->name('editPuntosVotacion');
+    
+    // Ruta para actualizar punto de votación
+    Route::put('/lugares/{id}', [LugarVotacionController::class, 'update'])->name('updatePuntosVotacion');
+    
+    // Ruta para eliminar punto de votación
+    Route::delete('/lugares/{id}', [LugarVotacionController::class, 'destroy'])->name('destroyPuntosVotacion');
+    
+    // Ruta de debug (opcional, para desarrollo)
+    Route::get('/lugares/debug', [LugarVotacionController::class, 'debug'])->name('debugPuntosVotacion');
 });
 
 /*
