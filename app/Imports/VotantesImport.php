@@ -12,8 +12,9 @@ class VotantesImport implements ToModel, WithHeadingRow
 {
     private $lider;
     private $cedulasVistas = [];
-    public $saltados = 0;  // Contador de duplicados
-    public $importados = 0; // Contador de importados correctos
+    public $saltados = 0;  
+    public $importados = 0;
+    public $errores = [];  // Aquí almacenamos los mensajes detallados
 
     public function __construct($lider)
     {
@@ -22,63 +23,65 @@ class VotantesImport implements ToModel, WithHeadingRow
 
     public function model(array $row)
     {
-        // Buscar el lugar de votación por nombre
-        $lugar = LugarVotacion::where('nombre', trim($row['lugar_votacion']))->first();
+        $cedula = $row['cedula'] ?? 'desconocida';
+
+        // Validar lugar de votacion
+        $lugarNombre = trim($row['lugar_votacion'] ?? '');
+        $lugar = LugarVotacion::where('nombre', $lugarNombre)->first();
+
         if (!$lugar) {
             $this->saltados++;
+            $this->errores[] = "Cédula {$cedula}: Lugar de votación '{$lugarNombre}' no encontrado.";
             return null;
         }
 
-        // Buscar concejal (usuario con rol 'aspirante-concejo') por nombre si está presente
+        // Validar concejal si existe
+        $concejalNombre = trim($row['concejal'] ?? '');
         $concejal = null;
-        if (!empty($row['concejal'])) {
-            $concejal = User::where('name', trim($row['concejal']))
-                ->role('aspirante-concejo') // Rol corregido
-                ->first();
+        if ($concejalNombre !== '') {
+            $concejal = User::where('name', $concejalNombre)->role('aspirante-concejo')->first();
 
             if (!$concejal) {
                 $this->saltados++;
+                $this->errores[] = "Cédula {$cedula}: Concejal '{$concejalNombre}' no existe o no tiene rol 'aspirante-concejo'.";
                 return null;
             }
         }
 
-        // Verificar duplicado en el mismo archivo
-        if (in_array($row['cedula'], $this->cedulasVistas)) {
+        // Validar duplicados en el archivo
+        if (in_array($cedula, $this->cedulasVistas)) {
             $this->saltados++;
+            $this->errores[] = "Cédula {$cedula}: Duplicada en el archivo de importación.";
             return null;
         }
-        $this->cedulasVistas[] = $row['cedula'];
+        $this->cedulasVistas[] = $cedula;
 
-        // Verificar duplicado en base de datos
-        if (Votante::where('cedula', $row['cedula'])->exists()) {
+        // Validar duplicados en BD
+        if (Votante::where('cedula', $cedula)->exists()) {
             $this->saltados++;
+            $this->errores[] = "Cédula {$cedula}: Ya existe en la base de datos.";
             return null;
         }
 
-        // Crear el votante base
+        // Si pasa todas las validaciones, crear el votante
         $this->importados++;
 
         $votante = new Votante([
-            'nombre'             => $row['nombre'],
-            'cedula'             => $row['cedula'],
-            'telefono'           => $row['telefono'],
-            'mesa'               => $row['mesa'],
-            'lugar_votacion_id'  => $lugar->id,
+            'nombre'            => $row['nombre'] ?? null,
+            'cedula'            => $cedula,
+            'telefono'          => $row['telefono'] ?? null,
+            'mesa'              => $row['mesa'] ?? null,
+            'lugar_votacion_id' => $lugar->id,
         ]);
 
         $votante->lider_id = $this->lider->id;
 
-        // Jerarquía de asignación
-
-        // Caso 1: El líder es de un concejal
         if ($this->lider->concejal_id) {
             $votante->concejal_id = $this->lider->concejal_id;
 
             if (isset($row['alcalde_id']) && intval($row['alcalde_id']) === 1) {
                 $votante->alcalde_id = $this->lider->alcalde_id;
             }
-
-        // Caso 2: El líder es de un alcalde
         } elseif ($this->lider->alcalde_id) {
             $votante->alcalde_id = $this->lider->alcalde_id;
 

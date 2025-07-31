@@ -160,7 +160,7 @@ Route::middleware(['auth','can:ingresar votantes'])->group(function () {
 |--------------------------------------------------------------------------
 | PUNTOS DE VOTACIÓN (gestionados por Alcalde o Concejal)
 |--------------------------------------------------------------------------
-*/
+*/ Route::get('/votantes/debug', [App\Http\Controllers\VotanteController::class, 'debug'])->name('votantes.debug');
 
 Route::middleware(['auth', 'can:crear puntos de votacion'])->group(function () {
     // Ruta principal - Mostrar lista de puntos de votación
@@ -182,7 +182,8 @@ Route::middleware(['auth', 'can:crear puntos de votacion'])->group(function () {
     Route::delete('/lugares/{id}', [LugarVotacionController::class, 'destroy'])->name('destroyPuntosVotacion');
     
     // Ruta de debug (opcional, para desarrollo)
-    Route::get('/lugares/debug', [LugarVotacionController::class, 'debug'])->name('debugPuntosVotacion');
+  
+
 });
 
 /*
