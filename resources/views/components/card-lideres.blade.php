@@ -19,8 +19,6 @@
                         <h2 class="mb-0 fw-bold text-warning counter"
                         data-target="{{ $totalLideres }}">0</h2>
                     </div>
-                       
-                           
                 </div>
             </div>
         </div>
