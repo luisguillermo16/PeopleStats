@@ -1,5 +1,5 @@
 <div class="col-12 col-md-6 col-xl-4">
-    <div class="card border-0 shadow-sm h-100 hover-shadow">
+<div class="card border-0 shadow-sm h-100 hover-shadow dashboard-card concejales-card">
         <div class="card-body p-4">
             <div class="d-flex align-items-center justify-content-between">
                 <div>
@@ -16,7 +16,9 @@
                         </div>
                     </div>
                     <div class="d-flex align-items-end">
-                        <h2 class="mb-0 fw-bold text-primary">{{ $totalConcejales }}</h2>
+                        <h2 class="mb-0 fw-bold text-primary counter"
+                           data-target="{{ $totalConcejales }}">0</h2>
+                      
                     </div>
                 </div>
             </div>
