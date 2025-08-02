@@ -19,6 +19,7 @@
                     <div class="d-flex align-items-end">
                         <h2 class="mb-0 fw-bold text-success counter" 
                             data-target="{{ $totalVotantes }}">0</h2>
+                            
                     </div>
                 </div>
             </div>
@@ -49,12 +50,13 @@
                                 <span class="d-none d-lg-inline">Total de Votantes Únicos</span>
                                 <span class="d-lg-none">Votantes Únicos</span>
                             </h6>
-                            <small class="text-muted">Registrados en el sistema</small>
+                          
                         </div>
                     </div>
                     <div class="d-flex align-items-end">
                         <h2 class="mb-0 fw-bold text-success counter" 
                             data-target="{{ $totalVotantes }}">0</h2>
+                            
                     </div>
                 </div>
             </div>
