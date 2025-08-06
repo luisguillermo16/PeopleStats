@@ -34,6 +34,7 @@
         <x-card-lideres />
     @elseif ($rol == 'lider')
         <x-card-votantes />
+        <x-buscar-cedula />
     @else
         <div class="alert alert-danger">Rol no válido</div>
     @endif

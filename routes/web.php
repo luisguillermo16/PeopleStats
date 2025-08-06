@@ -157,6 +157,8 @@ Route::middleware(['auth','can:ingresar votantes'])->group(function () {
     Route::get('/buscar-votante', [VotanteController::class, 'buscarPorCedula'])->name('votantes.buscar');
     Route::post('/votantes/import', [VotanteController::class, 'import'])->name('votantes.import');
     Route::get('/votantes/plantilla', [VotanteController::class, 'template'])->name('votantes.plantilla');
+    Route::get('/votantes/buscar', [VotanteController::class, 'buscarPorCedula'])->name('votantes.buscar');
+
 });
 
 /*

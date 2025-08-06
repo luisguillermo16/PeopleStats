@@ -5,6 +5,7 @@ namespace App\Imports;
 use App\Models\Votante;
 use App\Models\LugarVotacion;
 use App\Models\User;
+use App\Models\Barrio;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
@@ -14,7 +15,7 @@ class VotantesImport implements ToModel, WithHeadingRow
     private $cedulasVistas = [];
     public $saltados = 0;  
     public $importados = 0;
-    public $errores = [];  // Aquí almacenamos los mensajes detallados
+    public $errores = [];
 
     public function __construct($lider)
     {
@@ -25,7 +26,9 @@ class VotantesImport implements ToModel, WithHeadingRow
     {
         $cedula = $row['cedula'] ?? 'desconocida';
 
-        // Validar lugar de votacion
+        // =============================
+        // Validar Lugar de Votación
+        // =============================
         $lugarNombre = trim($row['lugar_votacion'] ?? '');
         $lugar = LugarVotacion::where('nombre', $lugarNombre)->first();
 
@@ -35,7 +38,32 @@ class VotantesImport implements ToModel, WithHeadingRow
             return null;
         }
 
-        // Validar concejal si existe
+        // =============================
+        // Validar Barrio
+        // =============================
+        $barrioNombre = trim($row['barrio'] ?? '');
+        $barrio = null;
+
+        if ($barrioNombre !== '') {
+            // El barrio debe estar creado por el mismo alcalde vinculado al líder
+            $barrio = Barrio::where('nombre', $barrioNombre)
+                ->where('alcalde_id', $this->lider->alcalde_id)
+                ->first();
+
+            if (!$barrio) {
+                $this->saltados++;
+                $this->errores[] = "Cédula {$cedula}: Barrio '{$barrioNombre}' no encontrado o no pertenece al alcalde asignado.";
+                return null;
+            }
+        } else {
+            $this->saltados++;
+            $this->errores[] = "Cédula {$cedula}: El campo 'barrio' es obligatorio.";
+            return null;
+        }
+
+        // =============================
+        // Validar Concejal
+        // =============================
         $concejalNombre = trim($row['concejal'] ?? '');
         $concejal = null;
         if ($concejalNombre !== '') {
@@ -48,7 +76,9 @@ class VotantesImport implements ToModel, WithHeadingRow
             }
         }
 
-        // Validar duplicados en el archivo
+        // =============================
+        // Validar duplicados en archivo
+        // =============================
         if (in_array($cedula, $this->cedulasVistas)) {
             $this->saltados++;
             $this->errores[] = "Cédula {$cedula}: Duplicada en el archivo de importación.";
@@ -56,14 +86,18 @@ class VotantesImport implements ToModel, WithHeadingRow
         }
         $this->cedulasVistas[] = $cedula;
 
+        // =============================
         // Validar duplicados en BD
+        // =============================
         if (Votante::where('cedula', $cedula)->exists()) {
             $this->saltados++;
             $this->errores[] = "Cédula {$cedula}: Ya existe en la base de datos.";
             return null;
         }
 
-        // Si pasa todas las validaciones, crear el votante
+        // =============================
+        // Crear Votante
+        // =============================
         $this->importados++;
 
         $votante = new Votante([
@@ -72,10 +106,12 @@ class VotantesImport implements ToModel, WithHeadingRow
             'telefono'          => $row['telefono'] ?? null,
             'mesa'              => $row['mesa'] ?? null,
             'lugar_votacion_id' => $lugar->id,
+            'barrio_id'         => $barrio->id,
         ]);
 
         $votante->lider_id = $this->lider->id;
 
+        // Asignar concejal/alcalde según jerarquía
         if ($this->lider->concejal_id) {
             $votante->concejal_id = $this->lider->concejal_id;
 

@@ -305,9 +305,7 @@ class LugarVotacionController extends Controller
         $user = Auth::user();
         $lugar = LugarVotacion::findOrFail($id);
 
-        if (!$this->canUserModifyLugar($user, $lugar)) {
-            abort(403, 'No tienes permisos para eliminar este lugar de votación.');
-        }
+       
 
         Mesa::where('lugar_votacion_id', $lugar->id)->delete();
         $lugar->delete();

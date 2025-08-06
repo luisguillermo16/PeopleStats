@@ -241,35 +241,7 @@
                             <label class="form-label fw-semibold">Confirmar Contraseña</label>
                             <input name="password_confirmation" type="password" class="form-control" required>
                         </div>
-                        <div class="col-12 col-md-6">
-                            <label class="form-label fw-semibold">Zona de Influencia</label>
-                            <select name="zona_influencia" class="form-select" required>
-                                <option value="">Seleccionar zona...</option>
-                                <option value="Norte" {{ old('zona_influencia') == 'Norte' ? 'selected' : '' }}>Norte</option>
-                                <option value="Sur" {{ old('zona_influencia') == 'Sur' ? 'selected' : '' }}>Sur</option>
-                                <option value="Este" {{ old('zona_influencia') == 'Este' ? 'selected' : '' }}>Este</option>
-                                <option value="Oeste" {{ old('zona_influencia') == 'Oeste' ? 'selected' : '' }}>Oeste</option>
-                                <option value="Centro" {{ old('zona_influencia') == 'Centro' ? 'selected' : '' }}>Centro</option>
-                                <option value="Metropolitana" {{ old('zona_influencia') == 'Metropolitana' ? 'selected' : '' }}>Metropolitana</option>
-                                <option value="Rural" {{ old('zona_influencia') == 'Rural' ? 'selected' : '' }}>Rural</option>
-                                <option value="Urbana" {{ old('zona_influencia') == 'Urbana' ? 'selected' : '' }}>Urbana</option>
-                            </select>
-                        </div>
-                        <div class="col-12 col-md-6">
-                            <label class="form-label fw-semibold">Afiliación Política</label>
-                            <select name="afiliacion_politica" class="form-select">
-                                <option value="">Sin afiliación</option>
-                                <option value="Conservador" {{ old('afiliacion_politica') == 'Conservador' ? 'selected' : '' }}>Conservador</option>
-                                <option value="Liberal" {{ old('afiliacion_politica') == 'Liberal' ? 'selected' : '' }}>Liberal</option>
-                                <option value="Centro Democrático" {{ old('afiliacion_politica') == 'Centro Democrático' ? 'selected' : '' }}>Centro Democrático</option>
-                                <option value="Cambio Radical" {{ old('afiliacion_politica') == 'Cambio Radical' ? 'selected' : '' }}>Cambio Radical</option>
-                                <option value="Polo Democrático" {{ old('afiliacion_politica') == 'Polo Democrático' ? 'selected' : '' }}>Polo Democrático</option>
-                                <option value="Alianza Verde" {{ old('afiliacion_politica') == 'Alianza Verde' ? 'selected' : '' }}>Alianza Verde</option>
-                                <option value="FARC" {{ old('afiliacion_politica') == 'FARC' ? 'selected' : '' }}>FARC</option>
-                                <option value="Independiente" {{ old('afiliacion_politica') == 'Independiente' ? 'selected' : '' }}>Independiente</option>
-                                <option value="Otro" {{ old('afiliacion_politica') == 'Otro' ? 'selected' : '' }}>Otro</option>
-                            </select>
-                        </div>
+                       
                         <div class="col-12">
                             <label class="form-label fw-semibold">Teléfono</label>
                             <input name="telefono" type="tel" class="form-control" 

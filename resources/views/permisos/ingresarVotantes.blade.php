@@ -55,6 +55,7 @@
                 <th>Nombre</th>
                 <th class="d-none d-md-table-cell">Cédula</th>
                 <th class="d-none d-lg-table-cell">Teléfono</th>
+                 <th class="d-none d-lg-table-cell">Barrio</th>
                 <th class="d-none d-lg-table-cell">Lugar de Votación</th>
                 <th class="d-none d-lg-table-cell">Mesa</th>
                 <th class="d-none d-lg-table-cell">
@@ -72,9 +73,10 @@
                         <div class="d-md-none"><small class="text-muted">{{ $votante->telefono }}</small></div>
                     </td>
                     <td class="d-none d-md-table-cell">{{ $votante->cedula }}</td>
-                    <td class="d-none d-lg-table-cell">{{ $votante->telefono }}</td>
+                    <td class="d-none d-lg-table-cell">{{ $votante->telefono ?? 'Sin asignar' }}</td>
+                    <td class="d-none d-lg-table-cell">{{ $votante->barrio->nombre ?? 'Sin asignar' }}</td>
                     <td class="d-none d-lg-table-cell">{{ $votante->lugarVotacion->nombre ?? 'Sin asignar' }}</td>
-                    <td class="d-none d-lg-table-cell">{{ $votante->mesa }}</td>
+                    <td class="d-none d-lg-table-cell">{{ $votante->mesa ?? 'Sin asignar' }}</td>
                     <td class="d-none d-lg-table-cell">
                       @if(is_null($lider->concejal_id))
                             {{ $votante->concejal?->name ?? $votante->concejal?->user?->name ?? 'No' }}
@@ -115,13 +117,31 @@
                             <label class="form-label">Nombre</label>
                             <input name="nombre" type="text" class="form-control" value="{{ old('nombre') }}" required>
                         </div>
-                        <div class="col-md-6">
+                       <div class="col-md-6">
                             <label class="form-label">Cédula</label>
-                            <input name="cedula" type="text" class="form-control" value="{{ old('cedula') }}" required>
+                            <input name="cedula" type="text" class="form-control" 
+                                
+                                required
+                                inputmode="numeric"
+                                pattern="[0-9]*"
+                                oninput="this.value = this.value.replace(/[^0-9]/g,'');">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Teléfono</label>
-                            <input name="telefono" type="text" class="form-control" value="{{ old('telefono') }}">
+                            <input name="telefono" type="text" class="form-control" value="{{ old('telefono') }}" 
+                                required
+                                inputmode="numeric"
+                                pattern="[0-9]*"
+                                oninput="this.value = this.value.replace(/[^0-9]/g,'');">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Barrio</label>
+                            <select name="barrio_id" class="form-select" required>
+                                <option value="">Seleccione un barrio</option>
+                                @foreach($barrios as $barrio)
+                                    <option value="{{ $barrio->id }}">{{ $barrio->nombre }}</option>
+                                @endforeach
+                            </select>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Lugar de Votación</label>
@@ -187,14 +207,34 @@
                                 <label class="form-label">Nombre</label>
                                 <input name="nombre" type="text" class="form-control" value="{{ $votante->nombre }}" required>
                             </div>
-                            <div class="col-md-6">
+                          <div class="col-md-6">
                                 <label class="form-label">Cédula</label>
-                                <input name="cedula" type="text" class="form-control" value="{{ $votante->cedula }}" required>
+                                <input name="cedula" type="text" class="form-control" 
+                                    value="{{ $votante->cedula }}" 
+                                    required
+                                    inputmode="numeric"
+                                    pattern="[0-9]*"
+                                    oninput="this.value = this.value.replace(/[^0-9]/g,'');">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Teléfono</label>
-                                <input name="telefono" type="text" class="form-control" value="{{ $votante->telefono }}">
+                                <input name="telefono" type="text" class="form-control" value="{{ $votante->telefono }}" required
+                                inputmode="numeric"
+                                pattern="[0-9]*"
+                                oninput="this.value = this.value.replace(/[^0-9]/g,'');">
                             </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Barrio</label>
+                                <select name="barrio_id" class="form-select" required>
+                                    <option value="">Seleccione un barrio</option>
+                                    @foreach($barrios as $barrio)
+                                        <option value="{{ $barrio->id }}" {{ $votante->barrio_id == $barrio->id ? 'selected' : '' }}>
+                                            {{ $barrio->nombre }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
                             <div class="col-md-6">
                                 <label class="form-label">Lugar de Votación</label>
                                 <select class="form-select lugar-select" name="lugar_votacion_id" data-mesa-select="mesa_edit_{{ $votante->id }}">
@@ -259,6 +299,9 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    // ==========================
+    // Actualización de Mesas
+    // ==========================
     const actualizarMesas = (lugarSelect, mesaSelect) => {
         mesaSelect.innerHTML = '<option value="">Seleccione una mesa</option>';
         const mesas = JSON.parse(lugarSelect.selectedOptions[0]?.dataset.mesas || '[]');
@@ -279,68 +322,31 @@ document.addEventListener('DOMContentLoaded', function () {
         select.addEventListener('change', () => actualizarMesas(select, mesaSelect));
     });
 
+    // ==========================
+    // Checkbox seleccionar todos
+    // ==========================
     document.getElementById('selectAll')?.addEventListener('change', function () {
         document.querySelectorAll('.item-checkbox').forEach(cb => cb.checked = this.checked);
     });
 
-   @if ($errors->any() && !session('editModalId'))
-    new bootstrap.Modal(document.getElementById('createModal')).show();
-@endif
+    // ==========================
+    // Reabrir modal si hay errores
+    // ==========================
+    @if ($errors->any() && !session('editModalId'))
+        const modalCreate = new bootstrap.Modal(document.getElementById('createModal'));
+        modalCreate.show(); // Se abre con fondo normal
+    @endif
 
+    // ==========================
+    // Reabrir modal editar si aplica
+    // ==========================
     @if(session('editModalId'))
         new bootstrap.Modal(document.getElementById('editModal{{ session('editModalId') }}')).show();
     @endif
-});
-document.addEventListener('DOMContentLoaded', function () {
-    const fileInput = document.getElementById('excel_file');
-    const importBtn = document.getElementById('importBtn');
-    const selectBtn = document.querySelector('button[onclick*="excel_file"]');
 
-    fileInput.addEventListener('change', function () {
-        const fileName = this.files[0]?.name || '';
-
-        if (fileName) {
-            // Habilitar botón de importar
-            importBtn.disabled = false;
-
-            // Truncar nombre si es muy largo
-            const shortName = fileName.length > 20 ? fileName.substring(0, 20) + '...' : fileName;
-
-            // Cambiar contenido del botón
-            selectBtn.innerHTML = `
-                <i class="bi bi-file-earmark-excel me-1"></i>
-                <span class="d-none d-sm-inline">${shortName}</span>
-            `;
-
-            selectBtn.classList.remove('btn-outline-success');
-            selectBtn.classList.add('btn-success');
-        } else {
-            // Restaurar estado original
-            importBtn.disabled = true;
-
-            selectBtn.innerHTML = `
-                <i class="bi bi-file-earmark-excel me-1"></i>
-                <span class="d-none d-sm-inline">Seleccionar</span> Excel
-            `;
-
-            selectBtn.classList.remove('btn-success');
-            selectBtn.classList.add('btn-outline-success');
-        }
-    });
-
-    // Validación al enviar
-    const form = document.querySelector('form[action*="import"]');
-    form.addEventListener('submit', function (e) {
-        if (!fileInput.files.length) {
-            e.preventDefault();
-            alert('Por favor seleccione un archivo Excel para importar.');
-        }
-    });
-});
-
-
-document.addEventListener('DOMContentLoaded', function() {
+    // ==========================
     // Confirmación SweetAlert antes de eliminar
+    // ==========================
     document.querySelectorAll('.form-eliminar').forEach(form => {
         form.addEventListener('submit', function (e) {
             e.preventDefault();
@@ -362,7 +368,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Mensaje flash de éxito
+    // ==========================
+    // SweetAlert de éxito y error
+    // ==========================
     @if(session('success'))
         Swal.fire({
             icon: 'success',
@@ -372,7 +380,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     @endif
 
-    // Mensaje flash de error
     @if(session('error'))
         Swal.fire({
             icon: 'error',
@@ -382,7 +389,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     @endif
 
-    // Errores de validación
+    // ==========================
+    // SweetAlert de validación (no cierra modal)
+    // ==========================
     @if ($errors->any())
         Swal.fire({
             icon: 'error',
@@ -392,19 +401,17 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     @endif
 
-    // Abrir modal de creación si hay errores
-    @if($errors->any() && old('_token') && !$errors->has('email'))
-        const createModal = new bootstrap.Modal(document.getElementById('createModal'));
-        createModal.show();
-    @endif
-
-    // Abrir modal de edición si error pertenece a edición
-    @if($errors->has('email') && session('edit_id'))
-        const editModal = new bootstrap.Modal(document.getElementById('editModal{{ session("edit_id") }}'));
-        editModal.show();
-    @endif
+    // ==========================
+    // Limpiar backdrop al cerrar modal
+    // ==========================
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('hidden.bs.modal', () => {
+            document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+            document.body.classList.remove('modal-open');
+            document.body.style.removeProperty('overflow'); // evita scroll bloqueado
+            document.body.style.removeProperty('padding-right');
+        });
+    });
 });
-
-
 </script>
 @endpush

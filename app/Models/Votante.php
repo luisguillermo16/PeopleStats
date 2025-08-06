@@ -21,6 +21,7 @@ class Votante extends Model
         'concejal_id',
         'alcalde_id',
         'lugar_votacion_id', 
+        'barrio_id',
         
     ];
 
@@ -60,7 +61,7 @@ class Votante extends Model
     }
     public function barrio()
 {
-    return $this->belongsTo(Barrio::class);
+    return $this->belongsTo(Barrio::class, 'barrio_id');
 }
 
 }
