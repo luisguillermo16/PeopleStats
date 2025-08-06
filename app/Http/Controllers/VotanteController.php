@@ -111,6 +111,7 @@ class VotanteController extends Controller
     {
         $lider = $this->getLider();
 
+
         if (!$lider) {
             return redirect()->back()->with('error', 'No se encontró el líder asociado al usuario.');
         }
@@ -120,7 +121,7 @@ class VotanteController extends Controller
             'cedula' => 'required|string|max:20|unique:votantes,cedula',
             'telefono' => 'required|string|max:20',
             'mesa' => 'required|string|max:255',
-            'lugares_votacion_id' => 'required|exists:lugar_votacions,id', // Corregido el nombre de la tabla
+            'lugar_votacion_id' => 'required|exists:lugares_votacion,id',
         ];
 
         if ($lider->concejal_id) {
@@ -134,7 +135,7 @@ class VotanteController extends Controller
             'concejal_id.exists' => 'El concejal seleccionado no es válido.',
         ]);
 
-        $votante = new Votante($request->only('nombre', 'cedula', 'telefono', 'mesa', 'lugares_votacion_id'));
+        $votante = new Votante($request->only('nombre', 'cedula', 'telefono', 'mesa', 'lugar_votacion_id'));
         $votante->lider_id = $lider->id;
 
         // Lógica para asignar alcalde/concejal
@@ -147,7 +148,6 @@ class VotanteController extends Controller
                 $votante->concejal_id = $request->concejal_id;
             }
         }
-
         $votante->save();
 
         return redirect()->route('ingresarVotantes')->with('success', 'Votante registrado correctamente.');
@@ -226,7 +226,7 @@ class VotanteController extends Controller
             'cedula' => 'required|string|max:20|unique:votantes,cedula,' . $votante->id,
             'telefono' => 'required|string|max:20',
             'mesa' => 'required|string|max:255',
-            'lugares_votacion_id' => 'required|exists:lugar_votacions,id', // Corregido el nombre de la tabla
+            'lugar_votacion_id' => 'required|exists:lugares_votacion,id',
         ];
 
         if ($lider->concejal_id) {
@@ -247,7 +247,7 @@ class VotanteController extends Controller
                 ->with('editModalId', $votante->id);
         }
 
-        $votante->fill($request->only('nombre', 'cedula', 'telefono', 'mesa', 'lugares_votacion_id'));
+        $votante->fill($request->only('nombre', 'cedula', 'telefono', 'mesa', 'lugar_votacion_id'));
 
         // Lógica para actualizar alcalde/concejal
         if ($lider->concejal_id) {

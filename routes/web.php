@@ -11,7 +11,9 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AlcaldeVotanteController;
 use App\Http\Controllers\VerVotanteController;
 use App\Http\Controllers\LugarVotacionController;
+use App\Http\Controllers\BarrioController;
 use App\Models\User;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -72,6 +74,7 @@ Route::middleware(['auth','can:crear concejales'])->group(function () {
 
     // Vista tabla de concejales
     Route::get('/crearConcejal', [ConcejalController::class,'index'])->name('crearConcejal');
+
 
     // Model binding seguro: {concejal} siempre será un User con rol aspirante-concejo
     Route::bind('concejal', function ($value) {
@@ -183,6 +186,20 @@ Route::middleware(['auth', 'can:crear puntos de votacion'])->group(function () {
     
     // Ruta de debug (opcional, para desarrollo)
   
+
+});
+/*
+|--------------------------------------------------------------------------
+| PUNTOS DE barrios (gestionados por Alcalde)
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', 'can:crear barrios'])->group(function () {
+
+    Route::get('/crearBarrios', [BarrioController::class, 'index'])->name('crearBarrios');
+    Route::post('/crearBarrios', [BarrioController::class, 'store'])->name('crearBarrios.store');
+    Route::delete('/crearBarrios/{barrio}', [BarrioController::class, 'destroy'])->name('crearBarrios.destroy');
+
+
 
 });
 

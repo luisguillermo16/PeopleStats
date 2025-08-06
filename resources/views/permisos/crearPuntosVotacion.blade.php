@@ -7,7 +7,7 @@
     <!-- Header con título y botón principal -->
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
         <h4 class="mb-2 mb-md-0">
-            <i class="bi bi-geo-alt me-2"></i>Puntos de Votación
+            
         </h4>
         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#crearPuntoModal">
             <i class="bi bi-plus-circle me-2"></i>
@@ -171,13 +171,14 @@
                                         <!-- Botón eliminar -->
                                         <form action="{{ route('destroyPuntosVotacion', $lugar) }}" method="POST" 
                                               style="display:inline-block" 
-                                              onsubmit="return confirm('¿Eliminar este punto de votación?')">
+                                               class="form-eliminar">
                                             @csrf 
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </form>
+                                        
                                     </div>
                                 </td>
                             </tr>
@@ -528,3 +529,69 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 </style>
 @endsection
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    // Confirmación SweetAlert al eliminar
+    document.querySelectorAll('.form-eliminar').forEach(form => {
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            Swal.fire({
+                title: '¿Estás seguro?',
+                text: "¡Esta acción no se puede deshacer!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) form.submit();
+            });
+        });
+    });
+
+    // Mensajes flash
+    @if(session('success'))
+        Swal.fire({
+            icon: 'success',
+            title: '¡Éxito!',
+            text: '{{ session('success') }}',
+            confirmButtonColor: '#3085d6'
+        });
+    @endif
+
+    @if(session('error'))
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: '{{ session('error') }}',
+            confirmButtonColor: '#d33'
+        });
+    @endif
+
+    // Errores de validación
+    @if ($errors->any())
+        Swal.fire({
+            icon: 'error',
+            title: 'Errores en el formulario',
+            html: `{!! implode('<br>', $errors->all()) !!}`,
+            confirmButtonColor: '#d33'
+        });
+    @endif
+
+    // Abrir modal crear si error es de creación
+    @if($errors->any() && old('_token') && !$errors->has('email'))
+        const createModal = new bootstrap.Modal(document.getElementById('createModal'));
+        createModal.show();
+    @endif
+
+    // Abrir modal editar si error pertenece a edición
+    @if($errors->has('email') && session('edit_id'))
+        const editModal = new bootstrap.Modal(document.getElementById('editModal{{ session("edit_id") }}'));
+        editModal.show();
+    @endif
+});
+</script>
+@endpush

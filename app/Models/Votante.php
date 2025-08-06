@@ -58,4 +58,9 @@ class Votante extends Model
     {
         return $this->belongsTo(LugarVotacion::class, 'lugar_votacion_id');
     }
+    public function barrio()
+{
+    return $this->belongsTo(Barrio::class);
+}
+
 }

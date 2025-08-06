@@ -11,7 +11,7 @@ class Mesa extends Model
         'lugar_votacion_id'
     ];
 
-    public function lugarVotacion()
+     public function lugarVotacion()
     {
         return $this->belongsTo(LugarVotacion::class, 'lugar_votacion_id');
     }

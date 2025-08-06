@@ -1,73 +1,34 @@
 @extends('layouts.admin')
-
-@section('tituloPage', 'Gestión de Concejales')
-
+@section('tituloPage', 'Gestión de Líderes')
 @section('contenido')
 
-{{-- Alertas de éxito --}}
-@if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="bi bi-check-circle me-2"></i>{{ session('success') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-@endif
-
-{{-- Alertas de error --}}
-@if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <i class="bi bi-exclamation-triangle me-2"></i>{{ session('error') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-@endif
-
-{{-- Errores de validación --}}
-@if ($errors->any())
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <i class="bi bi-exclamation-triangle me-2"></i>
-        <ul class="mb-0">
-            @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
-        </ul>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-@endif
-
-<!-- Botón Nuevo Concejal - Responsive -->
+{{-- Botón principal - Responsive --}}
 <div class="mb-3 text-end">
     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">
         <i class="bi bi-plus-circle me-2"></i>
-        <span class="d-none d-sm-inline">Nuevo Concejal</span>
+        <span class="d-none d-sm-inline">Nuevo Líder</span>
         <span class="d-sm-none">Nuevo</span>
     </button>
 </div>
 
-<!-- Filtros Responsive -->
+{{-- Filtros Responsive --}}
 <div class="p-4 border bg-light rounded mb-4">
     <form method="GET">
         <div class="row align-items-center g-3">
             <!-- Búsqueda principal -->
-            <div class="col-12 col-md-6">
+            <div class="col-12 col-md-8">
                 <div class="input-group">
                     <span class="input-group-text bg-white border-0">
                         <i class="bi bi-search text-muted"></i>
                     </span>
                     <input type="text" class="form-control border-start-0" 
-                           placeholder="Buscar por nombre, email o partido" 
+                           placeholder="Buscar por nombre, email o zona..." 
                            name="search" value="{{ request('search') }}">
                 </div>
             </div>
             
-            <!-- Número de lista -->
-            <div class="col-6 col-md-2">
-                <input name="numero_lista" type="number" min="1" 
-                       value="{{ request('numero_lista') }}" 
-                       class="form-control" 
-                       placeholder="N° Lista">
-            </div>
-            
             <!-- Botón de búsqueda -->
-            <div class="col-6 col-md-1">
+            <div class="col-12 col-md-4">
                 <button class="btn btn-outline-primary w-100" type="submit">
                     <i class="bi bi-search"></i>
                     <span class="d-none d-lg-inline ms-1">Buscar</span>
@@ -77,58 +38,68 @@
     </form>
 </div>
 
-<!-- Tabla Responsive -->
+{{-- Tabla Responsive --}}
 <div class="table-responsive">
     <table class="table">
         <thead>
             <tr>
-                <!-- Checkbox solo en desktop -->
                 <th width="50" class="d-none d-md-table-cell">
                     <input type="checkbox" id="selectAll" class="form-check-input">
                 </th>
-                <th>Concejal</th>
+                <th>Líder</th>
                 <th class="d-none d-md-table-cell">Email</th>
-                <th class="d-none d-lg-table-cell">Partido</th>
-                <th class="d-none d-lg-table-cell">N° Lista</th>
-                <th class="d-none d-sm-table-cell">Votantes</th>
+                <th class="d-none d-lg-table-cell">Zona de Influencia</th>
+                <th class="d-none d-lg-table-cell">Creado por</th>
+                <th class="d-none d-lg-table-cell">Votantes</th>
                 <th class="d-none d-sm-table-cell">Fecha</th>
                 <th width="150">Acciones</th>
             </tr>
         </thead>
         <tbody>
-        @forelse ($concejales as $concejal)
+        @forelse ($lideres as $lider)
             <tr>
-                <!-- Checkbox -->
                 <td class="d-none d-md-table-cell">
                     <input type="checkbox" class="form-check-input item-checkbox">
                 </td>
-                
-                <!-- Información principal -->
+               
                 <td>
                     <div class="d-flex align-items-center">
                         <div class="user-avatar me-3">
                             <i class="bi bi-person fs-4"></i>
                         </div>
                         <div>
-                            <div class="fw-semibold">{{ $concejal->name }}</div>
-                            <!-- Info adicional en móvil -->
+                            <div class="fw-semibold">{{ $lider->name }}</div>
                             <div class="d-md-none">
-                                <small class="text-muted">{{ $concejal->email }}</small>
-                              
+                                <small class="text-muted">{{ $lider->email }}</small>
+                                <br>
+                                <small class="text-muted">
+                                    <i class="bi bi-geo-alt me-1"></i>{{ $lider->lider->zona_influencia ?? 'Sin especificar' }}
+                                </small>
                             </div>
                         </div>
                     </div>
                 </td>
                 
-                <!-- Campos ocultos en móvil -->
-                <td class="d-none d-md-table-cell">{{ $concejal->email }}</td>
-                <td class="d-none d-lg-table-cell">{{ $concejal->concejal->partido_politico ?? 'Sin partido' }}</td>
-                <td class="d-none d-lg-table-cell">{{ $concejal->concejal->numero_lista ?? 'N/A' }}</td>
-                 <td class="d-none d-sm-table-cell"> 
-                    <span class="badge bg-primary">{{ $concejal->votantes_count ?? 0 }}</span>
+                <td class="d-none d-md-table-cell">{{ $lider->email }}</td>
+                <td class="d-none d-lg-table-cell">{{ $lider->lider->zona_influencia ?? 'Sin especificar' }}</td>
+                <td class="d-none d-lg-table-cell">
+                    @if($lider->creadoPorConcejal)
+                        <span class="badge bg-info">{{ $lider->creadoPorConcejal->name }}</span>
+                        <small class="text-muted d-block">Concejal</small>
+                    @elseif($lider->creadoPorAlcalde)
+                        <span class="badge bg-success">{{ $lider->creadoPorAlcalde->name }}</span>
+                        <small class="text-muted d-block">Alcalde</small>
+                    @else
+                        <span class="text-muted">Sin información</span>
+                    @endif
                 </td>
-                <td class="d-none d-sm-table-cell">{{ $concejal->created_at->format('d/m/Y') }}</td>
-               
+                <td class="d-none d-sm-table-cell">
+                    <span class="badge bg-primary">
+                        {{ $lider->votantesRegistrados->count() }}
+                    </span>
+                </td>
+                <td class="d-none d-sm-table-cell">{{ $lider->created_at->format('d/m/Y') }}</td>
+                
                 <!-- Acciones -->
                 <td>
                     <div class="btn-group" role="group">
@@ -136,14 +107,14 @@
                         <button class="btn btn-sm btn-outline-primary" 
                                 title="Editar"
                                 data-bs-toggle="modal"
-                                data-bs-target="#editModal{{ $concejal->id }}">
+                                data-bs-target="#editModal{{ $lider->id }}">
                             <i class="bi bi-pencil"></i>
                         </button>
                         
                         <!-- Botón eliminar -->
-                        <form method="POST" action="{{ route('admin.concejales.destroy', $concejal) }}" 
+                        <form method="POST" action="{{ route('admin.lideres.destroy', $lider) }}" 
                               style="display:inline" 
-                              onsubmit="return confirm('¿Eliminar este concejal?')">
+                              class="form-eliminar">
                             @csrf @method('DELETE')
                             <button class="btn btn-sm btn-outline-danger" title="Eliminar">
                                 <i class="bi bi-trash"></i>
@@ -153,17 +124,15 @@
                 </td>
             </tr>
 
-            <!-- Modal: Editar Concejal - Responsive -->
-            <div class="modal fade" id="editModal{{ $concejal->id }}" tabindex="-1">
+            {{-- Modal de edición --}}
+            <div class="modal fade" id="editModal{{ $lider->id }}" tabindex="-1">
                 <div class="modal-dialog modal-lg modal-dialog-centered">
                     <div class="modal-content">
-                        <form method="POST" action="{{ route('admin.concejales.update', $concejal) }}">
+                        <form method="POST" action="{{ route('admin.lideres.update', $lider) }}">
                             @csrf @method('PUT')
                             <div class="modal-header">
                                 <h5 class="modal-title">
-                                    <i class="bi bi-pencil me-2"></i>
-                                    <span class="d-none d-sm-inline">Editar Concejal</span>
-                                    <span class="d-sm-none">Editar</span>
+                                    <i class="bi bi-pencil me-2"></i> Editar Líder
                                 </h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                             </div>
@@ -172,42 +141,40 @@
                                     <div class="col-12 col-md-6">
                                         <label class="form-label fw-semibold">Nombre</label>
                                         <input name="name" type="text" class="form-control" 
-                                               value="{{ $concejal->name }}" required>
+                                               value="{{ $lider->name }}" required>
                                     </div>
                                     <div class="col-12 col-md-6">
                                         <label class="form-label fw-semibold">Email</label>
                                         <input name="email" type="email" class="form-control" 
-                                               value="{{ $concejal->email }}" required>
+                                               value="{{ $lider->email }}" required>
                                     </div>
                                     <div class="col-12 col-md-6">
-                                        <label class="form-label fw-semibold">Nueva Contraseña</label>
-                                        <input name="password" type="password" class="form-control" 
-                                               placeholder="Dejar vacío para mantener la actual">
+                                        <label class="form-label fw-semibold">Teléfono</label>
+                                        <input name="telefono" type="tel" class="form-control" 
+                                               value="{{ $lider->lider->telefono ?? '' }}">
                                     </div>
                                     <div class="col-12 col-md-6">
-                                        <label class="form-label fw-semibold">Confirmar Contraseña</label>
-                                        <input name="password_confirmation" type="password" class="form-control">
-                                    </div>
-                                    <div class="col-12 col-md-6">
-                                        <label class="form-label fw-semibold">Partido Político</label>
-                                        <input name="partido_politico" type="text" class="form-control" 
-                                               value="{{ $concejal->concejal->partido_politico ?? '' }}">
-                                    </div>
-                                    <div class="col-12 col-md-6">
-                                        <label class="form-label fw-semibold">Número de Lista</label>
-                                        <input name="numero_lista" type="number" class="form-control" 
-                                               value="{{ $concejal->concejal->numero_lista ?? '' }}" min="1">
+                                        <label class="form-label fw-semibold">Zona de Influencia</label>
+                                        <select name="zona_influencia" class="form-select">
+                                            <option value="">Seleccionar zona...</option>
+                                            <option value="Norte" {{ ($lider->lider->zona_influencia ?? '') == 'Norte' ? 'selected' : '' }}>Norte</option>
+                                            <option value="Sur" {{ ($lider->lider->zona_influencia ?? '') == 'Sur' ? 'selected' : '' }}>Sur</option>
+                                            <option value="Este" {{ ($lider->lider->zona_influencia ?? '') == 'Este' ? 'selected' : '' }}>Este</option>
+                                            <option value="Oeste" {{ ($lider->lider->zona_influencia ?? '') == 'Oeste' ? 'selected' : '' }}>Oeste</option>
+                                            <option value="Centro" {{ ($lider->lider->zona_influencia ?? '') == 'Centro' ? 'selected' : '' }}>Centro</option>
+                                            <option value="Metropolitana" {{ ($lider->lider->zona_influencia ?? '') == 'Metropolitana' ? 'selected' : '' }}>Metropolitana</option>
+                                            <option value="Rural" {{ ($lider->lider->zona_influencia ?? '') == 'Rural' ? 'selected' : '' }}>Rural</option>
+                                            <option value="Urbana" {{ ($lider->lider->zona_influencia ?? '') == 'Urbana' ? 'selected' : '' }}>Urbana</option>
+                                        </select>
                                     </div>
                                 </div>
                             </div>
                             <div class="modal-footer p-4">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                    <span class="d-none d-sm-inline">Cancelar</span>
-                                    <span class="d-sm-none">❌</span>
+                                    Cancelar
                                 </button>
                                 <button type="submit" class="btn btn-primary">
-                                    <span class="d-none d-sm-inline">Guardar Cambios</span>
-                                    <span class="d-sm-none">✓</span>
+                                    Actualizar Líder
                                 </button>
                             </div>
                         </form>
@@ -217,8 +184,8 @@
         @empty
             <tr>
                 <td colspan="7" class="text-center py-4">
-                    <i class="bi bi-people text-muted" style="font-size: 3rem;"></i>
-                    <p class="text-muted mt-2">No hay concejales registrados</p>
+                    <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+                    <p class="text-muted mt-2">No hay líderes registrados</p>
                 </td>
             </tr>
         @endforelse
@@ -226,20 +193,17 @@
     </table>
 </div>
 
-<!-- Paginación Responsive -->
-<x-paginacion :collection="$concejales" />
+<x-paginacion :collection="$lideres" />
 
-{{-- Modal de creación - Responsive --}}
+{{-- Modal para crear nuevo líder --}}
 <div class="modal fade" id="createModal" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
-            <form method="POST" action="{{ route('admin.concejales.store') }}">
+            <form method="POST" action="{{ route('admin.lideres.store') }}">
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title">
-                        <i class="bi bi-person-plus me-2"></i>
-                        <span class="d-none d-sm-inline">Agregar Nuevo Concejal</span>
-                        <span class="d-sm-none">Nuevo</span>
+                        <i class="bi bi-plus-circle me-2"></i> Agregar Nuevo Líder
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
@@ -247,13 +211,11 @@
                     <div class="row g-3">
                         <div class="col-12 col-md-6">
                             <label class="form-label fw-semibold">Nombre</label>
-                            <input name="name" type="text" class="form-control" 
-                                   value="{{ old('name') }}" required>
+                            <input name="name" type="text" class="form-control" value="{{ old('name') }}" required>
                         </div>
                         <div class="col-12 col-md-6">
                             <label class="form-label fw-semibold">Email</label>
-                            <input name="email" type="email" class="form-control" 
-                                   value="{{ old('email') }}" required>
+                            <input name="email" type="email" class="form-control" value="{{ old('email') }}" required>
                         </div>
                         <div class="col-12 col-md-6">
                             <label class="form-label fw-semibold">Contraseña</label>
@@ -264,25 +226,48 @@
                             <input name="password_confirmation" type="password" class="form-control" required>
                         </div>
                         <div class="col-12 col-md-6">
-                            <label class="form-label fw-semibold">Partido Político</label>
-                            <input name="partido_politico" type="text" class="form-control" 
-                                   value="{{ old('partido_politico') }}">
+                            <label class="form-label fw-semibold">Zona de Influencia</label>
+                            <select name="zona_influencia" class="form-select" required>
+                                <option value="">Seleccionar zona...</option>
+                                <option value="Norte" {{ old('zona_influencia') == 'Norte' ? 'selected' : '' }}>Norte</option>
+                                <option value="Sur" {{ old('zona_influencia') == 'Sur' ? 'selected' : '' }}>Sur</option>
+                                <option value="Este" {{ old('zona_influencia') == 'Este' ? 'selected' : '' }}>Este</option>
+                                <option value="Oeste" {{ old('zona_influencia') == 'Oeste' ? 'selected' : '' }}>Oeste</option>
+                                <option value="Centro" {{ old('zona_influencia') == 'Centro' ? 'selected' : '' }}>Centro</option>
+                                <option value="Metropolitana" {{ old('zona_influencia') == 'Metropolitana' ? 'selected' : '' }}>Metropolitana</option>
+                                <option value="Rural" {{ old('zona_influencia') == 'Rural' ? 'selected' : '' }}>Rural</option>
+                                <option value="Urbana" {{ old('zona_influencia') == 'Urbana' ? 'selected' : '' }}>Urbana</option>
+                            </select>
                         </div>
                         <div class="col-12 col-md-6">
-                            <label class="form-label fw-semibold">Número de Lista</label>
-                            <input name="numero_lista" type="number" class="form-control" 
-                                   value="{{ old('numero_lista') }}" min="1">
+                            <label class="form-label fw-semibold">Afiliación Política</label>
+                            <select name="afiliacion_politica" class="form-select">
+                                <option value="">Sin afiliación</option>
+                                <option value="Conservador" {{ old('afiliacion_politica') == 'Conservador' ? 'selected' : '' }}>Conservador</option>
+                                <option value="Liberal" {{ old('afiliacion_politica') == 'Liberal' ? 'selected' : '' }}>Liberal</option>
+                                <option value="Centro Democrático" {{ old('afiliacion_politica') == 'Centro Democrático' ? 'selected' : '' }}>Centro Democrático</option>
+                                <option value="Cambio Radical" {{ old('afiliacion_politica') == 'Cambio Radical' ? 'selected' : '' }}>Cambio Radical</option>
+                                <option value="Polo Democrático" {{ old('afiliacion_politica') == 'Polo Democrático' ? 'selected' : '' }}>Polo Democrático</option>
+                                <option value="Alianza Verde" {{ old('afiliacion_politica') == 'Alianza Verde' ? 'selected' : '' }}>Alianza Verde</option>
+                                <option value="FARC" {{ old('afiliacion_politica') == 'FARC' ? 'selected' : '' }}>FARC</option>
+                                <option value="Independiente" {{ old('afiliacion_politica') == 'Independiente' ? 'selected' : '' }}>Independiente</option>
+                                <option value="Otro" {{ old('afiliacion_politica') == 'Otro' ? 'selected' : '' }}>Otro</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Teléfono</label>
+                            <input name="telefono" type="tel" class="form-control" 
+                                value="{{ old('telefono') }}" 
+                                placeholder="Ej: +57 300 123 4567">
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer p-4">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <span class="d-none d-sm-inline">Cancelar</span>
-                        <span class="d-sm-none">❌</span>
+                        Cancelar
                     </button>
                     <button type="submit" class="btn btn-primary">
-                        <span class="d-none d-sm-inline">Crear Concejal</span>
-                        <span class="d-sm-none">✓</span>
+                        Crear Líder
                     </button>
                 </div>
             </form>
@@ -292,43 +277,73 @@
 
 @endsection
 
-@section('scripts')
+{{-- SweetAlert2 --}}
+@push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Seleccionar todos los checkboxes
-    const selectAllCheckbox = document.getElementById('selectAll');
-    const itemCheckboxes = document.querySelectorAll('.item-checkbox');
-    
-    if (selectAllCheckbox) {
-        selectAllCheckbox.addEventListener('change', function() {
-            itemCheckboxes.forEach(checkbox => {
-                checkbox.checked = this.checked;
+    // Confirmación SweetAlert antes de eliminar
+    document.querySelectorAll('.form-eliminar').forEach(form => {
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            Swal.fire({
+                title: '¿Estás seguro?',
+                text: "¡Esta acción no se puede deshacer!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
             });
         });
-    }
-    
-    // Abrir modal si hay errores de validación
-    @if($errors->any() && old('_token'))
+    });
+
+    // Mensaje flash de éxito
+    @if(session('success'))
+        Swal.fire({
+            icon: 'success',
+            title: '¡Éxito!',
+            text: '{{ session('success') }}',
+            confirmButtonColor: '#3085d6'
+        });
+    @endif
+
+    // Mensaje flash de error
+    @if(session('error'))
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: '{{ session('error') }}',
+            confirmButtonColor: '#d33'
+        });
+    @endif
+
+    // Errores de validación
+    @if ($errors->any())
+        Swal.fire({
+            icon: 'error',
+            title: 'Errores en el formulario',
+            html: `{!! implode('<br>', $errors->all()) !!}`,
+            confirmButtonColor: '#d33'
+        });
+    @endif
+
+    // Abrir modal de creación si hay errores
+    @if($errors->any() && old('_token') && !$errors->has('email'))
         const createModal = new bootstrap.Modal(document.getElementById('createModal'));
         createModal.show();
     @endif
-    
-    // Manejo responsive de tablas
-    function handleTableResponsive() {
-        const tables = document.querySelectorAll('.table-responsive');
-        tables.forEach(table => {
-            if (window.innerWidth < 768) {
-                // Lógica para móvil
-                table.classList.add('table-mobile');
-            } else {
-                table.classList.remove('table-mobile');
-            }
-        });
-    }
-    
-    // Ejecutar al cargar y redimensionar
-    handleTableResponsive();
-    window.addEventListener('resize', handleTableResponsive);
+
+    // Abrir modal de edición si error pertenece a edición
+    @if($errors->has('email') && session('edit_id'))
+        const editModal = new bootstrap.Modal(document.getElementById('editModal{{ session("edit_id") }}'));
+        editModal.show();
+    @endif
 });
 </script>
-@endsection
+@endpush

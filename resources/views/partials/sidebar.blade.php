@@ -1,5 +1,8 @@
 <!-- resources/views/partials/sidebar.blade.php -->
-
+<link
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+  rel="stylesheet"
+/>
 <!-- Botón Hamburguesa (solo visible en mobile) -->
 <div class="hamburger-container">
     <button class="hamburger-btn" id="hamburgerBtn" aria-label="Abrir menú">
@@ -57,11 +60,7 @@
             <hr class="my-3 opacity-25">
             
             <!-- Botones de acción -->
-            <div class="d-flex gap-2">
-                <a href="#" class="btn btn-outline-light btn-sm flex-fill" title="Próximamente - Perfil">
-                    <i class="bi bi-person-gear me-1"></i> Perfil
-                </a>
-                
+            <div class="d-flex gap-2"> 
                 <form method="POST" action="{{ route('logout') }}" class="flex-fill">
                     @csrf
                     <button type="submit" class="btn btn-danger btn-sm w-100">
@@ -107,29 +106,6 @@
                 </li>
                 @endcan
 
-                <!-- Votaciones Alcaldes -->
-                @can('ver votaciones alcaldes')
-                <li class="nav-item">
-                    <a class="nav-link text-white sidebar-link {{ request()->routeIs('admin.votaciones.alcaldes') ? 'active' : '' }}" 
-                       href="#" title="Ver Votaciones Alcaldes">
-                        <i class="bi bi-bar-chart-line me-2"></i>
-                        Votaciones Alcaldes
-                        <small class="badge bg-warning text-dark ms-2">Próximamente</small>
-                    </a>
-                </li>
-                @endcan
-
-                <!-- Concejales vinculados al Alcalde -->
-                @can('crear concejales vinculados al alcalde')
-                <li class="nav-item">
-                    <a class="nav-link text-white sidebar-link {{ request()->routeIs('admin.concejales.vinculados') ? 'active' : '' }}" 
-                       href="home" title="Crear Concejales vinculados al Alcalde">
-                        <i class="bi bi-people-fill me-2"></i>
-                        Crear Concejales vinculados
-                    </a>
-                </li>
-                @endcan
-              
                 <!-- Dashboard Alcalde -->
                 @can('ver dashboard')
                 <li class="nav-item">
@@ -146,7 +122,7 @@
                 <li class="nav-item">
                     <a class="nav-link text-white sidebar-link {{ request()->routeIs('crearConcejal') ? 'active' : '' }}" 
                        href="{{ route('crearConcejal') }}" title="Crear Concejales">
-                        <i class="bi bi-person-plus me-2"></i>
+                        <i class="fas fa-user-tie me-2"></i>
                         Crear Concejales
                     </a>
                 </li>
@@ -157,7 +133,8 @@
                 <li class="nav-item">
                     <a class="nav-link text-white sidebar-link {{ request()->routeIs('alcaldia.votantes') ? 'active' : '' }}" 
                          href="{{ route('verVotantes') }}" title="Ver Votantes ">
-                        <i class="bi bi-people me-2"></i>
+                        <i class="fas fa-users me-2"></i>
+                        
                         Ver Votantes
                     </a>
                 </li>
@@ -168,6 +145,15 @@
                          href="{{ route('crearPuntosVotacion') }}" title="Crear Puntos de Votación">
                         <i class="bi bi-map-fill me-2"> </i>
                         Crear Puntos de Votación
+                    </a>
+                </li>
+                @endcan
+                    @can('crear barrios')
+                <li class="nav-item">
+                    <a class="nav-link text-white sidebar-link {{ request()->routeIs('barrios.index') ? 'active' : '' }}" 
+                    href="{{ route('crearBarrios') }}" title="Crear Barrios">
+                        <i class="bi bi-geo-alt-fill me-2"></i>
+                        Crear Barrios
                     </a>
                 </li>
                 @endcan
@@ -201,7 +187,7 @@
                 <li class="nav-item">
                     <a class="nav-link text-white sidebar-link {{ request()->routeIs('admin.lideres.*') ? 'active' : '' }}" 
                        href="{{ route('crearLider') }}" title="Crear Líderes">
-                        <i class="bi bi-person-star me-2"></i>
+                          <i class="fas fa-street-view me-2"></i>
                         Crear Líderes
                        
                     </a>

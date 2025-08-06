@@ -24,6 +24,7 @@ class RolesAndPermissionsSeeder extends Seeder
         Permission::firstOrCreate(['name' => 'ver votantes del concejal']);
         Permission::firstOrCreate(['name' => 'ver dashboard']);
         Permission::firstOrCreate(['name' => 'crear puntos de votacion']);
+        Permission::firstOrCreate(['name' => 'crear barrios']);
         
         // Otros permisos comunes
         Permission::firstOrCreate(['name' => 'ver todo dashboard']);
@@ -50,8 +51,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'crear concejales',
             'crear lideres',
             'crear puntos de votacion',
-            
-
+            'crear barrios'
         ]);
 
         // Rol Concejal

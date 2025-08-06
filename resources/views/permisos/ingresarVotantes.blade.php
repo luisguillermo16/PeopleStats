@@ -4,32 +4,6 @@
 
 @section('contenido')
 
-{{-- Alertas --}}
-@if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="bi bi-check-circle me-2"></i>{{ session('success') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-@endif
-
-@if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <i class="bi bi-exclamation-triangle me-2"></i>{{ session('error') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-@endif
-
-@if ($errors->any())
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <i class="bi bi-exclamation-triangle me-2"></i>
-        <ul class="mb-0">
-            @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
-        </ul>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-@endif
 
 
 {{-- Botones de acción --}}
@@ -363,6 +337,74 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 });
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Confirmación SweetAlert antes de eliminar
+    document.querySelectorAll('.form-eliminar').forEach(form => {
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            Swal.fire({
+                title: '¿Estás seguro?',
+                text: "¡Esta acción no se puede deshacer!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        });
+    });
+
+    // Mensaje flash de éxito
+    @if(session('success'))
+        Swal.fire({
+            icon: 'success',
+            title: '¡Éxito!',
+            text: '{{ session('success') }}',
+            confirmButtonColor: '#3085d6'
+        });
+    @endif
+
+    // Mensaje flash de error
+    @if(session('error'))
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: '{{ session('error') }}',
+            confirmButtonColor: '#d33'
+        });
+    @endif
+
+    // Errores de validación
+    @if ($errors->any())
+        Swal.fire({
+            icon: 'error',
+            title: 'Errores en el formulario',
+            html: `{!! implode('<br>', $errors->all()) !!}`,
+            confirmButtonColor: '#d33'
+        });
+    @endif
+
+    // Abrir modal de creación si hay errores
+    @if($errors->any() && old('_token') && !$errors->has('email'))
+        const createModal = new bootstrap.Modal(document.getElementById('createModal'));
+        createModal.show();
+    @endif
+
+    // Abrir modal de edición si error pertenece a edición
+    @if($errors->has('email') && session('edit_id'))
+        const editModal = new bootstrap.Modal(document.getElementById('editModal{{ session("edit_id") }}'));
+        editModal.show();
+    @endif
+});
+
 
 </script>
 @endpush
