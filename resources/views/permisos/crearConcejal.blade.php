@@ -62,7 +62,7 @@
 
 {{-- Tabla --}}
 <div class="table-responsive">
-    <table class="table">
+    <table class="table rounded border shadow-sm overflow-hidden">
         <thead>
             <tr>
                 <th class="d-none d-md-table-cell" width="50"><input type="checkbox" id="selectAll"></th>

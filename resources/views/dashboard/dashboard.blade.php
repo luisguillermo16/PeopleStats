@@ -29,6 +29,7 @@
         <x-card-votantes />
         <x-card-concejales />
         <x-card-lideres />
+           <x-estadistica-barrios />
        
     @elseif ($rol == 'aspirante-concejo')
         <x-card-votantes />

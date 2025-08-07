@@ -49,7 +49,7 @@
 
 {{-- Tabla --}}
 <div class="table-responsive">
-    <table class="table">
+    <table class="table rounded border shadow-sm overflow-hidden">
         <thead>
             <tr>
                 <th class="d-none d-md-table-cell"><input type="checkbox" id="selectAll" class="form-check-input"></th>

@@ -58,7 +58,7 @@
     <div class="card shadow-sm border-0">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover mb-0">
+                <table class="table rounded border shadow-sm overflow-hidden">
                     <thead class="table-light">
                         <tr>
                             <!-- Checkbox solo en desktop -->

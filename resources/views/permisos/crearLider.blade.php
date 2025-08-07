@@ -42,7 +42,7 @@
 
 {{-- Tabla Responsive --}}
 <div class="table-responsive">
-    <table class="table">
+    <table class="table rounded border shadow-sm overflow-hidden">
         <thead>
             <tr>
                 <!-- Checkbox solo en desktop -->
