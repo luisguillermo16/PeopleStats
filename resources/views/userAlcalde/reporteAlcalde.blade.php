@@ -27,33 +27,9 @@
 
 {{-- Resumen General --}}
 <div class="row g-3 mb-4">
-    <div class="col-6 col-lg-3">
-        <div class="card text-center border-primary h-100">
-            <div class="card-body py-3">
-                <i class="bi bi-people fs-1 text-primary"></i>
-                <h3 class="mb-0">1234</h3>
-                <small class="text-muted">Total Votantes</small>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-lg-3">
-        <div class="card text-center border-success h-100">
-            <div class="card-body py-3">
-                <i class="bi bi-person-badge fs-1 text-success"></i>
-                <h3 class="mb-0">56</h3>
-                <small class="text-muted">Líderes Activos</small>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-lg-3">
-        <div class="card text-center border-info h-100">
-            <div class="card-body py-3">
-                <i class="bi bi-person-check fs-1 text-info"></i>
-                <h3 class="mb-0">12</h3>
-                <small class="text-muted">Concejales</small>
-            </div>
-        </div>
-    </div>
+   <x-card-votantes />
+  <x-card-lideres />
+   <x-card-concejales />
     <div class="col-6 col-lg-3">
         <div class="card text-center border-warning h-100">
             <div class="card-body py-3">
@@ -184,14 +160,7 @@
             </div>
         </div>
     </div>
-    <div class="col-12 col-lg-4">
-        <div class="card">
-            <div class="card-header"><h5><i class="bi bi-pie-chart me-2"></i>Distribución por Rol</h5></div>
-            <div class="card-body">
-                <canvas id="distribucionChart"></canvas>
-            </div>
-        </div>
-    </div>
+   <x-estadistica-barrios />
 </div>
 
 {{-- Scripts --}}

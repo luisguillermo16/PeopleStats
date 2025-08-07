@@ -29,6 +29,7 @@
         <x-card-votantes />
         <x-card-concejales />
         <x-card-lideres />
+       
     @elseif ($rol == 'aspirante-concejo')
         <x-card-votantes />
         <x-card-lideres />

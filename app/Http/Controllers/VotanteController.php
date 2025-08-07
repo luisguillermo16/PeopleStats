@@ -396,4 +396,74 @@ class VotanteController extends Controller
             'barrios' => $barrios
         ]);
     }
+    public function estadisticas()
+{
+    $lider = $this->getLider();
+
+    if (!$lider) {
+        return redirect()->back()->with('error', 'No se encontró el líder asociado al usuario.');
+    }
+
+    // Totales generales
+    $totalVotantes = Votante::where('lider_id', $lider->id)->count();
+    $totalMesas = Votante::where('lider_id', $lider->id)->distinct('mesa')->count('mesa');
+    $totalConcejales = User::role('aspirante-concejo')->count();
+    $totalLideres = User::role('lider')->count();
+
+    // Votantes por lugar de votación
+    $votantesPorLugar = Votante::select('lugar_votacion_id', \DB::raw('count(*) as total'))
+        ->where('lider_id', $lider->id)
+        ->groupBy('lugar_votacion_id')
+        ->with('lugarVotacion:id,nombre')
+        ->get()
+        ->map(function ($item) {
+            return [
+                'nombre' => $item->lugarVotacion->nombre ?? 'Sin lugar',
+                'total' => $item->total
+            ];
+        });
+
+    // Votantes por barrio
+    $votantesPorBarrio = Votante::select('barrio_id', \DB::raw('count(*) as total'))
+        ->where('lider_id', $lider->id)
+        ->groupBy('barrio_id')
+        ->with('barrio:id,nombre')
+        ->get()
+        ->map(function ($item) {
+            return [
+                'nombre' => $item->barrio->nombre ?? 'Sin barrio',
+                'total' => $item->total
+            ];
+        });
+
+    // Votantes que también votan alcalde
+    $votantesAlcalde = Votante::where('lider_id', $lider->id)
+        ->whereNotNull('alcalde_id')
+        ->count();
+
+    // Votantes por mes (si tienes created_at)
+    $votantesPorMes = Votante::selectRaw('MONTH(created_at) as mes, COUNT(*) as total')
+        ->where('lider_id', $lider->id)
+        ->groupBy('mes')
+        ->orderBy('mes')
+        ->get()
+        ->map(function ($item) {
+            return [
+                'mes' => date("F", mktime(0, 0, 0, $item->mes, 1)),
+                'total' => $item->total
+            ];
+        });
+
+    return view('votantes.dashboard', compact(
+        'totalVotantes',
+        'totalMesas',
+        'totalConcejales',
+        'totalLideres',
+        'votantesPorLugar',
+        'votantesPorBarrio',
+        'votantesAlcalde',
+        'votantesPorMes'
+    ));
+}
+
 }

@@ -160,6 +160,7 @@ Route::middleware(['auth','can:ingresar votantes'])->group(function () {
     Route::get('/votantes/buscar', [VotanteController::class, 'buscarPorCedula'])->name('votantes.buscar');
 
 });
+Route::get('/votantes/estadisticas', [VotanteController::class, 'estadisticas'])->name('votantes.estadisticas');
 
 /*
 |--------------------------------------------------------------------------

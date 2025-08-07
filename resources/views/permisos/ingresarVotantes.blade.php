@@ -10,31 +10,32 @@
 <div class="mb-3 d-flex flex-column flex-md-row gap-2 justify-content-md-end">
     {{-- Botón Importar Excel --}}
     <div class="d-flex align-items-center">
-        <form action="{{ route('votantes.import') }}" method="POST" enctype="multipart/form-data" class="d-flex flex-column flex-sm-row gap-2 align-items-center">
-            @csrf
-            <div class="position-relative">
-                <input type="file" 
-                       id="excel_file" 
-                       name="excel_file" 
-                       class="form-control d-none" 
-                       accept=".xlsx,.xls,.csv"
-                       required>
-                <button type="button" 
-                        class="btn btn-outline-success btn-sm" 
-                        onclick="document.getElementById('excel_file').click()">
-                    <i class="bi bi-file-earmark-excel me-1"></i>
-                    <span class="d-none d-sm-inline">Seleccionar</span> Excel
-                </button>
-            </div>
-            <button type="submit" 
-                    class="btn btn-success btn-sm" 
-                    id="importBtn" 
-                    disabled>
-                <i class="bi bi-upload me-1"></i>
-                <span class="d-none d-sm-inline">Importar</span>
-                <span class="d-sm-none">Import</span>
-            </button>
-        </form>
+      <form action="{{ route('votantes.import') }}" method="POST" enctype="multipart/form-data" class="d-flex flex-column flex-sm-row gap-2 align-items-center">
+    @csrf
+    <div class="position-relative">
+        <input type="file" 
+               id="excel_file" 
+               name="excel_file" 
+               class="form-control d-none" 
+               accept=".xlsx,.xls"
+               required
+               onchange="document.getElementById('importBtn').disabled = !this.files.length">
+        <button type="button" 
+                class="btn btn-outline-success btn-sm" 
+                onclick="document.getElementById('excel_file').click()">
+            <i class="bi bi-file-earmark-excel me-1"></i>
+            <span class="d-none d-sm-inline">Seleccionar</span> Excel
+        </button>
+    </div>
+    <button type="submit" 
+            class="btn btn-success btn-sm" 
+            id="importBtn" 
+            disabled>
+        <i class="bi bi-upload me-1"></i>
+        <span class="d-none d-sm-inline">Importar</span>
+        <span class="d-sm-none">Import</span>
+    </button>
+</form>
     </div>
     
     {{-- Botón Nuevo Votante --}}
@@ -411,6 +412,13 @@ document.addEventListener('DOMContentLoaded', function () {
             document.body.style.removeProperty('overflow'); // evita scroll bloqueado
             document.body.style.removeProperty('padding-right');
         });
+    });
+
+    // ==========================
+    // Habilitar botón Importar
+    // ==========================
+    document.getElementById('excel_file').addEventListener('change', function() {
+        document.getElementById('importBtn').disabled = !this.files.length;
     });
 });
 </script>
