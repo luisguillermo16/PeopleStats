@@ -184,7 +184,7 @@ class VotanteController extends Controller
         }
 
         // Configuración de paginación configurable
-        $perPage = $request->get('per_page', 25); // Por defecto 25, máximo 100
+        $perPage = $request->get('per_page', 10); // Por defecto 25, máximo 100
         $perPage = min(max($perPage, 10), 100); // Limitar entre 10 y 100
         
         // Búsqueda con filtros
