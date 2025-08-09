@@ -55,5 +55,6 @@ class Kernel extends HttpKernel
 
         // Tu middleware personalizado (si lo usas)
         'role.redirect' => \App\Http\Middleware\RoleRedirect::class,
+        'rate.limit' => \App\Http\Middleware\RateLimitMiddleware::class,
     ];
 }
