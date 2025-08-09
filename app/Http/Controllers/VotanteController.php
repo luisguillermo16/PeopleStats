@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\VotantesImport;
+use Illuminate\Support\Facades\Log;
 
 class VotanteController extends Controller
 {
@@ -176,7 +177,7 @@ class VotanteController extends Controller
     // =============================
     // LISTAR VOTANTES
     // =============================
-    public function index()
+    public function index(Request $request)
     {
         $lider = $this->getLider();
 
@@ -184,7 +185,51 @@ class VotanteController extends Controller
             return redirect()->back()->with('error', 'No se encontró el líder asociado al usuario.');
         }
 
-        $votantes = Votante::where('lider_id', $lider->id)->paginate(10);
+        // Configuración de paginación configurable
+        $perPage = $request->get('per_page', 25); // Por defecto 25, máximo 100
+        $perPage = min(max($perPage, 10), 100); // Limitar entre 10 y 100
+        
+        // Búsqueda con filtros
+        $query = Votante::where('lider_id', $lider->id);
+        
+        // Filtro por nombre
+        if ($request->filled('nombre')) {
+            $query->where('nombre', 'like', '%' . $request->nombre . '%');
+        }
+        
+        // Filtro por cédula
+        if ($request->filled('cedula')) {
+            $query->where('cedula', 'like', '%' . $request->cedula . '%');
+        }
+        
+        // Filtro por barrio
+        if ($request->filled('barrio_id')) {
+            $query->where('barrio_id', $request->barrio_id);
+        }
+        
+        // Filtro por lugar de votación
+        if ($request->filled('lugar_votacion_id')) {
+            $query->where('lugar_votacion_id', $request->lugar_votacion_id);
+        }
+        
+        // Ordenamiento
+        $sortBy = $request->get('sort_by', 'created_at');
+        $sortOrder = $request->get('sort_order', 'desc');
+        $allowedSortFields = ['nombre', 'cedula', 'created_at', 'barrio_id', 'lugar_votacion_id'];
+        
+        if (in_array($sortBy, $allowedSortFields)) {
+            $query->orderBy($sortBy, $sortOrder);
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+        
+        // Paginación con eager loading para evitar N+1
+        $votantes = $query->with(['barrio:id,nombre', 'lugarVotacion:id,nombre'])
+                          ->paginate($perPage);
+        
+        // Agregar parámetros de búsqueda a la paginación
+        $votantes->appends($request->except('page'));
+        
         $concejalOpciones = [];
 
         if (is_null($lider->concejal_id) && $lider->alcalde_id) {
@@ -194,7 +239,14 @@ class VotanteController extends Controller
         $lugares = $this->getLugaresFiltrados($lider);
         $barrios = $this->getBarriosFiltrados($lider);
 
-        return view('permisos.ingresarVotantes', compact('votantes', 'lider', 'concejalOpciones', 'lugares', 'barrios'));
+        return view('permisos.ingresarVotantes', compact(
+            'votantes', 
+            'lider', 
+            'concejalOpciones', 
+            'lugares', 
+            'barrios',
+            'perPage'
+        ));
     }
 
     // =============================
@@ -341,33 +393,61 @@ class VotanteController extends Controller
     // =============================
     public function import(Request $request)
     {
-        $lider = $this->getLider();
+        $request->validate([
+            'archivo' => 'required|file|mimes:xlsx,xls|max:10240', // Máximo 10MB
+        ]);
 
+        $lider = $this->getLider();
         if (!$lider) {
             return redirect()->back()->with('error', 'No se encontró el líder asociado al usuario.');
         }
 
-        $request->validate([
-            'excel_file' => 'required|file|mimes:xlsx,xls'
-        ]);
-
         try {
-            $import = new VotantesImport($lider);
-            Excel::import($import, $request->file('excel_file'));
+            // Guardar archivo temporalmente
+            $archivo = $request->file('archivo');
+            $nombreArchivo = 'import_' . time() . '_' . $archivo->getClientOriginalName();
+            $rutaArchivo = $archivo->storeAs('temp/imports', $nombreArchivo);
 
-            $mensaje = "{$import->importados} votantes importados correctamente.";
+            // Dispatch del job asíncrono
+            \App\Jobs\ImportarVotantesJob::dispatch(
+                $rutaArchivo,
+                $lider->id,
+                Auth::id(),
+                Auth::user()->email
+            );
 
-            if ($import->saltados > 0) {
-                $mensaje .= " {$import->saltados} registros fueron ignorados por las siguientes razones:";
-                foreach ($import->errores as $error) {
-                    $mensaje .= "- {$error}";
-                }
-            }
+            // Limpiar caché de resultados previos
+            \Cache::forget("import_result_" . Auth::id());
 
-            return redirect()->route('ingresarVotantes')->with('success', $mensaje);
+            return redirect()->back()->with('success', 
+                'La importación ha comenzado. Recibirás una notificación cuando esté completa. ' .
+                'Puedes verificar el estado en la página de importaciones.'
+            );
+
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Error al importar: ' . $e->getMessage());
+            Log::error("Error al iniciar importación: " . $e->getMessage());
+            return redirect()->back()->with('error', 
+                'Error al procesar el archivo: ' . $e->getMessage()
+            );
         }
+    }
+
+    /**
+     * Verificar estado de importación
+     */
+    public function verificarImportacion()
+    {
+        $resultadoKey = "import_result_" . Auth::id();
+        $resultado = \Cache::get($resultadoKey);
+
+        if (!$resultado) {
+            return response()->json([
+                'estado' => 'pendiente',
+                'mensaje' => 'No hay importaciones en proceso'
+            ]);
+        }
+
+        return response()->json($resultado);
     }
 
     // =============================
@@ -397,73 +477,103 @@ class VotanteController extends Controller
         ]);
     }
     public function estadisticas()
-{
-    $lider = $this->getLider();
+    {
+        $lider = $this->getLider();
 
-    if (!$lider) {
-        return redirect()->back()->with('error', 'No se encontró el líder asociado al usuario.');
+        if (!$lider) {
+            return redirect()->back()->with('error', 'No se encontró el líder asociado al usuario.');
+        }
+
+        // Clave única para el caché de este líder
+        $cacheKey = "estadisticas_lider_{$lider->id}";
+        $cacheDuration = 300; // 5 minutos
+
+        // Intentar obtener del caché primero
+        $estadisticas = \Cache::remember($cacheKey, $cacheDuration, function () use ($lider) {
+            // Totales generales con consultas optimizadas
+            $totalVotantes = Votante::where('lider_id', $lider->id)->count();
+            $totalMesas = Votante::where('lider_id', $lider->id)->distinct('mesa')->count('mesa');
+            
+            // Cachear conteos de roles globales (no cambian por líder)
+            $totalConcejales = \Cache::remember('total_concejales', 600, function () {
+                return User::role('aspirante-concejo')->count();
+            });
+            
+            $totalLideres = \Cache::remember('total_lideres', 600, function () {
+                return User::role('lider')->count();
+            });
+
+            // Votantes por lugar de votación con eager loading optimizado
+            $votantesPorLugar = Votante::select('lugar_votacion_id', \DB::raw('count(*) as total'))
+                ->where('lider_id', $lider->id)
+                ->groupBy('lugar_votacion_id')
+                ->with('lugarVotacion:id,nombre')
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'nombre' => $item->lugarVotacion->nombre ?? 'Sin lugar',
+                        'total' => $item->total
+                    ];
+                });
+
+            // Votantes por barrio con eager loading optimizado
+            $votantesPorBarrio = Votante::select('barrio_id', \DB::raw('count(*) as total'))
+                ->where('lider_id', $lider->id)
+                ->groupBy('barrio_id')
+                ->with('barrio:id,nombre')
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'nombre' => $item->barrio->nombre ?? 'Sin barrio',
+                        'total' => $item->total
+                    ];
+                });
+
+            // Votantes que también votan alcalde
+            $votantesAlcalde = Votante::where('lider_id', $lider->id)
+                ->whereNotNull('alcalde_id')
+                ->count();
+
+            // Votantes por mes (si tienes created_at)
+            $votantesPorMes = Votante::selectRaw('MONTH(created_at) as mes, COUNT(*) as total')
+                ->where('lider_id', $lider->id)
+                ->groupBy('mes')
+                ->orderBy('mes')
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'mes' => date("F", mktime(0, 0, 0, $item->mes, 1)),
+                        'total' => $item->total
+                    ];
+                });
+
+            return [
+                'totalVotantes' => $totalVotantes,
+                'totalMesas' => $totalMesas,
+                'totalConcejales' => $totalConcejales,
+                'totalLideres' => $totalLideres,
+                'votantesPorLugar' => $votantesPorLugar,
+                'votantesPorBarrio' => $votantesPorBarrio,
+                'votantesAlcalde' => $votantesAlcalde,
+                'votantesPorMes' => $votantesPorMes,
+                'cache_timestamp' => now()->toISOString()
+            ];
+        });
+
+        // Extraer variables del array para la vista
+        extract($estadisticas);
+
+        return view('votantes.dashboard', compact(
+            'totalVotantes',
+            'totalMesas',
+            'totalConcejales',
+            'totalLideres',
+            'votantesPorLugar',
+            'votantesPorBarrio',
+            'votantesAlcalde',
+            'votantesPorMes',
+            'cache_timestamp'
+        ));
     }
-
-    // Totales generales
-    $totalVotantes = Votante::where('lider_id', $lider->id)->count();
-    $totalMesas = Votante::where('lider_id', $lider->id)->distinct('mesa')->count('mesa');
-    $totalConcejales = User::role('aspirante-concejo')->count();
-    $totalLideres = User::role('lider')->count();
-
-    // Votantes por lugar de votación
-    $votantesPorLugar = Votante::select('lugar_votacion_id', \DB::raw('count(*) as total'))
-        ->where('lider_id', $lider->id)
-        ->groupBy('lugar_votacion_id')
-        ->with('lugarVotacion:id,nombre')
-        ->get()
-        ->map(function ($item) {
-            return [
-                'nombre' => $item->lugarVotacion->nombre ?? 'Sin lugar',
-                'total' => $item->total
-            ];
-        });
-
-    // Votantes por barrio
-    $votantesPorBarrio = Votante::select('barrio_id', \DB::raw('count(*) as total'))
-        ->where('lider_id', $lider->id)
-        ->groupBy('barrio_id')
-        ->with('barrio:id,nombre')
-        ->get()
-        ->map(function ($item) {
-            return [
-                'nombre' => $item->barrio->nombre ?? 'Sin barrio',
-                'total' => $item->total
-            ];
-        });
-
-    // Votantes que también votan alcalde
-    $votantesAlcalde = Votante::where('lider_id', $lider->id)
-        ->whereNotNull('alcalde_id')
-        ->count();
-
-    // Votantes por mes (si tienes created_at)
-    $votantesPorMes = Votante::selectRaw('MONTH(created_at) as mes, COUNT(*) as total')
-        ->where('lider_id', $lider->id)
-        ->groupBy('mes')
-        ->orderBy('mes')
-        ->get()
-        ->map(function ($item) {
-            return [
-                'mes' => date("F", mktime(0, 0, 0, $item->mes, 1)),
-                'total' => $item->total
-            ];
-        });
-
-    return view('votantes.dashboard', compact(
-        'totalVotantes',
-        'totalMesas',
-        'totalConcejales',
-        'totalLideres',
-        'votantesPorLugar',
-        'votantesPorBarrio',
-        'votantesAlcalde',
-        'votantesPorMes'
-    ));
-}
 
 }

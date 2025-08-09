@@ -14,7 +14,8 @@ class CheckRole
             return redirect()->route('login');
         }
 
-        if (Auth::user()->rol_id != $role) {
+        // Usar Spatie Laravel Permission en lugar de rol_id
+        if (!Auth::user()->hasRole($role)) {
             abort(403, 'No tienes permisos para acceder a esta página.');
         }
 

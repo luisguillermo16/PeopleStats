@@ -128,4 +128,21 @@ class LoginController extends Controller
 
         return redirect()->route('login')->with('success', 'Sesión cerrada correctamente.');
     }
+
+    /**
+     * Verificar si el email existe en el sistema.
+     */
+    public function checkEmail(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email'
+        ]);
+
+        $emailExists = User::where('email', $request->email)->exists();
+        
+        return response()->json([
+            'exists' => $emailExists,
+            'message' => $emailExists ? 'Email encontrado' : 'Email no registrado'
+        ]);
+    }
 }

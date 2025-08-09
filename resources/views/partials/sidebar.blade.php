@@ -109,7 +109,7 @@
                 <!-- Dashboard Alcalde -->
                 @can('ver dashboard')
                 <li class="nav-item">
-                    <a class="nav-link text-white sidebar-link {{ request()->routeIs('dashboar') ? 'active' : '' }}" 
+                    <a class="nav-link text-white sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" 
                         href="{{ route('dashboard') }}" title="Dashboard">
                         <i class="bi bi-people-fill me-2"></i>
                         Dashboard 
