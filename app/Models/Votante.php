@@ -27,10 +27,10 @@ class Votante extends Model
 
    
 
-    public static function validarVotanteUnico($cedula, $user_id)
+    public static function validarVotanteUnico($cedula, $liderId)
     {
         return self::where('cedula', $cedula)
-                   ->where('user_id', $user_id)
+                   ->where('lider_id', $liderId)
                    ->exists();
     }
 

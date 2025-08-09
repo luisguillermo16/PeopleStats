@@ -134,9 +134,7 @@ class VotanteController extends Controller
                 'string',
                 'max:20',
                 Rule::unique('votantes')->where(function ($query) use ($lider) {
-                    if ($lider->alcalde_id) {
-                        $query->where('alcalde_id', $lider->alcalde_id);
-                    }
+                    $query->where('lider_id', $lider->id);
                 }),
             ],
             'telefono' => 'required|string|max:20',
@@ -152,7 +150,7 @@ class VotanteController extends Controller
         }
 
         $request->validate($rules, [
-            'cedula.unique' => 'Esta cédula ya ha sido registrada para este alcalde.',
+            'cedula.unique' => 'Esta cédula ya ha sido registrada por este líder.',
             'concejal_id.exists' => 'El concejal seleccionado no es válido.',
         ]);
 
@@ -303,9 +301,7 @@ class VotanteController extends Controller
                 'string',
                 'max:20',
                 Rule::unique('votantes')->where(function ($query) use ($lider) {
-                    if ($lider->alcalde_id) {
-                        $query->where('alcalde_id', $lider->alcalde_id);
-                    }
+                    $query->where('lider_id', $lider->id);
                 })->ignore($votante->id),
             ],
             'telefono' => 'required|string|max:20',
@@ -321,7 +317,7 @@ class VotanteController extends Controller
         }
 
         $validator = Validator::make($request->all(), $rules, [
-            'cedula.unique' => 'Esta cédula ya ha sido registrada para este alcalde.',
+            'cedula.unique' => 'Esta cédula ya ha sido registrada por este líder.',
             'concejal_id.exists' => 'El concejal seleccionado no es válido.',
         ]);
 
@@ -360,13 +356,12 @@ class VotanteController extends Controller
 
         $lider = $this->getLider();
 
-        $query = Votante::where('cedula', $cedula);
-
-        if ($lider && $lider->alcalde_id) {
-            $query->where('alcalde_id', $lider->alcalde_id);
+        $existe = false;
+        if ($lider) {
+            $existe = Votante::where('cedula', $cedula)
+                ->where('lider_id', $lider->id)
+                ->exists();
         }
-
-        $existe = $query->exists();
 
         return response()->json(['exists' => $existe]);
     }
@@ -393,61 +388,53 @@ class VotanteController extends Controller
     // =============================
     public function import(Request $request)
     {
-        $request->validate([
-            'archivo' => 'required|file|mimes:xlsx,xls|max:10240', // Máximo 10MB
-        ]);
-
         $lider = $this->getLider();
         if (!$lider) {
             return redirect()->back()->with('error', 'No se encontró el líder asociado al usuario.');
         }
 
+        $request->validate([
+            'excel_file' => 'required|file|mimes:xlsx,xls',
+        ]);
+
         try {
-            // Guardar archivo temporalmente
-            $archivo = $request->file('archivo');
-            $nombreArchivo = 'import_' . time() . '_' . $archivo->getClientOriginalName();
-            $rutaArchivo = $archivo->storeAs('temp/imports', $nombreArchivo);
+            $import = new VotantesImport($lider);
+            Excel::import($import, $request->file('excel_file'));
 
-            // Dispatch del job asíncrono
-            \App\Jobs\ImportarVotantesJob::dispatch(
-                $rutaArchivo,
-                $lider->id,
-                Auth::id(),
-                Auth::user()->email
-            );
+            $mensaje = "{$import->importados} votantes importados correctamente.";
+            if ($import->saltados > 0) {
+                $mensaje .= " {$import->saltados} registros fueron ignorados por las siguientes razones:";
+                foreach ($import->errores as $error) {
+                    $mensaje .= " - {$error}";
+                }
+            }
 
-            // Limpiar caché de resultados previos
-            \Cache::forget("import_result_" . Auth::id());
-
-            return redirect()->back()->with('success', 
-                'La importación ha comenzado. Recibirás una notificación cuando esté completa. ' .
-                'Puedes verificar el estado en la página de importaciones.'
-            );
-
+            return redirect()->route('ingresarVotantes')->with('success', $mensaje);
         } catch (\Exception $e) {
-            Log::error("Error al iniciar importación: " . $e->getMessage());
-            return redirect()->back()->with('error', 
-                'Error al procesar el archivo: ' . $e->getMessage()
-            );
+            return redirect()->back()->with('error', 'Error al importar: ' . $e->getMessage());
         }
     }
 
     /**
      * Verificar estado de importación
      */
-    public function verificarImportacion()
+    public function template()
     {
-        $resultadoKey = "import_result_" . Auth::id();
-        $resultado = \Cache::get($resultadoKey);
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="plantilla_votantes.csv"',
+        ];
 
-        if (!$resultado) {
-            return response()->json([
-                'estado' => 'pendiente',
-                'mensaje' => 'No hay importaciones en proceso'
-            ]);
-        }
+        $columns = ['nombre', 'cedula', 'telefono', 'mesa', 'lugar_votacion', 'barrio', 'concejal', 'alcalde_id'];
 
-        return response()->json($resultado);
+        $callback = function () use ($columns) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, $columns);
+            fputcsv($file, ['Juan Pérez', '123456789', '3001234567', '1', 'Colegio Central', 'Centro', 'Nombre Concejal', '1']);
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 
     // =============================

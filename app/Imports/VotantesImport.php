@@ -87,11 +87,13 @@ class VotantesImport implements ToModel, WithHeadingRow
         $this->cedulasVistas[] = $cedula;
 
         // =============================
-        // Validar duplicados en BD
+        // Validar duplicados en BD (único por líder)
         // =============================
-        if (Votante::where('cedula', $cedula)->exists()) {
+        if (Votante::where('cedula', $cedula)
+            ->where('lider_id', $this->lider->id)
+            ->exists()) {
             $this->saltados++;
-            $this->errores[] = "Cédula {$cedula}: Ya existe en la base de datos.";
+            $this->errores[] = "Cédula {$cedula}: Ya fue registrada por este líder.";
             return null;
         }
 
