@@ -52,7 +52,7 @@
     <table class="table rounded border shadow-sm overflow-hidden">
         <thead>
             <tr>
-                <th class="d-none d-md-table-cell"><input type="checkbox" id="selectAll" class="form-check-input"></th>
+                <th ></th>
                 <th>Nombre</th>
                 <th class="d-none d-md-table-cell">Cédula</th>
                 <th class="d-none d-lg-table-cell">Teléfono</th>
@@ -68,7 +68,7 @@
         <tbody>
             @forelse ($votantes as $votante)
                 <tr>
-                    <td class="d-none d-md-table-cell"><input type="checkbox" class="form-check-input item-checkbox"></td>
+                    <td ></td>
                     <td>
                         <div class="fw-semibold">{{ $votante->nombre }}</div>
                         <div class="d-md-none"><small class="text-muted">{{ $votante->telefono }}</small></div>

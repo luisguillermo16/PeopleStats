@@ -1,7 +1,7 @@
 @props(['collection'])
 
 @if ($collection->hasPages())
-    <div class="mobile-pagination-wrapper">
+    <div class="mobile-pagination-wrapper rounded border">
         
         {{-- Información de resultados --}}
         <div class="pagination-info text-center mb-3">
@@ -11,7 +11,7 @@
         </div>
 
         {{-- Paginación horizontal estilo móvil --}}
-        <div class="mobile-pagination d-flex justify-content-center align-items-center">
+        <div class="mobile-pagination  d-flex justify-content-center align-items-center">
             
             {{-- Botón anterior --}}
             @if (!$collection->onFirstPage())

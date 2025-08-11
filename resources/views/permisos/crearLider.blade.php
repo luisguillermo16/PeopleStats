@@ -47,7 +47,7 @@
             <tr>
                 <!-- Checkbox solo en desktop -->
                 <th width="50" class="d-none d-md-table-cell">
-                    <input type="checkbox" id="selectAll" class="form-check-input">
+                    
                 </th>
                 <th>Líder</th>
                 <th class="d-none d-md-table-cell">Email</th>
@@ -63,7 +63,7 @@
             <tr>
                 <!-- Checkbox -->
                 <td class="d-none d-md-table-cell">
-                    <input type="checkbox" class="form-check-input item-checkbox">
+                    
                 </td>
                
                 <!-- Información principal -->

@@ -18,27 +18,39 @@ class EstadisticaBarrios extends Component
         $this->votantesPorBarrio = $this->getDatos();
     }
 
-private function getDatos()
-{
-    $usuario = Auth::user();
+    private function getDatos()
+    {
+        $usuario = Auth::user();
 
-    if (!$usuario || !$usuario->hasRole('aspirante-alcaldia')) {
-        return collect();
-    }
+        if (!$usuario) {
+            return collect();
+        }
 
-    return Votante::select('barrio_id', DB::raw('count(*) as total'))
-        ->where('alcalde_id', $usuario->id)
-        ->groupBy('barrio_id')
-        ->with('barrio:id,nombre')
-        ->get()
-        ->map(function ($item) {
+        // Consulta base
+        $query = Votante::select('barrio_id', DB::raw('count(*) as total'))
+            ->groupBy('barrio_id')
+            ->with('barrio:id,nombre');
+
+        // Filtrado según el rol
+        if ($usuario->hasRole('aspirante-alcaldia')) {
+            $query->where('alcalde_id', $usuario->id);
+        } elseif ($usuario->hasRole('aspirante-concejo')) {
+            $query->where('concejal_id', $usuario->id);
+        } elseif ($usuario->hasRole('lider')) {
+            $query->where('lider_id', $usuario->id);
+        } else {
+            // Si el rol no coincide con ninguno de los tres, no retorna datos
+            return collect();
+        }
+
+        // Retorna datos mapeados
+        return $query->get()->map(function ($item) {
             return [
                 'nombre' => optional($item->barrio)->nombre ?? 'Sin barrio',
-                'total' => $item->total
+                'total'  => $item->total
             ];
         });
-}
-
+    }
 
     public function render(): View|Closure|string
     {

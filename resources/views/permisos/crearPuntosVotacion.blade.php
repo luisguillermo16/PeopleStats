@@ -63,7 +63,7 @@
                         <tr>
                             <!-- Checkbox solo en desktop -->
                             <th width="50" class="d-none d-md-table-cell">
-                                <input type="checkbox" id="selectAll" class="form-check-input">
+
                             </th>
                             <th>Punto de Votación</th>
                             <th class="d-none d-lg-table-cell">Dirección</th>
@@ -78,7 +78,7 @@
                             <tr>
                                 <!-- Checkbox -->
                                 <td class="d-none d-md-table-cell">
-                                    <input type="checkbox" class="form-check-input item-checkbox" value="{{ $lugar->id }}">
+                                  
                                 </td>
                                 
                                 <!-- Información principal -->

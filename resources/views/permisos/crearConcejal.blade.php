@@ -65,7 +65,7 @@
     <table class="table rounded border shadow-sm overflow-hidden">
         <thead>
             <tr>
-                <th class="d-none d-md-table-cell" width="50"><input type="checkbox" id="selectAll"></th>
+                <th></th>
                 <th>Concejal</th>
                 <th class="d-none d-md-table-cell">Email</th>
                 <th class="d-none d-lg-table-cell">Partido</th>
@@ -78,7 +78,7 @@
         <tbody>
             @forelse ($concejales as $concejal)
                 <tr>
-                    <td class="d-none d-md-table-cell"><input type="checkbox" class="form-check-input item-checkbox"></td>
+                    <td class="d-none d-md-table-cell"></td>
                     <td>
                         <div class="d-flex align-items-center">
                             <i class="bi bi-person fs-4 me-2"></i>

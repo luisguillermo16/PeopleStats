@@ -29,14 +29,30 @@
         <x-card-votantes />
         <x-card-concejales />
         <x-card-lideres />
-           <x-estadistica-barrios />
+        <x-estadistica-barrios />
+        <x-tendencia-semanal />
        
     @elseif ($rol == 'aspirante-concejo')
         <x-card-votantes />
         <x-card-lideres />
-    @elseif ($rol == 'lider')
-        <x-card-votantes />
+        <div class="col invisible">
+            {{-- Si quieres, puedes dejar vacío o poner un placeholder transparente --}}
+        </div>
+         <x-estadistica-barrios />
+          <x-tendencia-semanal />
+@elseif ($rol == 'lider')
+    {{-- Barra de búsqueda arriba --}}
+    <div class="col-12 mb-3">
         <x-buscar-cedula />
+    </div>
+    {{-- Tarjeta de votantes --}}
+        <x-card-votantes />
+    {{-- Gráficas lado a lado --}}
+    <div class="d-flex gap-3">
+        <x-estadistica-barrios/>
+        <x-tendencia-semanal/>
+    </div>
+       
     @else
         <div class="alert alert-danger">Rol no válido</div>
     @endif
