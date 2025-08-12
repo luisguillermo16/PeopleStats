@@ -16,7 +16,7 @@
     const ctx = document.getElementById('barriosPieChart').getContext('2d');
 
     new Chart(ctx, {
-        type: 'doughnut',
+        type: 'pie', // ← Aquí el cambio
         data: {
             labels: dataBarrios.map(b => b.nombre),
             datasets: [{

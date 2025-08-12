@@ -31,6 +31,47 @@ class VotanteController extends Controller
     }
 
     /**
+     * Obtiene el alcalde_id de la rama del líder actual
+     */
+    private function getAlcaldeIdDeRama($lider)
+    {
+        // Si el líder tiene alcalde_id directamente
+        if ($lider->alcalde_id) {
+            return $lider->alcalde_id;
+        }
+
+        // Si el líder pertenece a un concejal, obtener el alcalde del concejal
+        if ($lider->concejal_id) {
+            $concejal = User::find($lider->concejal_id);
+            return $concejal ? $concejal->alcalde_id : null;
+        }
+
+        return null;
+    }
+
+    /**
+     * Valida que una cédula no exista en la rama del alcalde
+     */
+    private function validarCedulaUnicaEnRama($cedula, $lider, $votanteId = null)
+    {
+        $alcaldeId = $this->getAlcaldeIdDeRama($lider);
+        
+        if (!$alcaldeId) {
+            return false; // Sin alcalde no puede validar
+        }
+
+        $query = Votante::where('cedula', $cedula)
+                        ->where('alcalde_id', $alcaldeId);
+
+        // Si estamos editando, excluir el votante actual
+        if ($votanteId) {
+            $query->where('id', '!=', $votanteId);
+        }
+
+        return !$query->exists();
+    }
+
+    /**
      * Filtra lugares de votación según el líder actual
      */
     private function getLugaresFiltrados($lider)
@@ -73,16 +114,7 @@ class VotanteController extends Controller
      */
     private function getBarriosFiltrados($lider)
     {
-        $alcaldeId = null;
-
-        if ($lider->concejal_id) {
-            $concejal = User::find($lider->concejal_id);
-            $alcaldeId = $concejal ? $concejal->alcalde_id : null;
-        }
-
-        if (!$alcaldeId && $lider->alcalde_id) {
-            $alcaldeId = $lider->alcalde_id;
-        }
+        $alcaldeId = $this->getAlcaldeIdDeRama($lider);
 
         if (!$alcaldeId) {
             return collect();
@@ -127,41 +159,48 @@ class VotanteController extends Controller
             return redirect()->back()->with('error', 'No se encontró el líder asociado al usuario.');
         }
 
-        $rules = [
+        // Validación personalizada de cédula única en la rama
+        $request->validate([
+            'cedula' => 'required|string|max:20',
             'nombre' => 'required|string|max:255',
-            'cedula' => [
-                'required',
-                'string',
-                'max:20',
-                Rule::unique('votantes')->where(function ($query) use ($lider) {
-                    $query->where('lider_id', $lider->id);
-                }),
-            ],
             'telefono' => 'required|string|max:20',
             'mesa' => 'required|string|max:255',
             'lugar_votacion_id' => 'required|exists:lugares_votacion,id',
             'barrio_id' => 'required|exists:barrios,id',
-        ];
-
-        if ($lider->concejal_id) {
-            $rules['tambien_vota_alcalde'] = 'required|in:1,0';
-        } elseif ($lider->alcalde_id) {
-            $rules['concejal_id'] = 'nullable|exists:users,id';
-        }
-
-        $request->validate($rules, [
-            'cedula.unique' => 'Esta cédula ya ha sido registrada por este líder.',
-            'concejal_id.exists' => 'El concejal seleccionado no es válido.',
         ]);
 
+        // Validación específica: cédula única por rama de alcalde
+        if (!$this->validarCedulaUnicaEnRama($request->cedula, $lider)) {
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['cedula' => 'Esta cédula ya ha sido registrada en esta campaña por otro líder.']);
+        }
+
+        // Validaciones adicionales según el tipo de líder
+        if ($lider->concejal_id) {
+            $request->validate([
+                'tambien_vota_alcalde' => 'required|in:1,0'
+            ]);
+        } elseif ($lider->alcalde_id) {
+            $request->validate([
+                'concejal_id' => 'nullable|exists:users,id'
+            ]);
+        }
+
+        // Crear votante
         $votante = new Votante($request->only('nombre', 'cedula', 'telefono', 'mesa', 'lugar_votacion_id', 'barrio_id'));
         $votante->lider_id = $lider->id;
 
+        // Asignar alcalde_id siempre (clave para la validación)
+        $votante->alcalde_id = $this->getAlcaldeIdDeRama($lider);
+
         if ($lider->concejal_id) {
             $votante->concejal_id = $lider->concejal_id;
-            $votante->alcalde_id = ($request->tambien_vota_alcalde == '1' && $lider->alcalde_id) ? $lider->alcalde_id : null;
+            // Solo quitar el alcalde si NO vota por alcalde
+            if ($request->tambien_vota_alcalde != '1') {
+                $votante->alcalde_id = null;
+            }
         } elseif ($lider->alcalde_id) {
-            $votante->alcalde_id = $lider->alcalde_id;
             if ($request->filled('concejal_id')) {
                 $votante->concejal_id = $request->concejal_id;
             }
@@ -184,8 +223,8 @@ class VotanteController extends Controller
         }
 
         // Configuración de paginación configurable
-        $perPage = $request->get('per_page', 10); // Por defecto 25, máximo 100
-        $perPage = min(max($perPage, 10), 100); // Limitar entre 10 y 100
+        $perPage = $request->get('per_page', 10);
+        $perPage = min(max($perPage, 10), 100);
         
         // Búsqueda con filtros
         $query = Votante::where('lider_id', $lider->id);
@@ -221,11 +260,10 @@ class VotanteController extends Controller
             $query->orderBy('created_at', 'desc');
         }
         
-        // Paginación con eager loading para evitar N+1
+        // Paginación con eager loading
         $votantes = $query->with(['barrio:id,nombre', 'lugarVotacion:id,nombre'])
                           ->paginate($perPage);
         
-        // Agregar parámetros de búsqueda a la paginación
         $votantes->appends($request->except('page'));
         
         $concejalOpciones = [];
@@ -294,47 +332,44 @@ class VotanteController extends Controller
             return redirect()->back()->with('error', 'No tienes permiso para actualizar este votante.');
         }
 
-        $rules = [
+        // Validación básica
+        $request->validate([
             'nombre' => 'required|string|max:255',
-            'cedula' => [
-                'required',
-                'string',
-                'max:20',
-                Rule::unique('votantes')->where(function ($query) use ($lider) {
-                    $query->where('lider_id', $lider->id);
-                })->ignore($votante->id),
-            ],
+            'cedula' => 'required|string|max:20',
             'telefono' => 'required|string|max:20',
             'mesa' => 'required|string|max:255',
             'lugar_votacion_id' => 'required|exists:lugares_votacion,id',
             'barrio_id' => 'required|exists:barrios,id',
-        ];
-
-        if ($lider->concejal_id) {
-            $rules['tambien_vota_alcalde'] = 'required|in:1,0';
-        } elseif ($lider->alcalde_id) {
-            $rules['concejal_id'] = 'nullable|exists:users,id';
-        }
-
-        $validator = Validator::make($request->all(), $rules, [
-            'cedula.unique' => 'Esta cédula ya ha sido registrada por este líder.',
-            'concejal_id.exists' => 'El concejal seleccionado no es válido.',
         ]);
 
-        if ($validator->fails()) {
+        // Validación específica: cédula única por rama (excluyendo el actual)
+        if (!$this->validarCedulaUnicaEnRama($request->cedula, $lider, $votante->id)) {
             return redirect()->back()
-                ->withErrors($validator)
                 ->withInput()
+                ->withErrors(['cedula' => 'Esta cédula ya ha sido registrada en esta campaña por otro líder.'])
                 ->with('editModalId', $votante->id);
         }
 
+        // Validaciones adicionales según el tipo de líder
+        if ($lider->concejal_id) {
+            $request->validate(['tambien_vota_alcalde' => 'required|in:1,0']);
+        } elseif ($lider->alcalde_id) {
+            $request->validate(['concejal_id' => 'nullable|exists:users,id']);
+        }
+
+        // Actualizar datos básicos
         $votante->fill($request->only('nombre', 'cedula', 'telefono', 'mesa', 'lugar_votacion_id', 'barrio_id'));
+
+        // Asignar alcalde_id siempre
+        $votante->alcalde_id = $this->getAlcaldeIdDeRama($lider);
 
         if ($lider->concejal_id) {
             $votante->concejal_id = $lider->concejal_id;
-            $votante->alcalde_id = ($request->tambien_vota_alcalde == '1' && $lider->alcalde_id) ? $lider->alcalde_id : null;
+            // Solo quitar el alcalde si NO vota por alcalde
+            if ($request->tambien_vota_alcalde != '1') {
+                $votante->alcalde_id = null;
+            }
         } elseif ($lider->alcalde_id) {
-            $votante->alcalde_id = $lider->alcalde_id;
             $votante->concejal_id = $request->filled('concejal_id') ? $request->concejal_id : null;
         }
 
@@ -344,7 +379,7 @@ class VotanteController extends Controller
     }
 
     // =============================
-    // BUSCAR POR CÉDULA
+    // BUSCAR POR CÉDULA - MEJORADO
     // =============================
     public function buscarPorCedula(Request $request)
     {
@@ -355,15 +390,17 @@ class VotanteController extends Controller
         }
 
         $lider = $this->getLider();
-
         $existe = false;
+
         if ($lider) {
-            $existe = Votante::where('cedula', $cedula)
-                ->where('lider_id', $lider->id)
-                ->exists();
+            // Verificar si existe en la rama del alcalde
+            $existe = !$this->validarCedulaUnicaEnRama($cedula, $lider);
         }
 
-        return response()->json(['exists' => $existe]);
+        return response()->json([
+            'exists' => $existe,
+            'message' => $existe ? 'Esta cédula ya está registrada en esta campaña.' : 'Cédula disponible.'
+        ]);
     }
 
     // =============================
@@ -384,7 +421,7 @@ class VotanteController extends Controller
     }
 
     // =============================
-    // IMPORTAR EXCEL
+    // IMPORTAR EXCEL - MEJORADO
     // =============================
     public function import(Request $request)
     {
@@ -398,15 +435,66 @@ class VotanteController extends Controller
         ]);
 
         try {
-            $import = new VotantesImport($lider);
+            // Crear import personalizado que valide por rama de alcalde
+            $import = new class($lider, $this) {
+                private $lider;
+                private $controller;
+                public $importados = 0;
+                public $saltados = 0;
+                public $errores = [];
+
+                public function __construct($lider, $controller)
+                {
+                    $this->lider = $lider;
+                    $this->controller = $controller;
+                }
+
+                public function collection($rows)
+                {
+                    foreach ($rows as $index => $row) {
+                        try {
+                            // Validar datos básicos
+                            if (empty($row['cedula']) || empty($row['nombre'])) {
+                                $this->saltados++;
+                                $this->errores[] = "Fila " . ($index + 2) . ": Datos requeridos faltantes";
+                                continue;
+                            }
+
+                            // Validar cédula única en la rama
+                            if (!$this->controller->validarCedulaUnicaEnRama($row['cedula'], $this->lider)) {
+                                $this->saltados++;
+                                $this->errores[] = "Fila " . ($index + 2) . ": Cédula {$row['cedula']} ya existe en la campaña";
+                                continue;
+                            }
+
+                            // Crear votante
+                            $votante = new Votante();
+                            $votante->nombre = $row['nombre'];
+                            $votante->cedula = $row['cedula'];
+                            $votante->telefono = $row['telefono'] ?? '';
+                            $votante->mesa = $row['mesa'] ?? '';
+                            $votante->lider_id = $this->lider->id;
+                            $votante->alcalde_id = $this->controller->getAlcaldeIdDeRama($this->lider);
+                            $votante->concejal_id = $this->lider->concejal_id;
+                            $votante->lugar_votacion_id = $row['lugar_votacion_id'] ?? null;
+                            $votante->barrio_id = $row['barrio_id'] ?? null;
+
+                            $votante->save();
+                            $this->importados++;
+
+                        } catch (\Exception $e) {
+                            $this->saltados++;
+                            $this->errores[] = "Fila " . ($index + 2) . ": " . $e->getMessage();
+                        }
+                    }
+                }
+            };
+
             Excel::import($import, $request->file('excel_file'));
 
             $mensaje = "{$import->importados} votantes importados correctamente.";
             if ($import->saltados > 0) {
-                $mensaje .= " {$import->saltados} registros fueron ignorados por las siguientes razones:";
-                foreach ($import->errores as $error) {
-                    $mensaje .= " - {$error}";
-                }
+                $mensaje .= " {$import->saltados} registros fueron ignorados: " . implode(', ', $import->errores);
             }
 
             return redirect()->route('ingresarVotantes')->with('success', $mensaje);
@@ -416,7 +504,7 @@ class VotanteController extends Controller
     }
 
     /**
-     * Verificar estado de importación
+     * Template de descarga
      */
     public function template()
     {
@@ -425,12 +513,12 @@ class VotanteController extends Controller
             'Content-Disposition' => 'attachment; filename="plantilla_votantes.csv"',
         ];
 
-        $columns = ['nombre', 'cedula', 'telefono', 'mesa', 'lugar_votacion', 'barrio', 'concejal', 'alcalde_id'];
+        $columns = ['nombre', 'cedula', 'telefono', 'mesa', 'lugar_votacion_id', 'barrio_id'];
 
         $callback = function () use ($columns) {
             $file = fopen('php://output', 'w');
             fputcsv($file, $columns);
-            fputcsv($file, ['Juan Pérez', '123456789', '3001234567', '1', 'Colegio Central', 'Centro', 'Nombre Concejal', '1']);
+            fputcsv($file, ['Juan Pérez', '123456789', '3001234567', '1', '1', '1']);
             fclose($file);
         };
 
@@ -450,12 +538,14 @@ class VotanteController extends Controller
 
         $lugares = $this->getLugaresFiltrados($lider);
         $barrios = $this->getBarriosFiltrados($lider);
+        $alcaldeId = $this->getAlcaldeIdDeRama($lider);
 
         return response()->json([
             'lider' => [
                 'id' => $lider->id,
                 'alcalde_id' => $lider->alcalde_id,
                 'concejal_id' => $lider->concejal_id,
+                'alcalde_de_rama' => $alcaldeId,
             ],
             'lugares_count' => count($lugares),
             'barrios_count' => count($barrios),
@@ -463,6 +553,7 @@ class VotanteController extends Controller
             'barrios' => $barrios
         ]);
     }
+
     public function estadisticas()
     {
         $lider = $this->getLider();
@@ -471,17 +562,13 @@ class VotanteController extends Controller
             return redirect()->back()->with('error', 'No se encontró el líder asociado al usuario.');
         }
 
-        // Clave única para el caché de este líder
         $cacheKey = "estadisticas_lider_{$lider->id}";
-        $cacheDuration = 300; // 5 minutos
+        $cacheDuration = 300;
 
-        // Intentar obtener del caché primero
         $estadisticas = \Cache::remember($cacheKey, $cacheDuration, function () use ($lider) {
-            // Totales generales con consultas optimizadas
             $totalVotantes = Votante::where('lider_id', $lider->id)->count();
             $totalMesas = Votante::where('lider_id', $lider->id)->distinct('mesa')->count('mesa');
             
-            // Cachear conteos de roles globales (no cambian por líder)
             $totalConcejales = \Cache::remember('total_concejales', 600, function () {
                 return User::role('aspirante-concejo')->count();
             });
@@ -490,7 +577,6 @@ class VotanteController extends Controller
                 return User::role('lider')->count();
             });
 
-            // Votantes por lugar de votación con eager loading optimizado
             $votantesPorLugar = Votante::select('lugar_votacion_id', \DB::raw('count(*) as total'))
                 ->where('lider_id', $lider->id)
                 ->groupBy('lugar_votacion_id')
@@ -503,7 +589,6 @@ class VotanteController extends Controller
                     ];
                 });
 
-            // Votantes por barrio con eager loading optimizado
             $votantesPorBarrio = Votante::select('barrio_id', \DB::raw('count(*) as total'))
                 ->where('lider_id', $lider->id)
                 ->groupBy('barrio_id')
@@ -516,12 +601,10 @@ class VotanteController extends Controller
                     ];
                 });
 
-            // Votantes que también votan alcalde
             $votantesAlcalde = Votante::where('lider_id', $lider->id)
                 ->whereNotNull('alcalde_id')
                 ->count();
 
-            // Votantes por mes (si tienes created_at)
             $votantesPorMes = Votante::selectRaw('MONTH(created_at) as mes, COUNT(*) as total')
                 ->where('lider_id', $lider->id)
                 ->groupBy('mes')
@@ -547,7 +630,6 @@ class VotanteController extends Controller
             ];
         });
 
-        // Extraer variables del array para la vista
         extract($estadisticas);
 
         return view('votantes.dashboard', compact(
@@ -562,5 +644,4 @@ class VotanteController extends Controller
             'cache_timestamp'
         ));
     }
-
 }
