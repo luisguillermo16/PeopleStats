@@ -13,6 +13,7 @@ use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\VotantesImport;
 use Illuminate\Support\Facades\Log;
+use App\Jobs\ImportarVotantesJob;
 
 class VotanteController extends Controller
 {
@@ -423,85 +424,25 @@ class VotanteController extends Controller
     // =============================
     // IMPORTAR EXCEL - MEJORADO
     // =============================
-    public function import(Request $request)
-    {
-        $lider = $this->getLider();
-        if (!$lider) {
-            return redirect()->back()->with('error', 'No se encontró el líder asociado al usuario.');
-        }
+        public function import(Request $request)
+        {
+            $request->validate([
+                'excel_file' => 'required|mimes:xlsx,xls'
+            ]);
 
-        $request->validate([
-            'excel_file' => 'required|file|mimes:xlsx,xls',
-        ]);
+            $lider = auth()->user(); // o como obtengas el líder
 
-        try {
-            // Crear import personalizado que valide por rama de alcalde
-            $import = new class($lider, $this) {
-                private $lider;
-                private $controller;
-                public $importados = 0;
-                public $saltados = 0;
-                public $errores = [];
-
-                public function __construct($lider, $controller)
-                {
-                    $this->lider = $lider;
-                    $this->controller = $controller;
-                }
-
-                public function collection($rows)
-                {
-                    foreach ($rows as $index => $row) {
-                        try {
-                            // Validar datos básicos
-                            if (empty($row['cedula']) || empty($row['nombre'])) {
-                                $this->saltados++;
-                                $this->errores[] = "Fila " . ($index + 2) . ": Datos requeridos faltantes";
-                                continue;
-                            }
-
-                            // Validar cédula única en la rama
-                            if (!$this->controller->validarCedulaUnicaEnRama($row['cedula'], $this->lider)) {
-                                $this->saltados++;
-                                $this->errores[] = "Fila " . ($index + 2) . ": Cédula {$row['cedula']} ya existe en la campaña";
-                                continue;
-                            }
-
-                            // Crear votante
-                            $votante = new Votante();
-                            $votante->nombre = $row['nombre'];
-                            $votante->cedula = $row['cedula'];
-                            $votante->telefono = $row['telefono'] ?? '';
-                            $votante->mesa = $row['mesa'] ?? '';
-                            $votante->lider_id = $this->lider->id;
-                            $votante->alcalde_id = $this->controller->getAlcaldeIdDeRama($this->lider);
-                            $votante->concejal_id = $this->lider->concejal_id;
-                            $votante->lugar_votacion_id = $row['lugar_votacion_id'] ?? null;
-                            $votante->barrio_id = $row['barrio_id'] ?? null;
-
-                            $votante->save();
-                            $this->importados++;
-
-                        } catch (\Exception $e) {
-                            $this->saltados++;
-                            $this->errores[] = "Fila " . ($index + 2) . ": " . $e->getMessage();
-                        }
-                    }
-                }
-            };
-
+            $import = new VotantesImport($lider);
             Excel::import($import, $request->file('excel_file'));
 
-            $mensaje = "{$import->importados} votantes importados correctamente.";
-            if ($import->saltados > 0) {
-                $mensaje .= " {$import->saltados} registros fueron ignorados: " . implode(', ', $import->errores);
-            }
+            // Guardamos en sesión para mostrar en la vista
+            session()->flash('import_result', [
+                'importados' => $import->importadosDetalle,
+                'errores'    => $import->errores
+            ]);
 
-            return redirect()->route('ingresarVotantes')->with('success', $mensaje);
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Error al importar: ' . $e->getMessage());
+            return redirect()->route('ingresarVotantes')->with('success', 'Votantes importados correctamente.');
         }
-    }
 
     /**
      * Template de descarga

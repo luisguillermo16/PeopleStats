@@ -414,12 +414,142 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // ==========================
-    // Habilitar botón Importar
-    // ==========================
-    document.getElementById('excel_file').addEventListener('change', function() {
-        document.getElementById('importBtn').disabled = !this.files.length;
+  // ==========================
+// Habilitar botón Importar
+// ==========================
+const fileInput = document.getElementById('excel_file');
+const importBtn = document.getElementById('importBtn');
+
+if (fileInput && importBtn) {
+    fileInput.addEventListener('change', function() {
+        const hasFile = this.files.length > 0;
+        importBtn.disabled = !hasFile;
+        
+        // Mostrar nombre del archivo seleccionado
+        if (hasFile) {
+            const fileName = this.files[0].name;
+            importBtn.textContent = `Importar ${fileName.length > 20 ? fileName.substring(0, 20) + '...' : fileName}`;
+        } else {
+            importBtn.textContent = 'Importar';
+        }
     });
+}
+
+// ==========================
+// Mostrar resultados de importación
+// ==========================
+try {
+    const data = @json(session('import_result'));
+    
+    if (data && (data.importados?.length || data.errores?.length)) {
+        const { importados = [], errores = [] } = data;
+        const total = importados.length + errores.length;
+        const successRate = total > 0 ? Math.round((importados.length / total) * 100) : 0;
+        
+        let htmlContent = '';
+        
+        // Estadísticas básicas
+        if (total > 0) {
+            htmlContent += `
+                <div style="background: #f8f9fa; padding: 12px; border-radius: 6px; margin-bottom: 15px; text-align: center;">
+                    <strong>Total procesado:</strong> ${total} | 
+                    <strong style="color: #28a745;">Tasa de éxito:</strong> ${successRate}%
+                </div>
+            `;
+        }
+        
+        // Lista de importados exitosos
+        if (importados.length) {
+            htmlContent += `
+                <h5 style="color: #28a745; margin: 15px 0 8px 0; display: flex; align-items: center;">
+                    <span style="margin-right: 8px;">✅</span>
+                    Importados Exitosamente (${importados.length})
+                </h5>
+                <div style="max-height: 150px; overflow-y: auto; background: #d4edda; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
+                    <ul style="text-align: left; margin: 0; padding-left: 20px;">
+            `;
+            
+            importados.forEach(item => {
+                htmlContent += `<li style="padding: 2px 0; font-size: 13px;">${item}</li>`;
+            });
+            
+            htmlContent += `</ul></div>`;
+        }
+        
+        // Lista de errores
+        if (errores.length) {
+            htmlContent += `
+                <h5 style="color: #dc3545; margin: 15px 0 8px 0; display: flex; align-items: center;">
+                    <span style="margin-right: 8px;">❌</span>
+                    Errores Encontrados (${errores.length})
+                </h5>
+                <div style="max-height: 150px; overflow-y: auto; background: #f8d7da; padding: 10px; border-radius: 4px;">
+                    <ul style="text-align: left; margin: 0; padding-left: 20px;">
+            `;
+            
+            errores.forEach(error => {
+                htmlContent += `<li style="padding: 2px 0; font-size: 13px;">${error}</li>`;
+            });
+            
+            htmlContent += `</ul></div>`;
+        }
+        
+        // Determinar icono y título
+        let icon, title;
+        if (errores.length && importados.length) {
+            icon = 'warning';
+            title = 'Importación Completada con Advertencias';
+        } else if (errores.length) {
+            icon = 'error';
+            title = 'Importación Fallida';
+        } else {
+            icon = 'success';
+            title = 'Importación Exitosa';
+        }
+        
+        // Mostrar resultado con SweetAlert
+        Swal.fire({
+            icon: icon,
+            title: title,
+            html: htmlContent,
+            width: 750,
+            confirmButtonText: 'Cerrar',
+            customClass: {
+                popup: 'import-result-popup'
+            },
+            didOpen: () => {
+                // Agregar estilos CSS dinámicamente
+                const style = document.createElement('style');
+                style.textContent = `
+                    .import-result-popup {
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+                    }
+                    .import-result-popup ul {
+                        list-style-type: disc;
+                    }
+                    .import-result-popup li {
+                        text-align: left !important;
+                        line-height: 1.4;
+                    }
+                    .import-result-popup h5 {
+                        font-weight: 600;
+                        font-size: 16px;
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+        });
+    }
+} catch (error) {
+    console.error('Error al procesar resultados:', error);
+    
+    Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Hubo un problema al mostrar los resultados de la importación.',
+        confirmButtonText: 'Entendido'
+    });
+}
 });
 </script>
 @endpush

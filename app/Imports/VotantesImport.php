@@ -13,9 +13,11 @@ class VotantesImport implements ToModel, WithHeadingRow
 {
     private $lider;
     private $cedulasVistas = [];
+
     public $saltados = 0;  
     public $importados = 0;
     public $errores = [];
+    public $importadosDetalle = []; // ✅ Lista de importados correctos
 
     public function __construct($lider)
     {
@@ -25,6 +27,7 @@ class VotantesImport implements ToModel, WithHeadingRow
     public function model(array $row)
     {
         $cedula = $row['cedula'] ?? 'desconocida';
+        $nombre = $row['nombre'] ?? '';
 
         // =============================
         // Validar Lugar de Votación
@@ -33,8 +36,7 @@ class VotantesImport implements ToModel, WithHeadingRow
         $lugar = LugarVotacion::where('nombre', $lugarNombre)->first();
 
         if (!$lugar) {
-            $this->saltados++;
-            $this->errores[] = "Cédula {$cedula}: Lugar de votación '{$lugarNombre}' no encontrado.";
+            $this->registrarError($cedula, $nombre, "Lugar de votación '{$lugarNombre}' no encontrado.");
             return null;
         }
 
@@ -45,19 +47,16 @@ class VotantesImport implements ToModel, WithHeadingRow
         $barrio = null;
 
         if ($barrioNombre !== '') {
-            // El barrio debe estar creado por el mismo alcalde vinculado al líder
             $barrio = Barrio::where('nombre', $barrioNombre)
                 ->where('alcalde_id', $this->lider->alcalde_id)
                 ->first();
 
             if (!$barrio) {
-                $this->saltados++;
-                $this->errores[] = "Cédula {$cedula}: Barrio '{$barrioNombre}' no encontrado o no pertenece al alcalde asignado.";
+                $this->registrarError($cedula, $nombre, "Barrio '{$barrioNombre}' no encontrado o no pertenece al alcalde asignado.");
                 return null;
             }
         } else {
-            $this->saltados++;
-            $this->errores[] = "Cédula {$cedula}: El campo 'barrio' es obligatorio.";
+            $this->registrarError($cedula, $nombre, "El campo 'barrio' es obligatorio.");
             return null;
         }
 
@@ -66,12 +65,14 @@ class VotantesImport implements ToModel, WithHeadingRow
         // =============================
         $concejalNombre = trim($row['concejal'] ?? '');
         $concejal = null;
+
         if ($concejalNombre !== '') {
-            $concejal = User::where('name', $concejalNombre)->role('aspirante-concejo')->first();
+            $concejal = User::where('name', $concejalNombre)
+                ->role('aspirante-concejo')
+                ->first();
 
             if (!$concejal) {
-                $this->saltados++;
-                $this->errores[] = "Cédula {$cedula}: Concejal '{$concejalNombre}' no existe o no tiene rol 'aspirante-concejo'.";
+                $this->registrarError($cedula, $nombre, "Concejal '{$concejalNombre}' no existe o no tiene rol 'aspirante-concejo'.");
                 return null;
             }
         }
@@ -80,30 +81,31 @@ class VotantesImport implements ToModel, WithHeadingRow
         // Validar duplicados en archivo
         // =============================
         if (in_array($cedula, $this->cedulasVistas)) {
-            $this->saltados++;
-            $this->errores[] = "Cédula {$cedula}: Duplicada en el archivo de importación.";
+            $this->registrarError($cedula, $nombre, "Duplicada en el archivo de importación.");
             return null;
         }
         $this->cedulasVistas[] = $cedula;
 
         // =============================
-        // Validar duplicados en BD (único por líder)
+        // Validar duplicados en la campaña (por alcalde)
         // =============================
-        if (Votante::where('cedula', $cedula)
-            ->where('lider_id', $this->lider->id)
+        $alcaldeId = $this->lider->alcalde_id 
+            ?? optional(User::find($this->lider->concejal_id))->alcalde_id;
+
+        if ($alcaldeId && Votante::where('cedula', $cedula)
+            ->where('alcalde_id', $alcaldeId)
             ->exists()) {
-            $this->saltados++;
-            $this->errores[] = "Cédula {$cedula}: Ya fue registrada por este líder.";
+            $this->registrarError($cedula, $nombre, "Ya fue registrada en esta campaña.");
             return null;
         }
-
         // =============================
         // Crear Votante
         // =============================
         $this->importados++;
+        $this->importadosDetalle[] = "{$cedula} - {$nombre}"; // ✅ Guardamos para mostrar
 
         $votante = new Votante([
-            'nombre'            => $row['nombre'] ?? null,
+            'nombre'            => $nombre,
             'cedula'            => $cedula,
             'telefono'          => $row['telefono'] ?? null,
             'mesa'              => $row['mesa'] ?? null,
@@ -129,5 +131,14 @@ class VotantesImport implements ToModel, WithHeadingRow
         }
 
         return $votante;
+    }
+
+    /**
+     * Guarda un error en la lista y aumenta contador de saltados
+     */
+    private function registrarError($cedula, $nombre, $mensaje)
+    {
+        $this->saltados++;
+        $this->errores[] = "{$cedula} - {$nombre}: {$mensaje}";
     }
 }
