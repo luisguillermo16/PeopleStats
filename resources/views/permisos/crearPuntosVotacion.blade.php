@@ -9,22 +9,23 @@
         <h4 class="mb-2 mb-md-0">
             
         </h4>
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#crearPuntoModal">
-            <i class="bi bi-plus-circle me-2"></i>
-            <span class="d-none d-sm-inline">Nuevo Punto de Votación</span>
-            <span class="d-sm-none">Nuevo Punto</span>
-        </button>
+        <div class="d-grid d-sm-block">
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#crearPuntoModal">
+                <i class="bi bi-plus-circle me-2"></i>
+                <span class="d-none d-sm-inline">Nuevo Punto de Votación</span>
+                <span class="d-sm-none">Nuevo Punto</span>
+            </button>
+        </div>
     </div>
 
-  
     <!-- Filtros Responsive -->
-    <div class="p-4 border bg-light rounded mb-4">
+    <div class="p-3 p-md-4 border bg-light rounded mb-4">
         <form method="GET">
-            <div class="row align-items-center g-3">
+            <div class="row align-items-end g-2 g-md-3">
                 <!-- Búsqueda principal -->
-                <div class="col-12 col-md-6">
+                <div class="col-12 col-md-6 col-lg-7">
                     <div class="input-group">
-                        <span class="input-group-text bg-white border-0">
+                        <span class="input-group-text bg-white border-end-0">
                             <i class="bi bi-search text-muted"></i>
                         </span>
                         <input type="text" class="form-control border-start-0" 
@@ -34,153 +35,229 @@
                 </div>
                 
                 <!-- Filtro por creador -->
-                <div class="col-6 col-md-3">
+                <div class="col-6 col-md-3 col-lg-2">
                     <select name="creador" class="form-select">
-                        <option value="">Todos los creadores</option>
-                        <option value="aspirante-alcaldia" {{ request('creador') == 'aspirante-alcaldia' ? 'selected' : '' }}>Aspirantes Alcaldía</option>
-                        <option value="aspirante-concejo" {{ request('creador') == 'aspirante-concejo' ? 'selected' : '' }}>Aspirantes Concejo</option>
+                        <option value="">Todos</option>
+                        <option value="aspirante-alcaldia" {{ request('creador') == 'aspirante-alcaldia' ? 'selected' : '' }}>Alcaldía</option>
+                        <option value="aspirante-concejo" {{ request('creador') == 'aspirante-concejo' ? 'selected' : '' }}>Concejo</option>
                         <option value="lider" {{ request('creador') == 'lider' ? 'selected' : '' }}>Líderes</option>
                     </select>
                 </div>
                 
                 <!-- Botón de búsqueda -->
-                <div class="col-6 col-md-3">
-                    <button class="btn btn-outline-primary w-100" type="submit">
-                        <i class="bi bi-search"></i>
-                        <span class="d-none d-lg-inline ms-1">Buscar</span>
-                    </button>
+                <div class="col-6 col-md-3 col-lg-3">
+                    <div class="d-grid">
+                        <button class="btn btn-outline-primary" type="submit">
+                            <i class="bi bi-search"></i>
+                            <span class="d-none d-lg-inline ms-1">Buscar</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </form>
     </div>
 
-    <!-- Tabla Responsive -->
-    <div class="card shadow-sm border-0">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table rounded border shadow-sm overflow-hidden">
-                    <thead class="table-light">
-                        <tr>
-                            <!-- Checkbox solo en desktop -->
-                            <th width="50" class="d-none d-md-table-cell">
-
-                            </th>
-                            <th>Punto de Votación</th>
-                            <th class="d-none d-lg-table-cell">Dirección</th>
-                            <th class="d-none d-md-table-cell">Mesas</th>
-                            <th class="d-none d-lg-table-cell">Creado por</th>
-                            <th class="d-none d-sm-table-cell">Fecha</th>
-                            <th width="150">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($lugares as $lugar)
+    <!-- Vista Desktop/Tablet - Tabla -->
+    <div class="d-none d-md-block">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table rounded border shadow-sm overflow-hidden">
+                        <thead class="table-light">
                             <tr>
-                                <!-- Checkbox -->
-                                <td class="d-none d-md-table-cell">
-                                  
-                                </td>
-                                
-                                <!-- Información principal -->
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="me-3">
-                                            <i class="bi bi-geo-alt-fill text-primary fs-4"></i>
-                                        </div>
-                                        <div>
-                                            <div class="fw-semibold">{{ $lugar->nombre }}</div>
-                                            <!-- Info adicional en móvil -->
-                                            <div class="d-lg-none">
-                                                <small class="text-muted">
-                                                    <i class="bi bi-geo me-1"></i>{{ Str::limit($lugar->direccion, 30) }}
-                                                </small>
+                                <th>Punto de Votación</th>
+                                <th class="d-none d-lg-table-cell">Dirección</th>
+                                <th>Mesas</th>
+                                <th class="d-none d-lg-table-cell">Creado por</th>
+                                <th class="d-none d-lg-table-cell">Fecha</th>
+                                <th width="150">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($lugares as $lugar)
+                                <tr>
+                                    <!-- Información principal -->
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="me-3">
+                                                <i class="bi bi-geo-alt-fill text-primary fs-4"></i>
                                             </div>
-                                            <!-- Mesas en móvil -->
-                                            <div class="d-md-none mt-1">
-                                                @foreach($lugar->mesas as $mesa)
-                                                    <span class="badge bg-primary me-1">{{ $mesa->numero }}</span>
-                                                @endforeach
+                                            <div>
+                                                <div class="fw-semibold">{{ $lugar->nombre }}</div>
+                                                <div class="d-lg-none">
+                                                    <small class="text-muted">
+                                                        <i class="bi bi-geo me-1"></i>{{ Str::limit($lugar->direccion, 30) }}
+                                                    </small>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </td>
-                                
-                                <!-- Dirección - oculta en móvil/tablet -->
-                                <td class="d-none d-lg-table-cell">
-                                    <small class="text-muted">
-                                        <i class="bi bi-geo me-1"></i>{{ $lugar->direccion ?: 'No especificada' }}
-                                    </small>
-                                </td>
-                                
-                                <!-- Mesas - ocultas en móvil -->
-                                <td class="d-none d-md-table-cell">
-                                    @forelse($lugar->mesas as $mesa)
-                                        <span class="badge bg-primary me-1">{{ $mesa->numero }}</span>
-                                    @empty
-                                        <span class="text-muted">Sin mesas</span>
-                                    @endforelse
-                                </td>
-                                
-                                <!-- Creado por - oculto hasta LG -->
-                                <td class="d-none d-lg-table-cell">
-                                    @if($lugar->alcalde_id)
-                                        <span class="badge bg-success">
-                                            <i class="bi bi-person-badge me-1"></i>Aspirante Alcaldía
-                                        </span>
-                                    @elseif($lugar->concejal_id)
-                                        <span class="badge bg-info">
-                                            <i class="bi bi-person me-1"></i>Aspirante Concejo
-                                        </span>
-                                    @else
-                                        <span class="badge bg-secondary">No definido</span>
+                                    </td>
+                                    
+                                    <!-- Dirección - oculta en móvil/tablet -->
+                                    <td class="d-none d-lg-table-cell">
+                                        <small class="text-muted">
+                                            <i class="bi bi-geo me-1"></i>{{ $lugar->direccion ?: 'No especificada' }}
+                                        </small>
+                                    </td>
+                                    
+                                    <!-- Mesas -->
+                                    <td>
+                                        @forelse($lugar->mesas as $mesa)
+                                            <span class="badge bg-primary me-1">{{ $mesa->numero }}</span>
+                                        @empty
+                                            <span class="text-muted">Sin mesas</span>
+                                        @endforelse
+                                    </td>
+                                    
+                                    <!-- Creado por - oculto hasta LG -->
+                                    <td class="d-none d-lg-table-cell">
+                                        @if($lugar->alcalde_id)
+                                            <span class="badge bg-success">
+                                                <i class="bi bi-person-badge me-1"></i>Aspirante Alcaldía
+                                            </span>
+                                        @elseif($lugar->concejal_id)
+                                            <span class="badge bg-info">
+                                                <i class="bi bi-person me-1"></i>Aspirante Concejo
+                                            </span>
+                                        @else
+                                            <span class="badge bg-secondary">No definido</span>
+                                        @endif
+                                    </td>
+                                    
+                                    <!-- Fecha - oculta en móvil -->
+                                    <td class="d-none d-lg-table-cell">
+                                        <small class="text-muted">{{ $lugar->created_at?->format('d/m/Y') }}</small>
+                                    </td>
+                                    
+                                    <!-- Acciones -->
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <!-- Botón editar -->
+                                            <button class="btn btn-sm btn-outline-warning btn-editar"
+                                                    title="Editar"
+                                                    data-id="{{ $lugar->id }}"
+                                                    data-nombre="{{ $lugar->nombre }}"
+                                                    data-direccion="{{ $lugar->direccion }}"
+                                                    data-mesas='@json($lugar->mesas)'>
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            
+                                            <!-- Botón eliminar -->
+                                            <form action="{{ route('destroyPuntosVotacion', $lugar) }}" method="POST" 
+                                                  style="display:inline-block" 
+                                                   class="form-eliminar">
+                                                @csrf 
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="6" class="text-center py-5">
+                                        <i class="bi bi-geo-alt text-muted" style="font-size: 3rem;"></i>
+                                        <p class="text-muted mt-2 mb-0">No hay puntos de votación registrados</p>
+                                        <small class="text-muted">Crea el primer punto de votación haciendo clic en "Nuevo Punto"</small>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vista Móvil - Cards -->
+    <div class="d-md-none">
+        @forelse($lugares as $lugar)
+            <div class="card mb-3 shadow-sm">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-9">
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-geo-alt-fill text-primary fs-4 me-2 mt-1"></i>
+                                <div class="flex-grow-1 min-w-0">
+                                    <h6 class="card-title mb-1 text-truncate fw-semibold">{{ $lugar->nombre }}</h6>
+                                    
+                                    @if($lugar->direccion)
+                                        <p class="card-text small text-muted mb-2 text-truncate">
+                                            <i class="bi bi-geo me-1"></i>{{ $lugar->direccion }}
+                                        </p>
                                     @endif
-                                </td>
-                                
-                                <!-- Fecha - oculta en móvil -->
-                                <td class="d-none d-sm-table-cell">
-                                    <small class="text-muted">{{ $lugar->created_at?->format('d/m/Y') }}</small>
-                                </td>
-                                
-                                <!-- Acciones -->
-                                <td>
-                                    <div class="btn-group" role="group">
-                                        <!-- Botón editar -->
-                                        <button class="btn btn-sm btn-outline-warning btn-editar"
-                                                title="Editar"
+                                    
+                                    <!-- Mesas -->
+                                    <div class="mb-2">
+                                        @forelse($lugar->mesas as $mesa)
+                                            <span class="badge bg-primary me-1 mb-1">{{ $mesa->numero }}</span>
+                                        @empty
+                                            <span class="badge bg-secondary">Sin mesas</span>
+                                        @endforelse
+                                    </div>
+                                    
+                                    <!-- Info adicional -->
+                                    <div class="d-flex align-items-center gap-3 mt-2">
+                                        @if($lugar->alcalde_id || $lugar->concejal_id)
+                                            <small class="text-muted">
+                                                @if($lugar->alcalde_id)
+                                                    <i class="bi bi-person-badge me-1"></i>Alcaldía
+                                                @else
+                                                    <i class="bi bi-person me-1"></i>Concejo
+                                                @endif
+                                            </small>
+                                        @endif
+                                        
+                                        <small class="text-muted">
+                                            <i class="bi bi-calendar me-1"></i>{{ $lugar->created_at?->format('d/m/Y') }}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-3 text-end">
+                            <div class="dropdown">
+                                <button class="btn btn-outline-secondary btn-sm dropdown-toggle w-100" type="button" 
+                                        data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <button class="dropdown-item btn-editar" 
                                                 data-id="{{ $lugar->id }}"
                                                 data-nombre="{{ $lugar->nombre }}"
                                                 data-direccion="{{ $lugar->direccion }}"
                                                 data-mesas='@json($lugar->mesas)'>
-                                            <i class="bi bi-pencil"></i>
+                                            <i class="bi bi-pencil me-2 text-warning"></i>Editar
                                         </button>
-                                        
-                                        <!-- Botón eliminar -->
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
                                         <form action="{{ route('destroyPuntosVotacion', $lugar) }}" method="POST" 
-                                              style="display:inline-block" 
-                                               class="form-eliminar">
+                                              class="form-eliminar">
                                             @csrf 
                                             @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
-                                                <i class="bi bi-trash"></i>
+                                            <button class="dropdown-item text-danger" type="submit">
+                                                <i class="bi bi-trash me-2"></i>Eliminar
                                             </button>
                                         </form>
-                                        
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="7" class="text-center py-5">
-                                    <i class="bi bi-geo-alt text-muted" style="font-size: 3rem;"></i>
-                                    <p class="text-muted mt-2 mb-0">No hay puntos de votación registrados</p>
-                                    <small class="text-muted">Crea el primer punto de votación haciendo clic en "Nuevo Punto"</small>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
+        @empty
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-geo-alt" style="font-size: 4rem;"></i>
+                <p class="mt-2 mb-0 fw-semibold">No hay puntos de votación registrados</p>
+                <small>Crea el primer punto de votación haciendo clic en "Nuevo Punto"</small>
+            </div>
+        @endforelse
     </div>
 
     <!-- Paginación Responsive -->
@@ -289,7 +366,7 @@
     </div>
 </div>
 
-<!-- Modal Editar Punto de Votación CORREGIDO -->
+<!-- Modal Editar Punto de Votación -->
 <div class="modal fade" id="editarPuntoModal" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
@@ -391,7 +468,7 @@ document.addEventListener('DOMContentLoaded', function() {
         container.appendChild(newMesa);
     });
     
-    // Agregar mesa en modal de EDICIÓN (CORREGIDO)
+    // Agregar mesa en modal de EDICIÓN
     document.getElementById('btn-agregar-mesa-editar').addEventListener('click', function() {
         const container = document.getElementById('editar-mesas-container');
         const newMesa = document.createElement('div');
@@ -421,7 +498,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Manejar botón editar (CORREGIDO)
+    // Manejar botón editar
     document.addEventListener('click', function(e) {
         if (e.target.closest('.btn-editar')) {
             const btn = e.target.closest('.btn-editar');
@@ -478,47 +555,13 @@ document.addEventListener('DOMContentLoaded', function() {
             editModal.show();
         }
     });
-    
-    // Manejo responsive de tablas
-    function handleTableResponsive() {
-        const tables = document.querySelectorAll('.table-responsive');
-        tables.forEach(table => {
-            if (window.innerWidth < 768) {
-                table.classList.add('table-mobile');
-            } else {
-                table.classList.remove('table-mobile');
-            }
-        });
-    }
-    
-    handleTableResponsive();
-    window.addEventListener('resize', handleTableResponsive);
 });
 </script>
-
-<style>
-@media (max-width: 767px) {
-    .btn-group {
-        flex-direction: column;
-        width: 100%;
-    }
-    
-    .table-mobile th,
-    .table-mobile td {
-        padding: 0.5rem 0.25rem;
-        font-size: 0.875rem;
-    }
-    
-    .modal-dialog {
-        margin: 0.5rem;
-    }
-}
-</style>
 @endsection
+
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-
     // Confirmación SweetAlert al eliminar
     document.querySelectorAll('.form-eliminar').forEach(form => {
         form.addEventListener('submit', function (e) {
@@ -565,18 +608,6 @@ document.addEventListener('DOMContentLoaded', function() {
             html: `{!! implode('<br>', $errors->all()) !!}`,
             confirmButtonColor: '#d33'
         });
-    @endif
-
-    // Abrir modal crear si error es de creación
-    @if($errors->any() && old('_token') && !$errors->has('email'))
-        const createModal = new bootstrap.Modal(document.getElementById('createModal'));
-        createModal.show();
-    @endif
-
-    // Abrir modal editar si error pertenece a edición
-    @if($errors->has('email') && session('edit_id'))
-        const editModal = new bootstrap.Modal(document.getElementById('editModal{{ session("edit_id") }}'));
-        editModal.show();
     @endif
 });
 </script>

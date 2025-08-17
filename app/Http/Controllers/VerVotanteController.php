@@ -10,17 +10,15 @@ use Illuminate\Support\Facades\DB;
 
 class VerVotanteController extends Controller
 {
-   public function index(Request $request)
+public function index(Request $request)
 {
     $user = auth()->user();
 
-    // Verificar si es aspirante a concejo o a alcaldía
     if (!$user->hasRole('aspirante-concejo') && !$user->hasRole('aspirante-alcaldia')) {
         abort(403, 'Acceso no autorizado');
     }
 
-    // Filtrado dinámico según el rol
-    $query = Votante::with(['lider', 'concejal']);
+    $query = Votante::with(['lider', 'concejal', 'mesa']);
 
     if ($user->hasRole('aspirante-alcaldia')) {
         $query->where('alcalde_id', $user->id);
@@ -28,7 +26,7 @@ class VerVotanteController extends Controller
         $query->where('concejal_id', $user->id);
     }
 
-    // Filtros adicionales
+    // Buscador general
     if ($request->filled('search')) {
         $search = $request->get('search');
         $query->where(function ($q) use ($search) {
@@ -37,8 +35,12 @@ class VerVotanteController extends Controller
         });
     }
 
+    // Filtro por mesa (por número, no por ID)
     if ($request->filled('mesa')) {
-        $query->where('mesa', $request->get('mesa'));
+        $mesaNumero = $request->get('mesa');
+        $query->whereHas('mesa', function ($q) use ($mesaNumero) {
+            $q->where('numero', $mesaNumero);
+        });
     }
 
     if ($request->filled('lider')) {
@@ -51,18 +53,23 @@ class VerVotanteController extends Controller
 
     $votantes = $query->paginate(5)->appends($request->query());
 
-    // Estadísticas y filtros
     $filtroCampo = $user->hasRole('aspirante-alcaldia') ? 'alcalde_id' : 'concejal_id';
 
     $totalVotantes = Votante::where($filtroCampo, $user->id)->count();
-    $totalMesas = Votante::where($filtroCampo, $user->id)->distinct('mesa')->count('mesa');
-    $totalLideres = Votante::where($filtroCampo, $user->id)->whereNotNull('lider_id')->distinct()->count('lider_id');
-    $totalConcejales = Votante::where($filtroCampo, $user->id)->whereNotNull('concejal_id')->distinct()->count('concejal_id');
+    $totalMesas = Votante::where($filtroCampo, $user->id)
+        ->distinct('mesa_id')
+        ->count('mesa_id');
+    $totalLideres = Votante::where($filtroCampo, $user->id)
+        ->whereNotNull('lider_id')->distinct()->count('lider_id');
+    $totalConcejales = Votante::where($filtroCampo, $user->id)
+        ->whereNotNull('concejal_id')->distinct()->count('concejal_id');
 
-    $lideresIds = Votante::where($filtroCampo, $user->id)->whereNotNull('lider_id')->distinct()->pluck('lider_id')->toArray();
+    $lideresIds = Votante::where($filtroCampo, $user->id)
+        ->whereNotNull('lider_id')->distinct()->pluck('lider_id')->toArray();
     $lideres = User::whereIn('id', $lideresIds)->select('id', 'name')->get();
 
-    $concejalesIds = Votante::where($filtroCampo, $user->id)->whereNotNull('concejal_id')->distinct()->pluck('concejal_id')->toArray();
+    $concejalesIds = Votante::where($filtroCampo, $user->id)
+        ->whereNotNull('concejal_id')->distinct()->pluck('concejal_id')->toArray();
     $concejales = User::whereIn('id', $concejalesIds)->select('id', 'name')->get();
 
     return view('permisos.verVotantes', compact(
@@ -75,4 +82,5 @@ class VerVotanteController extends Controller
         'totalLideres'
     ));
 }
+
 }

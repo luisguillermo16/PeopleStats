@@ -15,7 +15,7 @@ class Votante extends Model
         'nombre',
         'cedula',
         'telefono',
-        'mesa',
+        'mesa_id',
         'user_id',
         'lider_id',
         'concejal_id',
@@ -59,9 +59,12 @@ class Votante extends Model
     {
         return $this->belongsTo(LugarVotacion::class, 'lugar_votacion_id');
     }
-    public function barrio()
+        public function barrio()
+    {
+        return $this->belongsTo(Barrio::class, 'barrio_id');
+    }
+    public function mesa()
 {
-    return $this->belongsTo(Barrio::class, 'barrio_id');
+    return $this->belongsTo(Mesa::class, 'mesa_id');
 }
-
 }

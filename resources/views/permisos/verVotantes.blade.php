@@ -82,17 +82,22 @@
                 </select>
             </div>
             
-            <!-- Filtro por concejal -->
-            <div class="col-6 col-md-3 col-lg-2">
-                <select name="concejal" class="form-select">
-                    <option value="">Todos los concejales</option>
-                    @foreach($concejales ?? [] as $concejal)
-                        <option value="{{ $concejal->id }}" {{ request('concejal') == $concejal->id ? 'selected' : '' }}>
-                            {{ $concejal->name }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
+           @auth
+            @if(auth()->user()->hasRole('aspirante-alcaldia'))
+                <!-- Aquí tu select de concejales -->
+                <div class="col-6 col-md-3 col-lg-2">
+                    <select name="concejal" class="form-select">
+                        <option value="">Todos los concejales</option>
+                        @foreach($concejales ?? [] as $concejal)
+                            <option value="{{ $concejal->id }}" {{ request('concejal') == $concejal->id ? 'selected' : '' }}>
+                                {{ $concejal->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+            @endif
+        @endauth
+
             
             <!-- Botón de búsqueda -->
             <div class="col-6 col-md-3 col-lg-1">
@@ -170,7 +175,7 @@
                 <th class="d-none d-sm-table-cell">Mesa</th>
                 <th class="d-none d-lg-table-cell">Líder</th>
                 <th class="d-none d-lg-table-cell">Concejal</th>
-                <th width="100">Acciones</th>
+                <th class="d-none d-lg-table-cell"></th>
             </tr>
         </thead>
         <tbody>
@@ -197,7 +202,7 @@
                                         <i class="bi bi-telephone me-1"></i>{{ $votante->telefono }}
                                     </small>
                                 @endif
-                                <small class="text-primary d-block">Mesa: {{ $votante->mesa }}</small>
+                                <small class="text-primary d-block">Mesa: {{ $votante->mesa->numero }}</small>
                             </div>
                         </div>
                     </div>
@@ -217,7 +222,7 @@
                     @endif
                 </td>
                 <td class="d-none d-sm-table-cell">
-                    <span class="badge bg-primary">Mesa {{ $votante->mesa }}</span>
+                    <span class="badge bg-primary">Mesa {{ $votante->mesa->numero }}</span>
                 </td>
                 <td class="d-none d-lg-table-cell">
                     @if($votante->lider)
@@ -254,13 +259,7 @@
                 <!-- Acciones -->
                 <td>
                     <div class="btn-group" role="group">
-                        <!-- Botón ver detalles -->
-                        <button class="btn btn-sm btn-outline-info" 
-                                title="Ver detalles"
-                                data-bs-toggle="modal"
-                                data-bs-target="#detailModal{{ $votante->id }}">
-                            <i class="bi bi-eye"></i>
-                        </button>
+                     
                         
                       
                     </div>

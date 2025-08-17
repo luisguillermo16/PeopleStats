@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Barrio;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use App\Models\Mesa; 
 
 class VotantesImport implements ToModel, WithHeadingRow
 {
@@ -59,6 +60,33 @@ class VotantesImport implements ToModel, WithHeadingRow
             $this->registrarError($cedula, $nombre, "El campo 'barrio' es obligatorio.");
             return null;
         }
+        // =============================
+        // Validar Mesa (con normalización)
+        // =============================
+        $mesaNumero = trim((string)($row['mesa'] ?? ''));
+
+        // Si viene en formato "Mesa 5", "M-10", "10.0" → dejamos solo los dígitos
+        $mesaNumero = preg_replace('/\D/', '', $mesaNumero);
+
+        $mesa = null;
+
+        if ($mesaNumero !== '') {
+            $mesa = Mesa::where('numero', $mesaNumero)
+                ->where('lugar_votacion_id', $lugar->id)
+                ->first();
+
+            if (!$mesa) {
+                $this->registrarError(
+                    $cedula,
+                    $nombre,
+                    "La mesa '{$mesaNumero}' no existe en el lugar de votación '{$lugarNombre}'."
+                );
+                return null; // 🚨 Detener el guardado
+            }
+        } else {
+            $this->registrarError($cedula, $nombre, "El campo 'mesa' es obligatorio.");
+            return null; // 🚨 Detener el guardado
+        }
 
         // =============================
         // Validar Concejal
@@ -108,7 +136,7 @@ class VotantesImport implements ToModel, WithHeadingRow
             'nombre'            => $nombre,
             'cedula'            => $cedula,
             'telefono'          => $row['telefono'] ?? null,
-            'mesa'              => $row['mesa'] ?? null,
+            'mesa_id'           => $mesa->id,   
             'lugar_votacion_id' => $lugar->id,
             'barrio_id'         => $barrio->id,
         ]);

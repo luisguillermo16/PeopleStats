@@ -77,7 +77,7 @@
                     <td class="d-none d-lg-table-cell">{{ $votante->telefono ?? 'Sin asignar' }}</td>
                     <td class="d-none d-lg-table-cell">{{ $votante->barrio->nombre ?? 'Sin asignar' }}</td>
                     <td class="d-none d-lg-table-cell">{{ $votante->lugarVotacion->nombre ?? 'Sin asignar' }}</td>
-                    <td class="d-none d-lg-table-cell">{{ $votante->mesa ?? 'Sin asignar' }}</td>
+                    <td class="d-none d-lg-table-cell">{{ $votante->mesa->numero ?? 'Sin asignar' }}</td>
                     <td class="d-none d-lg-table-cell">
                       @if(is_null($lider->concejal_id))
                             {{ $votante->concejal?->name ?? $votante->concejal?->user?->name ?? 'No' }}
