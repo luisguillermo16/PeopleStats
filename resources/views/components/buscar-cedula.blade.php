@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', function () {
         feedback.classList.remove('text-success', 'text-danger');
         feedback.classList.add('text-info');
 
-        fetch(`{{ route('votantes.buscar') }}?cedula=${cedula}`)
+        fetch(`{{ route('votantes.buscarCedula') }}?cedula=${cedula}`)
             .then(response => response.json())
             .then(data => {
                 if (data.exists) {

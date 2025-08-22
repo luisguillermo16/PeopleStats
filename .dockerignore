@@ -1,0 +1,33 @@
+# Ignorar dependencias de Node
+node_modules
+npm-debug.log
+yarn.lock
+pnpm-lock.yaml
+
+# Ignorar dependencias de Composer
+vendor
+
+# Archivos de Vite en desarrollo
+*.local
+*.env
+*.env.*
+!*.env.production
+
+# Archivos de editor/IDE
+.vscode
+.idea
+*.swp
+
+# Cachés del sistema
+.DS_Store
+Thumbs.db
+
+# Carpeta de build local (los assets se generan en el contenedor)
+public/build
+
+# Archivos de pruebas
+phpunit.xml
+tests
+
+# Storage link de Laravel
+public/storage
