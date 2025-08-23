@@ -89,6 +89,9 @@
                         <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editModal{{ $votante->id }}">
                             <i class="bi bi-pencil"></i>
                         </button>
+                        <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ $votante->id }}">
+                            <i class="bi bi-trash"></i>
+                        </button>
                     </td>
                 </tr>
             @empty

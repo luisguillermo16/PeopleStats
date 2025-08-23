@@ -41,7 +41,7 @@
             <span class="d-sm-none">Nuevo</span>
         </button>
     </div>
-
+            
     {{-- Sistema de Filtros Responsive --}}
     <div class="p-4 border bg-light rounded mb-4">
         <form method="GET" action="{{ route('admin') }}">
@@ -66,6 +66,19 @@
                         @endforeach
                     </select>
                 </div>
+                <!-- Filtro por Alcalde -->
+                <div class="col-12 col-md-3">
+                    <select class="form-select" name="alcalde_id">
+                        <option value="">🏛️ Por campaña</option>
+                        @foreach ($alcaldes as $alcalde)
+                            <option value="{{ $alcalde->id }}" {{ request('alcalde_id') == $alcalde->id ? 'selected' : '' }}>
+                                {{ $alcalde->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+             
+ 
 
                 <!-- Botón de búsqueda -->
                 <div class="col-6 col-md-1">
@@ -77,19 +90,36 @@
             </div>
         </form>
     </div>
-
+           
     {{-- Tabla Responsive Estándar --}}
     <div class="table-responsive">
+         @if(request('alcalde_id'))
+               <div class="d-flex gap-2 mb-2">
+                    <div class="card text-white bg-primary mb-0" style="min-width: 70px;">
+                        <div class="card-body p-1 text-center">
+                            <small class="d-block mb-0" style="font-size: 0.7rem;">Líderes</small>
+                            <strong style="font-size: 1rem;">{{ $totalLideres ?? 0 }}</strong>
+                        </div>
+                    </div>
+                    <div class="card text-white bg-info mb-0" style="min-width: 70px;">
+                        <div class="card-body p-1 text-center">
+                            <small class="d-block mb-0" style="font-size: 0.7rem;">Concejales</small>
+                            <strong style="font-size: 1rem;">{{ $totalConcejales ?? 0 }}</strong>
+                        </div>
+                    </div>
+                </div>
+            @endif
         <table class="table">
             <thead>
                 <tr>
                     <!-- Checkbox solo en desktop -->
                     <th width="50" class="d-none d-md-table-cell">
-                        <input type="checkbox" id="selectAll" class="form-check-input">
+                       
                     </th>
                     <th>Usuario</th>
                     <th class="d-none d-md-table-cell">Email</th>
                     <th class="d-none d-lg-table-cell">Rol</th>
+                    <th class="d-none d-lg-table-cell">Creado Por</th>
                     <th class="d-none d-sm-table-cell">Fecha Registro</th>
                     <th width="150">Acciones</th>
                 </tr>
@@ -99,15 +129,13 @@
                     <tr>
                         <!-- Checkbox -->
                         <td class="d-none d-md-table-cell">
-                            <input type="checkbox" class="form-check-input user-checkbox">
+                           
                         </td>
 
                         <!-- Información principal -->
                         <td>
                             <div class="d-flex align-items-center">
-                                <div class="user-avatar me-3">
-                                    <i class="bi bi-person fs-4"></i>
-                                </div>
+                              
                                 <div>
                                     <div class="fw-semibold">{{ $user->name }}</div>
                                     <!-- Info adicional en móvil -->
@@ -146,6 +174,24 @@
                                 <span class="badge bg-info">👤 Candidato Concejal</span>
                             @elseif($rol == 'lider')
                                 <span class="badge bg-warning text-dark">👤 Líder Comunitario</span>
+                            @endif
+                        </td>
+                        <td class="d-none d-lg-table-cell">
+                             @php
+                                $rol = $user->getRoleNames()->first();
+                            @endphp
+
+                            {{-- Mostrar si es líder o concejal --}}
+                            @if (in_array($rol, ['lider', 'aspirante-concejo']))
+                                @if ($user->alcalde)
+                                    <span class="fw-semibold">{{ $user->alcalde->name }}</span>
+                                @elseif ($user->concejal)
+                                    <span class="fw-semibold">{{ $user->concejal->name }}</span>
+                                @else
+                                    <span class="text-muted">—</span>
+                                @endif
+                            @else
+                                <span class="text-muted">—</span>
                             @endif
                         </td>
                         <td class="d-none d-sm-table-cell">{{ \Carbon\Carbon::parse($user->created_at)->format('d/m/Y') }}

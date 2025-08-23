@@ -74,15 +74,7 @@
         <nav class="sidebar-nav">
             <ul class="nav flex-column">
                 <!-- Dashboard -->
-                @can('ver todo dashboard')
-                <li class="nav-item">
-                    <a class="nav-link text-white sidebar-link {{ request()->routeIs('admin') ? 'active' : '' }}" 
-                       href="{{ route('admin') }}" title="Dashboard">
-                        <i class="bi bi-speedometer2 me-2"></i>
-                        Dashboard
-                    </a>
-                </li>
-                @endcan
+             
                 
                 @can('ver todo dashboard')
                 <li class="nav-item">

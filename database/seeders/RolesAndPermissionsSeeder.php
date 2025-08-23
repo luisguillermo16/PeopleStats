@@ -34,11 +34,9 @@ class RolesAndPermissionsSeeder extends Seeder
         // Administrador
         $roleAdmin = Role::firstOrCreate(['name' => 'super-admin']);
         $roleAdmin->syncPermissions([
-            'crear alcaldes',
-            'ver votaciones alcaldes',
-            'ver votaciones concejales',
-            'ver todo dashboard',
-            'acceder admin',
+                'acceder admin',
+                'ver todo dashboard',
+                'crear concejales',
 
         ]);
         

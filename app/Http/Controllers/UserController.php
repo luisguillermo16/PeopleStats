@@ -13,35 +13,44 @@ class UserController extends Controller
     /**
      * Muestra el listado de usuarios con filtros.
      */
-    public function index(Request $request)
+        public function index(Request $request)
     {
-        $query = User::with('roles'); // Cargar relaciones de roles
+        $query = User::with('roles', 'alcalde');
 
-        // Filtro de búsqueda por nombre o email
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                ->orWhere('email', 'like', "%{$search}%");
             });
         }
 
-        // Filtro por estado (si tienes columna 'status')
-        if ($request->filled('status')) {
-            $query->where('status', $request->input('status'));
-        }
-
-        // Filtro por rol usando Spatie
         if ($request->filled('role')) {
-            $query->role($request->input('role')); // método role() de Spatie
+            $query->role($request->input('role'));
         }
 
-        $users = $query->orderBy('created_at', 'desc')->paginate(10);
+        // Filtro por alcalde
+        $alcaldeId = $request->input('alcalde_id');
+        if ($alcaldeId) {
+            $query->where('alcalde_id', $alcaldeId);
+
+            // Contar líderes y concejales de esta campaña
+            $totalLideres = User::where('alcalde_id', $alcaldeId)->role('lider')->count();
+            $totalConcejales = User::where('alcalde_id', $alcaldeId)->role('aspirante-concejo')->count();
+        } else {
+            $totalLideres = null;
+            $totalConcejales = null;
+        }
+
+        $users = $query->orderBy('created_at', 'desc')
+            ->paginate(10)
+            ->appends($request->all());
+
         $roles = Role::all();
+        $alcaldes = User::role('aspirante-alcaldia')->get();
 
-        return view('admin.admin', compact('users', 'roles'));
+        return view('admin.admin', compact('users', 'roles', 'alcaldes', 'totalLideres', 'totalConcejales'));
     }
-
     /**
      * Guarda un nuevo usuario.
      */
@@ -133,27 +142,5 @@ class UserController extends Controller
         return response()->json($user->load('roles'));
     }
 
-    /**
-     * Página de inicio para el usuario tipo Líder.
-     */
-    public function homeLider()
-    {
-        return view('userLider.homeLider');
-    }
-
-    /**
-     * Página de inicio para el usuario tipo Alcalde.
-     */
-    public function homeAlcalde()
-    {
-        return view('userAlcalde.homeAlcalde');
-    }
-
-    /**
-     * Página de inicio para el administrador.
-     */
-    public function homeAdmin()
-    {
-        return view('admin.homeAdmin');
-    }
+   
 }
