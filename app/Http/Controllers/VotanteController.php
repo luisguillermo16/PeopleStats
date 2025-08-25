@@ -14,6 +14,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\VotantesImport;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\ImportarVotantesJob;
+use App\Models\Mesa;
 
 class VotanteController extends Controller
 {
@@ -126,6 +127,28 @@ class VotanteController extends Controller
             ->get(['id', 'nombre']);
     }
 
+    /**
+     * Obtiene todas las mesas disponibles para el líder actual
+     */
+    private function getMesasFiltradas($lider)
+    {
+        $lugares = $this->getLugaresFiltrados($lider);
+        $mesas = collect();
+
+        foreach ($lugares as $lugar) {
+            foreach ($lugar['mesas'] as $mesa) {
+                $mesas->push((object)[
+                    'id' => $mesa['id'],
+                    'numero' => $mesa['numero'],
+                    'lugar_id' => $lugar['id'],
+                    'lugar_nombre' => $lugar['nombre']
+                ]);
+            }
+        }
+
+        return $mesas->sortBy('numero');
+    }
+
     // =============================
     // FORMULARIO DE CREACIÓN
     // =============================
@@ -145,8 +168,9 @@ class VotanteController extends Controller
 
         $lugares = $this->getLugaresFiltrados($lider);
         $barrios = $this->getBarriosFiltrados($lider);
+        $mesas = $this->getMesasFiltradas($lider);
 
-        return view('votantes.create', compact('lider', 'concejalOpciones', 'lugares', 'barrios'));
+        return view('votantes.create', compact('lider', 'concejalOpciones', 'lugares', 'barrios', 'mesas'));
     }
 
     // =============================
@@ -165,7 +189,7 @@ class VotanteController extends Controller
             'cedula' => 'required|string|max:20',
             'nombre' => 'required|string|max:255',
             'telefono' => 'required|string|max:20',
-            'mesa' => 'required|string|max:255',
+            'mesa_id' => 'required|exists:mesas,id',
             'lugar_votacion_id' => 'required|exists:lugares_votacion,id',
             'barrio_id' => 'required|exists:barrios,id',
         ]);
@@ -175,6 +199,17 @@ class VotanteController extends Controller
             return redirect()->back()
                 ->withInput()
                 ->withErrors(['cedula' => 'Esta cédula ya ha sido registrada en esta campaña por otro líder.']);
+        }
+
+        // Validar que la mesa pertenece al lugar seleccionado
+        $mesa = Mesa::where('id', $request->mesa_id)
+                   ->where('lugar_votacion_id', $request->lugar_votacion_id)
+                   ->first();
+
+        if (!$mesa) {
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['mesa_id' => 'La mesa seleccionada no pertenece al lugar de votación elegido.']);
         }
 
         // Validaciones adicionales según el tipo de líder
@@ -189,7 +224,7 @@ class VotanteController extends Controller
         }
 
         // Crear votante
-        $votante = new Votante($request->only('nombre', 'cedula', 'telefono', 'mesa', 'lugar_votacion_id', 'barrio_id'));
+        $votante = new Votante($request->only('nombre', 'cedula', 'telefono', 'mesa_id', 'lugar_votacion_id', 'barrio_id'));
         $votante->lider_id = $lider->id;
 
         // Asignar alcalde_id siempre (clave para la validación)
@@ -249,11 +284,16 @@ class VotanteController extends Controller
         if ($request->filled('lugar_votacion_id')) {
             $query->where('lugar_votacion_id', $request->lugar_votacion_id);
         }
+
+        // Filtro por mesa
+        if ($request->filled('mesa_id')) {
+            $query->where('mesa_id', $request->mesa_id);
+        }
         
         // Ordenamiento
         $sortBy = $request->get('sort_by', 'created_at');
         $sortOrder = $request->get('sort_order', 'desc');
-        $allowedSortFields = ['nombre', 'cedula', 'created_at', 'barrio_id', 'lugar_votacion_id'];
+        $allowedSortFields = ['nombre', 'cedula', 'created_at', 'barrio_id', 'lugar_votacion_id', 'mesa_id'];
         
         if (in_array($sortBy, $allowedSortFields)) {
             $query->orderBy($sortBy, $sortOrder);
@@ -262,8 +302,11 @@ class VotanteController extends Controller
         }
         
         // Paginación con eager loading
-        $votantes = $query->with(['barrio:id,nombre', 'lugarVotacion:id,nombre'])
-                          ->paginate($perPage);
+        $votantes = $query->with([
+            'barrio:id,nombre',
+            'lugarVotacion:id,nombre',
+            'mesa:id,numero'
+        ])->paginate($perPage);
         
         $votantes->appends($request->except('page'));
         
@@ -275,13 +318,15 @@ class VotanteController extends Controller
 
         $lugares = $this->getLugaresFiltrados($lider);
         $barrios = $this->getBarriosFiltrados($lider);
-
+        $mesas = $this->getMesasFiltradas($lider);
+       
         return view('permisos.ingresarVotantes', compact(
             'votantes', 
             'lider', 
             'concejalOpciones', 
             'lugares', 
             'barrios',
+            'mesas',
             'perPage'
         ));
     }
@@ -301,9 +346,10 @@ class VotanteController extends Controller
         $concejalOpciones = $this->getConcejales($lider->alcalde_id ?? null);
         $lugares = $this->getLugaresFiltrados($lider);
         $barrios = $this->getBarriosFiltrados($lider);
+        $mesas = $this->getMesasFiltradas($lider);
 
         $totalVotantes = Votante::where('lider_id', $lider->id)->count();
-        $totalMesas = Votante::where('lider_id', $lider->id)->distinct('mesa')->count('mesa');
+        $totalMesas = Votante::where('lider_id', $lider->id)->distinct('mesa_id')->count('mesa_id');
         $totalConcejales = User::role('aspirante-concejo')->count();
         $totalLideres = User::role('lider')->count();
 
@@ -314,6 +360,7 @@ class VotanteController extends Controller
             'concejalOpciones',
             'lugares',
             'barrios',
+            'mesas',
             'totalVotantes',
             'totalMesas',
             'totalConcejales',
@@ -322,7 +369,7 @@ class VotanteController extends Controller
     }
 
     // =============================
-    // ACTUALIZAR VOTANTE
+    // ACTUALIZAR VOTANTE - CORREGIDO
     // =============================
     public function update(Request $request, $id)
     {
@@ -338,7 +385,7 @@ class VotanteController extends Controller
             'nombre' => 'required|string|max:255',
             'cedula' => 'required|string|max:20',
             'telefono' => 'required|string|max:20',
-            'mesa' => 'required|string|max:255',
+            'mesa_id' => 'required|exists:mesas,id',
             'lugar_votacion_id' => 'required|exists:lugares_votacion,id',
             'barrio_id' => 'required|exists:barrios,id',
         ]);
@@ -351,6 +398,18 @@ class VotanteController extends Controller
                 ->with('editModalId', $votante->id);
         }
 
+        // Validar que la mesa pertenece al lugar seleccionado
+        $mesa = Mesa::where('id', $request->mesa_id)
+                   ->where('lugar_votacion_id', $request->lugar_votacion_id)
+                   ->first();
+
+        if (!$mesa) {
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['mesa_id' => 'La mesa seleccionada no pertenece al lugar de votación elegido.'])
+                ->with('editModalId', $votante->id);
+        }
+
         // Validaciones adicionales según el tipo de líder
         if ($lider->concejal_id) {
             $request->validate(['tambien_vota_alcalde' => 'required|in:1,0']);
@@ -358,8 +417,8 @@ class VotanteController extends Controller
             $request->validate(['concejal_id' => 'nullable|exists:users,id']);
         }
 
-        // Actualizar datos básicos
-        $votante->fill($request->only('nombre', 'cedula', 'telefono', 'mesa', 'lugar_votacion_id', 'barrio_id'));
+        // ✅ ACTUALIZAR DATOS BÁSICOS - LÍNEA CORREGIDA
+        $votante->fill($request->only('nombre', 'cedula', 'telefono', 'mesa_id', 'lugar_votacion_id', 'barrio_id'));
 
         // Asignar alcalde_id siempre
         $votante->alcalde_id = $this->getAlcaldeIdDeRama($lider);
@@ -424,25 +483,25 @@ class VotanteController extends Controller
     // =============================
     // IMPORTAR EXCEL - MEJORADO
     // =============================
-        public function import(Request $request)
-        {
-            $request->validate([
-                'excel_file' => 'required|mimes:xlsx,xls'
-            ]);
+    public function import(Request $request)
+    {
+        $request->validate([
+            'excel_file' => 'required|mimes:xlsx,xls'
+        ]);
 
-            $lider = auth()->user(); // o como obtengas el líder
+        $lider = $this->getLider();
 
-            $import = new VotantesImport($lider);
-            Excel::import($import, $request->file('excel_file'));
+        $import = new VotantesImport($lider);
+        Excel::import($import, $request->file('excel_file'));
 
-            // Guardamos en sesión para mostrar en la vista
-            session()->flash('import_result', [
-                'importados' => $import->importadosDetalle,
-                'errores'    => $import->errores
-            ]);
+        // Guardamos en sesión para mostrar en la vista
+        session()->flash('import_result', [
+            'importados' => $import->importadosDetalle,
+            'errores'    => $import->errores
+        ]);
 
-            return redirect()->route('ingresarVotantes')->with('success', 'Votantes importados correctamente.');
-        }
+        return redirect()->route('ingresarVotantes')->with('success', 'Votantes importados correctamente.');
+    }
 
     /**
      * Template de descarga
@@ -454,7 +513,7 @@ class VotanteController extends Controller
             'Content-Disposition' => 'attachment; filename="plantilla_votantes.csv"',
         ];
 
-        $columns = ['nombre', 'cedula', 'telefono', 'mesa', 'lugar_votacion_id', 'barrio_id'];
+        $columns = ['nombre', 'cedula', 'telefono', 'mesa_id', 'lugar_votacion_id', 'barrio_id'];
 
         $callback = function () use ($columns) {
             $file = fopen('php://output', 'w');
@@ -479,6 +538,7 @@ class VotanteController extends Controller
 
         $lugares = $this->getLugaresFiltrados($lider);
         $barrios = $this->getBarriosFiltrados($lider);
+        $mesas = $this->getMesasFiltradas($lider);
         $alcaldeId = $this->getAlcaldeIdDeRama($lider);
 
         return response()->json([
@@ -490,8 +550,10 @@ class VotanteController extends Controller
             ],
             'lugares_count' => count($lugares),
             'barrios_count' => count($barrios),
+            'mesas_count' => $mesas->count(),
             'lugares' => $lugares,
-            'barrios' => $barrios
+            'barrios' => $barrios,
+            'mesas' => $mesas
         ]);
     }
 
@@ -508,7 +570,8 @@ class VotanteController extends Controller
 
         $estadisticas = \Cache::remember($cacheKey, $cacheDuration, function () use ($lider) {
             $totalVotantes = Votante::where('lider_id', $lider->id)->count();
-            $totalMesas = Votante::where('lider_id', $lider->id)->distinct('mesa')->count('mesa');
+            // Corregido: usar mesa_id en lugar de mesa
+            $totalMesas = Votante::where('lider_id', $lider->id)->distinct('mesa_id')->count('mesa_id');
             
             $totalConcejales = \Cache::remember('total_concejales', 600, function () {
                 return User::role('aspirante-concejo')->count();
