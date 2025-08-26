@@ -3,7 +3,6 @@
 @section('tituloPage', 'Panel de Control')
 
 @section('contenido')
-
 {{-- Alertas --}}
 @if(session('success'))
     <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -31,32 +30,35 @@
         <x-card-lideres />
         <x-estadistica-barrios />
         <x-tendencia-semanal />
-       
+            
     @elseif ($rol == 'aspirante-concejo')
         <x-card-votantes />
         <x-card-lideres />
         <div class="col invisible">
             {{-- Si quieres, puedes dejar vacío o poner un placeholder transparente --}}
         </div>
-         <x-estadistica-barrios />
-          <x-tendencia-semanal />
-@elseif ($rol == 'lider')
-    {{-- Barra de búsqueda arriba --}}
-    <div class="col-12 mb-3">
-        <x-buscar-cedula />
-    </div>
-    {{-- Tarjeta de votantes --}}
+         
+        <x-estadistica-barrios />          
+        <x-tendencia-semanal />
+
+    @elseif ($rol == 'lider')
+        {{-- Barra de búsqueda arriba --}}
+        <div class="col-12 mb-3">
+            <x-buscar-cedula />
+        </div>
+        {{-- Tarjeta de votantes --}}
         <x-card-votantes />
-    {{-- Gráficas lado a lado --}}
-    <div class="d-flex gap-3">
-        <x-estadistica-barrios/>
-        <x-tendencia-semanal/>
-    </div>
-       
+        {{-- Gráficas lado a lado en desktop, apiladas en móvil --}}
+        <div class="d-flex flex-column flex-lg-row gap-3">
+            <x-estadistica-barrios/>
+            <x-tendencia-semanal/>
+        </div>
+            
     @else
         <div class="alert alert-danger">Rol no válido</div>
     @endif
 </div>
+
 <div class="row g-4">
     <div class="col-12">
         <div class="card border-0 shadow-sm">
@@ -75,6 +77,5 @@
         </div>
     </div>
 </div>
-
 
 @endsection
