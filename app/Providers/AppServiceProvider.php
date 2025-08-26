@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\URL;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,6 +24,8 @@ class AppServiceProvider extends ServiceProvider
        Gate::before(function ($user, $ability) {
     return null; // No sobreescribe permisos
     });
-    
+    if (app()->environment('production')) {
+            URL::forceScheme('https');
+        }
     }
 }
