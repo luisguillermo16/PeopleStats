@@ -1,207 +1,148 @@
 <!-- resources/views/partials/sidebar.blade.php -->
-<link
-  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
-  rel="stylesheet"
-/>
-<!-- Botón Hamburguesa (solo visible en mobile) -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet" />
+
+<!-- Botón Hamburguesa (solo en mobile) -->
 <div class="hamburger-container">
-    <button class="hamburger-btn" id="hamburgerBtn" aria-label="Abrir menú">
+    <button class="hamburger-btn" id="hamburgerBtn" aria-label="Abrir menú" aria-expanded="false">
         <div class="hamburger-line"></div>
         <div class="hamburger-line"></div>
         <div class="hamburger-line"></div>
     </button>
 </div>
 
-<!-- Overlay para mobile -->
+<!-- Overlay -->
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <!-- Sidebar -->
 <div class="sidebar text-white p-0" id="sidebar">
     <div class="sidebar-content">
-       
-        <!-- Información del Usuario -->
+        <!-- Usuario -->
         <div class="user-info p-4">
             <div class="d-flex align-items-center mb-3">
                 <div class="user-avatar me-3">
                     @if(auth()->user()->avatar)
                         <img src="{{ asset('storage/' . auth()->user()->avatar) }}" 
-                             alt="Avatar" 
-                             class="rounded-circle" 
-                             width="40" 
-                             height="40">
+                             alt="Avatar" class="rounded-circle" width="40" height="40">
                     @else
-                        <div class="avatar-placeholder">
-                            <i class="bi bi-person"></i>
-                        </div>
+                        <div class="avatar-placeholder"><i class="fas fa-user"></i></div>
                     @endif
                 </div>
                 <div>
                     <div class="fw-semibold">{{ auth()->user()->name }}</div>
                     <small class="text-white-50">
-                        @if(auth()->user()->roles->isNotEmpty())
-                            {{ auth()->user()->roles->first()->name }}
-                        @else
-                            Sin rol asignado
-                        @endif
+                        {{ auth()->user()->roles->first()->name ?? 'Sin rol asignado' }}
                     </small>
                 </div>
             </div>
-            
-            <!-- Mostrar permisos del usuario actual -->
+
             @if(auth()->user()->getAllPermissions()->isNotEmpty())
             <div class="permissions-info mb-3">
                 <small class="text-white-50">
-                    <i class="bi bi-shield-check me-1"></i>
+                    <i class="fas fa-shield-alt me-1"></i>
                     {{ auth()->user()->getAllPermissions()->count() }} permisos activos
                 </small>
             </div>
             @endif
-            
+
             <hr class="my-3 opacity-25">
-            
-            <!-- Botones de acción -->
-            <div class="d-flex gap-2"> 
-                <form method="POST" action="{{ route('logout') }}" class="flex-fill">
-                    @csrf
-                    <button type="submit" class="btn btn-danger btn-sm w-100">
-                        <i class="bi bi-box-arrow-right me-1"></i> Salir
-                    </button>
-                </form>
-            </div>
+
+            <!-- Botón Salir -->
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit" class="btn btn-danger btn-sm w-100">
+                    <i class="fas fa-sign-out-alt me-1"></i> Salir
+                </button>
+            </form>
         </div>
 
         <!-- Navegación -->
         <nav class="sidebar-nav">
             <ul class="nav flex-column">
-                <!-- Dashboard -->
-             
-                
                 @can('ver todo dashboard')
                 <li class="nav-item">
-                    <a class="nav-link text-white sidebar-link {{ request()->routeIs('admin') ? 'active' : '' }}" 
-                       href="{{ route('admin') }}" title="Gestión de Usuarios">
-                        <i class="bi bi-person-badge me-2"></i>
-                        Gestión de Usuarios
+                    <a class="nav-link sidebar-link {{ request()->routeIs('admin') ? 'active' : '' }}" 
+                       href="{{ route('admin') }}">
+                        <i class="fas fa-users-cog me-2"></i> Gestión de Usuarios
                     </a>
                 </li>
                 @endcan
 
-                <!-- Administración Alcaldes -->
                 @can('crear alcaldes')
                 <li class="nav-item">
-                    <a class="nav-link text-white sidebar-link {{ request()->routeIs('admin.alcaldes.*') ? 'active' : '' }}" 
-                       href="#" title="Administrar Alcaldes">
-                        <i class="bi bi-person-badge me-2"></i>
-                        Crear Alcaldes
+                    <a class="nav-link sidebar-link disabled" href="#">
+                        <i class="fas fa-user-tie me-2"></i> Crear Alcaldes
                         <small class="badge bg-warning text-dark ms-2">Próximamente</small>
                     </a>
                 </li>
                 @endcan
 
-                <!-- Dashboard Alcalde -->
                 @can('ver dashboard')
                 <li class="nav-item">
-                    <a class="nav-link text-white sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" 
-                        href="{{ route('dashboard') }}" title="Dashboard">
-                        <i class="bi bi-people-fill me-2"></i>
-                        Dashboard 
+                    <a class="nav-link sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" 
+                       href="{{ route('dashboard') }}">
+                        <i class="fas fa-chart-line me-2"></i> Dashboard
                     </a>
                 </li>
                 @endcan
-                
-                <!-- Gestión Concejales -->
+
                 @can('crear concejales')
                 <li class="nav-item">
-                    <a class="nav-link text-white sidebar-link {{ request()->routeIs('crearConcejal') ? 'active' : '' }}" 
-                       href="{{ route('crearConcejal') }}" title="Crear Concejales">
-                        <i class="fas fa-user-tie me-2"></i>
-                        Crear Concejales
+                    <a class="nav-link sidebar-link {{ request()->routeIs('crearConcejal') ? 'active' : '' }}" 
+                       href="{{ route('crearConcejal') }}">
+                        <i class="fas fa-user-tie me-2"></i> Crear Concejales
                     </a>
                 </li>
                 @endcan
 
-                <!-- Ver votantes del Alcalde -->
                 @can('ver votantes')
                 <li class="nav-item">
-                    <a class="nav-link text-white sidebar-link {{ request()->routeIs('alcaldia.votantes') ? 'active' : '' }}" 
-                         href="{{ route('verVotantes') }}" title="Ver Votantes ">
-                        <i class="fas fa-users me-2"></i>
-                        
-                        Ver Votantes
-                    </a>
-                </li>
-                @endcan
-                  @can('crear puntos de votacion')
-                <li class="nav-item">
-                    <a class="nav-link text-white sidebar-link {{ request()->routeIs('alcaldia.votantes') ? 'active' : '' }}" 
-                         href="{{ route('crearPuntosVotacion') }}" title="Crear Puntos de Votación">
-                        <i class="bi bi-map-fill me-2"> </i>
-                        Crear Puntos de Votación
-                    </a>
-                </li>
-                @endcan
-                    @can('crear barrios')
-                <li class="nav-item">
-                    <a class="nav-link text-white sidebar-link {{ request()->routeIs('barrios.index') ? 'active' : '' }}" 
-                    href="{{ route('crearBarrios') }}" title="Crear Barrios">
-                        <i class="bi bi-geo-alt-fill me-2"></i>
-                        Crear Barrios
+                    <a class="nav-link sidebar-link {{ request()->routeIs('verVotantes') ? 'active' : '' }}" 
+                       href="{{ route('verVotantes') }}">
+                        <i class="fas fa-users me-2"></i> Ver Votantes
                     </a>
                 </li>
                 @endcan
 
-                <!-- Ver votaciones Concejales -->
-                @can('ver votaciones concejales')
+                @can('crear puntos de votacion')
                 <li class="nav-item">
-                    <a class="nav-link text-white sidebar-link {{ request()->routeIs('admin.votaciones.concejales') ? 'active' : '' }}" 
-                       href="#" title="Ver Votaciones Concejales">
-                        <i class="bi bi-bar-chart-line me-2"></i>
-                        Votaciones Concejales
-                        <small class="badge bg-warning text-dark ms-2">Próximamente</small>
+                    <a class="nav-link sidebar-link {{ request()->routeIs('crearPuntosVotacion') ? 'active' : '' }}" 
+                       href="{{ route('crearPuntosVotacion') }}">
+                        <i class="fas fa-map-marker-alt me-2"></i> Crear Puntos de Votación
                     </a>
                 </li>
                 @endcan
 
-                <!-- Ver votantes del Concejal -->
-                @can('ver votantes del concejal')
+                @can('crear barrios')
                 <li class="nav-item">
-                    <a class="nav-link text-white sidebar-link {{ request()->routeIs('concejal.votantes') ? 'active' : '' }}" 
-                       href="#" title="Ver Votantes del Concejal">
-                        <i class="bi bi-people me-2"></i>
-                        Ver Votantes Concejal
-                        <small class="badge bg-warning text-dark ms-2">Próximamente</small>
+                    <a class="nav-link sidebar-link {{ request()->routeIs('crearBarrios') ? 'active' : '' }}" 
+                       href="{{ route('crearBarrios') }}">
+                        <i class="fas fa-city me-2"></i> Crear Barrios
                     </a>
                 </li>
                 @endcan
 
-                <!-- Crear Líderes -->
                 @can('crear lideres')
                 <li class="nav-item">
-                    <a class="nav-link text-white sidebar-link {{ request()->routeIs('admin.lideres.*') ? 'active' : '' }}" 
-                       href="{{ route('crearLider') }}" title="Crear Líderes">
-                          <i class="fas fa-street-view me-2"></i>
-                        Crear Líderes
-                       
+                    <a class="nav-link sidebar-link {{ request()->routeIs('crearLider') ? 'active' : '' }}" 
+                       href="{{ route('crearLider') }}">
+                        <i class="fas fa-street-view me-2"></i> Crear Líderes
                     </a>
                 </li>
                 @endcan
 
-                <!-- Ingresar Votantes -->
                 @can('ingresar votantes')
                 <li class="nav-item">
-                    <a class="nav-link text-white sidebar-link {{ request()->routeIs('votantes.ingresar') ? 'active' : '' }}" 
-                        href="{{ route('ingresarVotantes') }}" title="Ingresar Votantes">
-                        <i class="bi bi-person-plus me-2"></i>
-                        Ingresar Votantes
-                      
+                    <a class="nav-link sidebar-link {{ request()->routeIs('ingresarVotantes') ? 'active' : '' }}" 
+                       href="{{ route('ingresarVotantes') }}">
+                        <i class="fas fa-user-plus me-2"></i> Ingresar Votantes
                     </a>
                 </li>
                 @endcan
-                
             </ul>
         </nav>
     </div>
 </div>
+
 
 <style>
 /* =================

@@ -41,19 +41,18 @@
         </h2>
         <p class="text-muted mb-0">
             <span class="d-none d-md-inline">Gestiona y visualiza los votantes registrados bajo tu candidatura</span>
-           
         </p>
     </div>
 </div>
 
 {{-- Sistema de Filtros Responsive --}}
-<div class="p-4 border bg-light rounded mb-4">
+<div class="p-3 p-md-4 border bg-light rounded mb-4">
     <form method="GET">
-        <div class="row align-items-center g-3">
+        <div class="row align-items-end g-2 g-md-3">
             <!-- Búsqueda principal -->
-            <div class="col-12 col-lg-4">
+            <div class="col-12 col-md-6 col-lg-4">
                 <div class="input-group">
-                    <span class="input-group-text bg-white border-0">
+                    <span class="input-group-text bg-white border-end-0">
                         <i class="bi bi-search text-muted"></i>
                     </span>
                     <input type="text" class="form-control border-start-0" 
@@ -62,13 +61,7 @@
                 </div>
             </div>
             
-            <!-- Filtro por mesa -->
-            <div class="col-6 col-md-3 col-lg-2">
-                <input name="mesa" type="text" 
-                       value="{{ request('mesa') }}" 
-                       class="form-control" 
-                       placeholder="Mesa">
-            </div>
+         
             
             <!-- Filtro por líder -->
             <div class="col-6 col-md-3 col-lg-2">
@@ -84,7 +77,7 @@
             
            @auth
             @if(auth()->user()->hasRole('aspirante-alcaldia'))
-                <!-- Aquí tu select de concejales -->
+                <!-- Filtro por concejales -->
                 <div class="col-6 col-md-3 col-lg-2">
                     <select name="concejal" class="form-select">
                         <option value="">Todos los concejales</option>
@@ -97,27 +90,31 @@
                 </div>
             @endif
         @endauth
-
             
-            <!-- Botón de búsqueda -->
-            <div class="col-6 col-md-3 col-lg-1">
-                <button class="btn btn-outline-primary w-100" type="submit">
-                    <i class="bi bi-search"></i>
-                    <span class="d-none d-lg-inline ms-1">Buscar</span>
-                </button>
+            <!-- Botones de acción -->
+            <div class="col-6 col-md-3 col-lg-2">
+                <div class="d-grid d-md-block">
+                    <button class="btn btn-outline-primary w-100" type="submit">
+                        <i class="bi bi-search me-1"></i>
+                        <span class="d-none d-sm-inline">Buscar</span>
+                        <span class="d-sm-none">OK</span>
+                    </button>
+                </div>
             </div>
             
             <!-- Botón limpiar filtros -->
-            <div class="col-6 col-md-3 col-lg-1">
+            <div class="col-6 col-md-3 col-lg-2">
                 <a href="{{ request()->url() }}" class="btn btn-outline-secondary w-100">
-                    <i class="bi bi-x-circle"></i>
-                    <span class="d-none d-lg-inline ms-1">Limpiar</span>
+                    <i class="bi bi-x-circle me-1"></i>
+                    <span class="d-none d-lg-inline">Limpiar</span>
+                    <span class="d-lg-none">Limpiar</span>
                 </a>
             </div>
         </div>
     </form>
 </div>
 
+{{-- Tarjetas de estadísticas --}}
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-3">
         <div class="card text-center border-primary">
@@ -160,128 +157,190 @@
     </div>
 </div>
 
-{{-- Tabla Responsive Estándar --}}
-<div class="table-responsive">
-    <table class="table rounded border shadow-sm overflow-hidden">
-        <thead>
-            <tr>
-                <!-- Checkbox solo en desktop -->
-                <th width="50" class="d-none d-md-table-cell">
-                   
-                </th>
-                <th>Votantes</th>
-                <th class="d-none d-md-table-cell">Cédula</th>
-                <th class="d-none d-lg-table-cell">Teléfono</th>
-                <th class="d-none d-sm-table-cell">Mesa</th>
-                <th class="d-none d-lg-table-cell">Líder</th>
-                <th class="d-none d-lg-table-cell">Concejal</th>
-                <th class="d-none d-lg-table-cell"></th>
-            </tr>
-        </thead>
-        <tbody>
-        @forelse ($votantes as $votante)
-            <tr>
-                <!-- Checkbox -->
-                <td class="d-none d-md-table-cell">
+{{-- Vista Desktop/Tablet - Tabla --}}
+<div class="d-none d-md-block">
+    <div class="table-responsive">
+        <table class="table rounded border shadow-sm overflow-hidden">
+            <thead>
+                <tr>
+                    <th class="d-none d-lg-table-cell">Votante</th>
+                    <th class="d-none d-lg-table-cell" >Cédula</th>
+                    <th class="d-none d-lg-table-cell">Teléfono</th>
+                    <th class="d-none d-lg-table-cell">Mesa</th>
+                    <th class="d-none d-lg-table-cell">Barrio</th>
+                    <th class="d-none d-lg-table-cell">Líder</th>
+                    <th class="d-none d-lg-table-cell">Concejal</th>
                  
-                </td>
+                    <th width="150">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse ($votantes as $votante)
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-person fs-4 me-2"></i>
+                                <div>
+                                    <div class="fw-semibold">{{ $votante->nombre }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="fw-semibold">{{ $votante->cedula }}</span></td>
+                        <td class="d-none d-lg-table-cell">
+                            @if($votante->telefono)
+                                <a href="tel:{{ $votante->telefono }}" class="text-decoration-none">
+                                    <i class="bi bi-telephone me-1"></i>{{ $votante->telefono }}
+                                </a>
+                            @else
+                                <span class="text-muted">No registrado</span>
+                            @endif
+                        </td>
+                        <td><span class="fw-semibold">Mesa {{ $votante->mesa->numero }}</span></td>
+                         <td class="d-none d-lg-table-cell">{{ $votante->barrio->nombre ?? 'Sin asignar' }}</td>
+                        <td class="d-none d-lg-table-cell">
+                            @if($votante->lider)
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-person-badge me-2 text-success"></i>
+                                    <span>{{ $votante->lider->name }}</span>
+                                </div>
+                            @else
+                                <span class="text-muted">Sin asignar</span>
+                            @endif
+                        </td>
                 
-                <!-- Información principal del votante -->
-                <td>
-                    <div class="d-flex align-items-center">
-                        <div class="user-avatar me-3">
-                            <i class="bi bi-person-circle fs-4 text-primary"></i>
-                        </div>
-                        <div>
-                            <div class="fw-semibold">{{ $votante->nombre }}</div>
-                            <!-- Info adicional en móvil -->
-                            <div class="d-md-none">
-                                <small class="text-muted d-block">C.C: {{ $votante->cedula }}</small>
+                        <td class="d-none d-lg-table-cell">
+                            @php
+                                $concejal = null;
+                                if($votante->concejal_id) {
+                                    $concejal = App\Models\User::find($votante->concejal_id);
+                                }
+                            @endphp
+                            @if($concejal)
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-person-badge me-2 text-info"></i>
+                                    <span>{{ $concejal->name }}</span>
+                                </div>
+                            @elseif($votante->concejal_id)
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-person-badge me-2 text-warning"></i>
+                                    <span>ID: {{ $votante->concejal_id }}</span>
+                                </div>
+                            @else
+                                <span class="text-muted">Sin asignar</span>
+                            @endif
+                        </td>
+                       
+                        <td>
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-outline-primary" title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-info" title="Ver detalles">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="8" class="text-center py-4 text-muted">
+                            <i class="bi bi-inbox fs-2"></i><br>
+                            No hay votantes registrados
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{{-- Vista Móvil - Cards --}}
+<div class="d-md-none">
+    @forelse ($votantes as $votante)
+        <div class="card mb-3 shadow-sm">
+            <div class="card-body p-3">
+                <div class="row align-items-center">
+                    <div class="col-8">
+                        <div class="d-flex align-items-start">
+                            <i class="bi bi-person-circle fs-4 me-2 text-primary mt-1"></i>
+                            <div class="flex-grow-1 min-w-0">
+                                <h6 class="card-title mb-1 text-truncate">{{ $votante->nombre }}</h6>
+                                <p class="card-text small text-muted mb-1 text-truncate">
+                                    <i class="bi  me-1"></i>C.C: {{ $votante->cedula }}
+                                </p>
                                 @if($votante->telefono)
-                                    <small class="text-muted d-block">
-                                        <i class="bi bi-telephone me-1"></i>{{ $votante->telefono }}
-                                    </small>
+                                    <p class="card-text small text-muted mb-1 text-truncate">
+                                        <i class="bi bi-telephone me-1"></i>
+                                        <a href="tel:{{ $votante->telefono }}" class="text-muted">{{ $votante->telefono }}</a>
+                                    </p>
                                 @endif
-                                <small class="text-primary d-block">Mesa: {{ $votante->mesa->numero }}</small>
+                                <div class="d-flex align-items-center gap-3 mt-2">
+                                    <small class="badge bg-primary">
+                                        <i class="bi bi-grid me-1"></i>Mesa {{ $votante->mesa->numero }}
+                                    </small>
+                                    @if($votante->lider)
+                                        <small class="text-muted text-truncate">
+                                            <i class="bi bi-person-badge me-1"></i>{{ $votante->lider->name }}
+                                        </small>
+                                    @endif
+                                </div>
+                                @if($votante->concejal_id)
+                                    @php
+                                        $concejal = App\Models\User::find($votante->concejal_id);
+                                    @endphp
+                                    @if($concejal)
+                                        <div class="mt-1">
+                                            <small class="text-muted">
+                                                <i class="bi bi-person-badge me-1"></i>Concejal: {{ $concejal->name }}
+                                            </small>
+                                        </div>
+                                    @endif
+                                @endif
                             </div>
                         </div>
                     </div>
-                </td>
-                
-                <!-- Campos ocultos en móvil -->
-                <td class="d-none d-md-table-cell">
-                    <span class="badge bg-secondary">{{ $votante->cedula }}</span>
-                </td>
-                <td class="d-none d-lg-table-cell">
-                    @if($votante->telefono)
-                        <a href="tel:{{ $votante->telefono }}" class="text-decoration-none">
-                            <i class="bi bi-telephone me-1"></i>{{ $votante->telefono }}
-                        </a>
-                    @else
-                        <span class="text-muted">No registrado</span>
-                    @endif
-                </td>
-                <td class="d-none d-sm-table-cell">
-                    <span class="badge bg-primary">Mesa {{ $votante->mesa->numero }}</span>
-                </td>
-                <td class="d-none d-lg-table-cell">
-                    @if($votante->lider)
-                        <div class="d-flex align-items-center">
-                            <i class="bi bi-person-badge me-2 text-success"></i>
-                            <span>{{ $votante->lider->name }}</span>
+                    <div class="col-4 text-end">
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" 
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-three-dots-vertical"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <button class="dropdown-item">
+                                        <i class="bi bi-pencil me-2"></i>Editar
+                                    </button>
+                                </li>
+                                <li>
+                                    <button class="dropdown-item">
+                                        <i class="bi bi-eye me-2"></i>Ver detalles
+                                    </button>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <button class="dropdown-item text-danger">
+                                        <i class="bi bi-trash me-2"></i>Eliminar
+                                    </button>
+                                </li>
+                            </ul>
                         </div>
-                    @else
-                        <span class="text-muted">Sin asignar</span>
-                    @endif
-                </td>
-                <td class="d-none d-lg-table-cell">
-                    @php
-                        $concejal = null;
-                        if($votante->concejal_id) {
-                            $concejal = App\Models\User::find($votante->concejal_id);
-                        }
-                    @endphp
-                    @if($concejal)
-                        <div class="d-flex align-items-center">
-                            <i class="bi bi-person-badge me-2 text-info"></i>
-                            <span>{{ $concejal->name }}</span>
-                        </div>
-                    @elseif($votante->concejal_id)
-                        <div class="d-flex align-items-center">
-                            <i class="bi bi-person-badge me-2 text-warning"></i>
-                            <span>ID: {{ $votante->concejal_id }}</span>
-                        </div>
-                    @else
-                        <span class="text-muted">Sin asignar</span>
-                    @endif
-                </td>
-                
-                <!-- Acciones -->
-                <td>
-                    <div class="btn-group" role="group">
-                     
-                        
-                      
                     </div>
-                </td>
-            </tr>
-
-
-        @empty
-            <tr>
-                <td colspan="8" class="text-center py-5">
-                    <i class="bi bi-people text-muted" style="font-size: 4rem;"></i>
-                    <h4 class="text-muted mt-3">No hay votantes registrados</h4>
-                    <p class="text-muted">Aún no hay votantes asignados a tu campaña.</p>
-                </td>
-            </tr>
-        @endforelse
-        </tbody>
-    </table>
+                </div>
+            </div>
+        </div>
+    @empty
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-inbox fs-1"></i>
+            <p class="mt-2">No hay votantes registrados</p>
+        </div>
+    @endforelse
 </div>
 
 {{-- Paginación Responsive --}}
-<x-paginacion :collection="$votantes"  />
+<x-paginacion :collection="$votantes" />
 
 {{-- JavaScript Responsive --}}
 <script>
@@ -335,7 +394,25 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 }
 
+/* Mejoras adicionales para las cards */
+.card {
+    transition: all 0.2s ease;
+}
 
+.card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+    transform: translateY(-1px);
+}
+
+.text-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.min-w-0 {
+    min-width: 0;
+}
 </style>
 
 @endsection

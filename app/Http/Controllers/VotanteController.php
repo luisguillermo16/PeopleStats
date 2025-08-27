@@ -250,86 +250,74 @@ class VotanteController extends Controller
     // =============================
     // LISTAR VOTANTES
     // =============================
-    public function index(Request $request)
-    {
-        $lider = $this->getLider();
+    // =============================
+// LISTAR VOTANTES - CORREGIDO
+// =============================
+public function index(Request $request)
+{
+    $lider = $this->getLider();
 
-        if (!$lider) {
-            return redirect()->back()->with('error', 'No se encontró el líder asociado al usuario.');
-        }
-
-        // Configuración de paginación configurable
-        $perPage = $request->get('per_page', 10);
-        $perPage = min(max($perPage, 10), 100);
-        
-        // Búsqueda con filtros
-        $query = Votante::where('lider_id', $lider->id);
-        
-        // Filtro por nombre
-        if ($request->filled('nombre')) {
-            $query->where('nombre', 'like', '%' . $request->nombre . '%');
-        }
-        
-        // Filtro por cédula
-        if ($request->filled('cedula')) {
-            $query->where('cedula', 'like', '%' . $request->cedula . '%');
-        }
-        
-        // Filtro por barrio
-        if ($request->filled('barrio_id')) {
-            $query->where('barrio_id', $request->barrio_id);
-        }
-        
-        // Filtro por lugar de votación
-        if ($request->filled('lugar_votacion_id')) {
-            $query->where('lugar_votacion_id', $request->lugar_votacion_id);
-        }
-
-        // Filtro por mesa
-        if ($request->filled('mesa_id')) {
-            $query->where('mesa_id', $request->mesa_id);
-        }
-        
-        // Ordenamiento
-        $sortBy = $request->get('sort_by', 'created_at');
-        $sortOrder = $request->get('sort_order', 'desc');
-        $allowedSortFields = ['nombre', 'cedula', 'created_at', 'barrio_id', 'lugar_votacion_id', 'mesa_id'];
-        
-        if (in_array($sortBy, $allowedSortFields)) {
-            $query->orderBy($sortBy, $sortOrder);
-        } else {
-            $query->orderBy('created_at', 'desc');
-        }
-        
-        // Paginación con eager loading
-        $votantes = $query->with([
-            'barrio:id,nombre',
-            'lugarVotacion:id,nombre',
-            'mesa:id,numero'
-        ])->paginate($perPage);
-        
-        $votantes->appends($request->except('page'));
-        
-        $concejalOpciones = [];
-
-        if (is_null($lider->concejal_id) && $lider->alcalde_id) {
-            $concejalOpciones = $this->getConcejales($lider->alcalde_id);
-        }
-
-        $lugares = $this->getLugaresFiltrados($lider);
-        $barrios = $this->getBarriosFiltrados($lider);
-        $mesas = $this->getMesasFiltradas($lider);
-       
-        return view('permisos.ingresarVotantes', compact(
-            'votantes', 
-            'lider', 
-            'concejalOpciones', 
-            'lugares', 
-            'barrios',
-            'mesas',
-            'perPage'
-        ));
+    if (!$lider) {
+        return redirect()->back()->with('error', 'No se encontró el líder asociado al usuario.');
     }
+
+    // Configuración de paginación configurable
+    $perPage = $request->get('per_page', 10);
+    $perPage = min(max($perPage, 10), 100);
+    
+    // Búsqueda con filtros
+    $query = Votante::where('lider_id', $lider->id);
+
+    // 🔎 Buscador único: nombre o cédula
+    if ($request->filled('search')) {
+        $search = trim($request->search);
+        $query->where(function ($q) use ($search) {
+            $q->where('nombre', 'like', "%{$search}%")
+              ->orWhere('cedula', 'like', "%{$search}%");
+        });
+    }
+
+    // Ordenamiento
+    $sortBy = $request->get('sort_by', 'created_at');
+    $sortOrder = $request->get('sort_order', 'desc');
+    $allowedSortFields = ['nombre', 'cedula', 'created_at', 'barrio_id', 'lugar_votacion_id', 'mesa_id'];
+    
+    if (in_array($sortBy, $allowedSortFields)) {
+        $query->orderBy($sortBy, $sortOrder);
+    } else {
+        $query->orderBy('created_at', 'desc');
+    }
+    
+    // Paginación con eager loading
+    $votantes = $query->with([
+        'barrio:id,nombre',
+        'lugarVotacion:id,nombre',
+        'mesa:id,numero'
+    ])->paginate($perPage);
+    
+    $votantes->appends($request->except('page'));
+    
+    $concejalOpciones = [];
+
+    if (is_null($lider->concejal_id) && $lider->alcalde_id) {
+        $concejalOpciones = $this->getConcejales($lider->alcalde_id);
+    }
+
+    $lugares = $this->getLugaresFiltrados($lider);
+    $barrios = $this->getBarriosFiltrados($lider);
+    $mesas = $this->getMesasFiltradas($lider);
+   
+    return view('permisos.ingresarVotantes', compact(
+        'votantes', 
+        'lider', 
+        'concejalOpciones', 
+        'lugares', 
+        'barrios',
+        'mesas',
+        'perPage'
+    ));
+}
+
 
     // =============================
     // EDITAR VOTANTE

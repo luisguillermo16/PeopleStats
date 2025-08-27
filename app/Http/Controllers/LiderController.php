@@ -11,14 +11,15 @@ use Spatie\Permission\Models\Role;
 
 class LiderController extends Controller
 {
-   public function index()
+ public function index(Request $request)
 {
     $userAuth = Auth::user();
 
     $query = User::role('lider')
-        ->withCount('votantesRegistrados') // 👈 Relación para contar votantes
-        ->orderByDesc('votantes_registrados_count'); // 👈 Ordenar de mayor a menor
+        ->withCount('votantesRegistrados')
+        ->orderByDesc('votantes_registrados_count');
 
+    // Aplicar filtro según rol del usuario
     if ($userAuth->hasRole('aspirante-alcaldia')) {
         $query->where('alcalde_id', $userAuth->id);
     } elseif ($userAuth->hasRole('aspirante-concejo')) {
@@ -27,7 +28,15 @@ class LiderController extends Controller
         return redirect()->back()->with('error', 'No tienes permiso para ver líderes.');
     }
 
+    // 🔹 Aplicar búsqueda si hay texto
+    if ($request->has('search') && $request->search != '') {
+        $query->where('name', 'like', '%' . $request->search . '%');
+    }
+
     $lideres = $query->latest()->paginate(10);
+
+    // Mantener query string en la paginación
+    $lideres->appends($request->all());
 
     return view('permisos.crearLider', compact('lideres'));
 }

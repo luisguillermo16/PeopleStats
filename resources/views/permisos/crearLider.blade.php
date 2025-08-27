@@ -44,7 +44,7 @@
                         <i class="bi bi-search text-muted"></i>
                     </span>
                     <input type="text" class="form-control border-start-0" name="search"
-                           placeholder="Buscar por nombre, email o zona" value="{{ request('search') }}">
+                           placeholder="Buscar por nombre" value="{{ request('search') }}">
                 </div>
             </div>
             <div class="col-12 col-md-3 col-lg-2">

@@ -4,45 +4,77 @@
 
 @section('contenido')
 
-{{-- Botones de acción --}}
-<div class="mb-3 d-flex flex-column flex-md-row gap-2 justify-content-md-end">
-    {{-- Botón Importar Excel --}}
-    <div class="d-flex align-items-center">
-        <form action="{{ route('votantes.import') }}" method="POST" enctype="multipart/form-data" class="d-flex flex-column flex-sm-row gap-2 align-items-center">
-            @csrf
-            <div class="position-relative">
-                <input type="file" 
-                       id="excel_file" 
-                       name="excel_file" 
-                       class="form-control d-none" 
-                       accept=".xlsx,.xls"
-                       required
-                       onchange="document.getElementById('importBtn').disabled = !this.files.length">
-                <button type="button" 
-                        class="btn btn-outline-success btn-sm" 
-                        onclick="document.getElementById('excel_file').click()">
-                    <i class="bi bi-file-earmark-excel me-1"></i>
-                    <span class="d-none d-sm-inline">Seleccionar</span> Excel
+<div class="mb-3">
+<div class="mb-3">
+    <div class="p-3 p-md-4 border bg-light rounded w-100">
+        <div class="d-flex flex-wrap align-items-center gap-2 justify-content-between">
+
+            {{-- 🔎 Bloque de búsqueda --}}
+            <form method="GET" action="{{ url()->current() }}" class="d-flex flex-wrap align-items-center gap-2 flex-grow-1">
+                
+                <!-- Campo búsqueda -->
+                <div class="input-group" style="max-width: 320px;">
+                    <span class="input-group-text bg-white border-end-0">
+                        <i class="bi bi-search text-muted"></i>
+                    </span>
+                    <input type="text" 
+                           class="form-control border-start-0" 
+                           placeholder="Buscar por nombre o cédula..." 
+                           name="search" 
+                           value="{{ request('search') }}">
+                </div>
+
+                <!-- Botón buscar -->
+                <button class="btn btn-outline-primary btn-sm" type="submit">
+                    <i class="bi bi-search me-1"></i> Buscar
+                </button>
+
+                <!-- Botón limpiar -->
+                <a href="{{ request()->url() }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-x-circle me-1"></i> Limpiar
+                </a>
+            </form>
+
+            {{-- 📂 Botones de acciones --}}
+            <div class="d-flex flex-wrap gap-2">
+
+                {{-- Importar Excel --}}
+                <form action="{{ route('votantes.import') }}" 
+                      method="POST" 
+                      enctype="multipart/form-data" 
+                      class="d-flex flex-wrap gap-2">
+                    @csrf
+                    <input type="file" 
+                           id="excel_file" 
+                           name="excel_file" 
+                           class="d-none" 
+                           accept=".xlsx,.xls"
+                           required
+                           onchange="document.getElementById('importBtn').disabled = !this.files.length">
+
+                    <button type="button" 
+                            class="btn btn-outline-success"
+                            onclick="document.getElementById('excel_file').click()">
+                        <i class="bi bi-file-earmark-excel me-1"></i> Seleccionar Excel
+                    </button>
+
+                    <button type="submit" 
+                            class="btn btn-success" 
+                            id="importBtn" 
+                            disabled>
+                        <i class="bi bi-upload me-1"></i> Importar
+                    </button>
+                </form>
+
+                {{-- Nuevo Votante --}}
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">
+                    <i class="bi bi-plus-circle me-1"></i> Nuevo Votante
                 </button>
             </div>
-            <button type="submit" 
-                    class="btn btn-success btn-sm" 
-                    id="importBtn" 
-                    disabled>
-                <i class="bi bi-upload me-1"></i>
-                <span class="d-none d-sm-inline">Importar</span>
-                <span class="d-sm-none">Import</span>
-            </button>
-        </form>
+        </div>
     </div>
-    
-    {{-- Botón Nuevo Votante --}}
-    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createModal">
-        <i class="bi bi-plus-circle me-1"></i>
-        <span class="d-none d-sm-inline">Nuevo Votante</span>
-        <span class="d-sm-none">Nuevo</span>
-    </button>
 </div>
+
 
 {{-- Tabla --}}
 <div class="table-responsive">
