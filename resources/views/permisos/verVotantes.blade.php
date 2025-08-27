@@ -114,44 +114,70 @@
     </form>
 </div>
 
-{{-- Tarjetas de estadísticas --}}
-<div class="row g-3 mb-4">
-    <div class="col-6 col-md-3">
-        <div class="card text-center border-primary">
-            <div class="card-body py-3">
-                <i class="bi bi-people fs-1 text-primary"></i>
-                <h4 class="mb-0">{{ $totalVotantes }}</h4>
-                <small class="text-muted">
-                    <span class="d-none d-sm-inline">Total Votantes</span>
-                    <span class="d-sm-none">Total</span>
+{{-- Tarjetas cuadradas compactas con descripción --}}
+<div class="row g-2 mb-3">
+    <div class="col-6 col-sm-4 col-md-3">
+        <div class="card text-center border-primary square-card">
+            <div class="card-body d-flex flex-column justify-content-center align-items-center p-2">
+                <i class="bi bi-people fs-3 text-primary"></i>
+                <h5 class="mb-1 mt-1">{{ $totalVotantesFiltrados }}</h5>
+                <small class="text-muted text-center fs-7">
+                    @if(request()->hasAny(['search', 'lider', 'concejal']))
+                        Votantes Filtrados
+                    @else
+                        Total Votantes
+                    @endif
                 </small>
             </div>
         </div>
     </div>
-    <div class="col-6 col-md-3">
-        <div class="card text-center border-info">
-            <div class="card-body py-3">
-                <i class="bi bi-person-badge fs-1 text-info"></i>
-                <h4 class="mb-0">{{ $totalConcejales }}</h4>
-                <small class="text-muted">Concejales</small>
+
+    @if(auth()->user()->hasRole('aspirante-alcaldia'))
+    <div class="col-6 col-sm-4 col-md-3">
+        <div class="card text-center border-info square-card">
+            <div class="card-body d-flex flex-column justify-content-center align-items-center p-2">
+                <i class="bi bi-person-badge fs-3 text-info"></i>
+                <h5 class="mb-1 mt-1">{{ $totalConcejalesFiltrados }}</h5>
+                <small class="text-muted text-center fs-7">
+                    @if(request()->hasAny(['search', 'lider', 'concejal']))
+                        Concejales Activos
+                    @else
+                        Concejales
+                    @endif
+                </small>
             </div>
         </div>
     </div>
-    <div class="col-6 col-md-3">
-        <div class="card text-center border-warning">
-            <div class="card-body py-3">
-                <i class="bi bi-grid-3x3-gap fs-1 text-warning"></i>
-                <h4 class="mb-0">{{ $totalMesas }}</h4>
-                <small class="text-muted">Mesas</small>
+    @endif
+
+    <div class="col-6 col-sm-4 col-md-3">
+        <div class="card text-center border-warning square-card">
+            <div class="card-body d-flex flex-column justify-content-center align-items-center p-2">
+                <i class="bi bi-grid-3x3-gap fs-3 text-warning"></i>
+                <h5 class="mb-1 mt-1">{{ $totalMesasFiltradas }}</h5>
+                <small class="text-muted text-center fs-7">
+                    @if(request()->hasAny(['search', 'lider', 'concejal']))
+                        Mesas Activas
+                    @else
+                        Mesas
+                    @endif
+                </small>
             </div>
         </div>
     </div>
-    <div class="col-6 col-md-3">
-        <div class="card text-center border-success">
-            <div class="card-body py-3">
-                <i class="bi bi-person-badge fs-1 text-success"></i>
-                <h4 class="mb-0">{{ $totalLideres }}</h4>
-                <small class="text-muted">Líderes</small>
+
+    <div class="col-6 col-sm-4 col-md-3">
+        <div class="card text-center border-success square-card">
+            <div class="card-body d-flex flex-column justify-content-center align-items-center p-2">
+                <i class="bi bi-person-badge fs-3 text-success"></i>
+                <h5 class="mb-1 mt-1">{{ $totalLideresFiltrados }}</h5>
+                <small class="text-muted text-center fs-7">
+                    @if(request()->hasAny(['search', 'lider', 'concejal']))
+                        Líderes Activos
+                    @else
+                        Líderes
+                    @endif
+                </small>
             </div>
         </div>
     </div>

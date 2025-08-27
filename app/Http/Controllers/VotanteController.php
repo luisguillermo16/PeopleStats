@@ -248,75 +248,97 @@ class VotanteController extends Controller
     }
 
     // =============================
-    // LISTAR VOTANTES
-    // =============================
-    // =============================
-// LISTAR VOTANTES - CORREGIDO
-// =============================
 public function index(Request $request)
 {
     $lider = $this->getLider();
 
-    if (!$lider) {
+    if (!$lider && !auth()->user()->hasRole('aspirante-alcaldia')) {
         return redirect()->back()->with('error', 'No se encontró el líder asociado al usuario.');
     }
 
     // Configuración de paginación configurable
     $perPage = $request->get('per_page', 10);
     $perPage = min(max($perPage, 10), 100);
-    
-    // Búsqueda con filtros
-    $query = Votante::where('lider_id', $lider->id);
 
-    // 🔎 Buscador único: nombre o cédula
+    // Query base
+    $query = Votante::query();
+
+    // 📌 Filtrado según rol
+    if (auth()->user()->hasRole('lider')) {
+        // Solo votantes de este líder
+        $query->where('lider_id', $lider->id);
+
+    } elseif (auth()->user()->hasRole('aspirante-concejo')) {
+        // Votantes de todos los líderes asociados a este concejal
+        $query->where('concejal_id', $lider->concejal_id);
+
+    } elseif (auth()->user()->hasRole('aspirante-alcaldia')) {
+        // Votantes de todos los líderes de todos los concejales de este alcalde
+        $alcaldeId = auth()->user()->alcalde_id ?? $this->getAlcaldeIdFromUser();
+        $query->where('alcalde_id', $alcaldeId);
+    }
+
+    // 🔎 Buscador único: nombre, cédula, teléfono, barrio, lugar o mesa
     if ($request->filled('search')) {
         $search = trim($request->search);
+
         $query->where(function ($q) use ($search) {
             $q->where('nombre', 'like', "%{$search}%")
-              ->orWhere('cedula', 'like', "%{$search}%");
+              ->orWhere('cedula', 'like', "%{$search}%")
+              ->orWhere('telefono', 'like', "%{$search}%")
+              ->orWhereHas('barrio', function ($sub) use ($search) {
+                  $sub->where('nombre', 'like', "%{$search}%");
+              })
+              ->orWhereHas('lugarVotacion', function ($sub) use ($search) {
+                  $sub->where('nombre', 'like', "%{$search}%");
+              })
+              ->orWhereHas('mesa', function ($sub) use ($search) {
+                  $sub->where('numero', 'like', "%{$search}%");
+              });
         });
     }
 
     // Ordenamiento
     $sortBy = $request->get('sort_by', 'created_at');
     $sortOrder = $request->get('sort_order', 'desc');
-    $allowedSortFields = ['nombre', 'cedula', 'created_at', 'barrio_id', 'lugar_votacion_id', 'mesa_id'];
-    
+    $allowedSortFields = ['nombre', 'cedula', 'telefono', 'created_at', 'barrio_id', 'lugar_votacion_id', 'mesa_id'];
+
     if (in_array($sortBy, $allowedSortFields)) {
         $query->orderBy($sortBy, $sortOrder);
     } else {
         $query->orderBy('created_at', 'desc');
     }
-    
+
     // Paginación con eager loading
     $votantes = $query->with([
         'barrio:id,nombre',
         'lugarVotacion:id,nombre',
         'mesa:id,numero'
     ])->paginate($perPage);
-    
+
     $votantes->appends($request->except('page'));
-    
+
     $concejalOpciones = [];
 
-    if (is_null($lider->concejal_id) && $lider->alcalde_id) {
+    if ($lider && is_null($lider->concejal_id) && $lider->alcalde_id) {
         $concejalOpciones = $this->getConcejales($lider->alcalde_id);
     }
 
     $lugares = $this->getLugaresFiltrados($lider);
     $barrios = $this->getBarriosFiltrados($lider);
     $mesas = $this->getMesasFiltradas($lider);
-   
+
     return view('permisos.ingresarVotantes', compact(
-        'votantes', 
-        'lider', 
-        'concejalOpciones', 
-        'lugares', 
+        'votantes',
+        'lider',
+        'concejalOpciones',
+        'lugares',
         'barrios',
         'mesas',
         'perPage'
     ));
 }
+
 
 
     // =============================
