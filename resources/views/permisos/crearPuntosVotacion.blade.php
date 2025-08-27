@@ -34,15 +34,7 @@
                     </div>
                 </div>
                 
-                <!-- Filtro por creador -->
-                <div class="col-6 col-md-3 col-lg-2">
-                    <select name="creador" class="form-select">
-                        <option value="">Todos</option>
-                        <option value="aspirante-alcaldia" {{ request('creador') == 'aspirante-alcaldia' ? 'selected' : '' }}>Alcaldía</option>
-                        <option value="aspirante-concejo" {{ request('creador') == 'aspirante-concejo' ? 'selected' : '' }}>Concejo</option>
-                        <option value="lider" {{ request('creador') == 'lider' ? 'selected' : '' }}>Líderes</option>
-                    </select>
-                </div>
+              
                 
                 <!-- Botón de búsqueda -->
                 <div class="col-6 col-md-3 col-lg-3">

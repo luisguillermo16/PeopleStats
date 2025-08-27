@@ -1,5 +1,6 @@
 @if ($rol === 'aspirante-alcaldia' || $rol === 'aspirante-concejo')
 <div class="col-12 col-md-6 col-xl-4">
+       <a href="{{ route('verVotantes') }}" class="text-decoration-none">
     <div class="card border-0 shadow-sm h-100 hover-shadow dashboard-card votantes-card">
         <div class="card-body p-4">
             <div class="d-flex align-items-center justify-content-between">
@@ -33,10 +34,12 @@
             </small>
         </div>
     </div>
+    </a>
 </div>
 @endif
 @if ($rol === 'lider')
   <div class="col-12 col-md-6 col-xl-4">
+    <a href="{{ route('ingresarVotantes') }}" class="text-decoration-none">
     <div class="card border-0 shadow-sm h-100 hover-shadow dashboard-card votantes-card">
         <div class="card-body p-4">
             <div class="d-flex align-items-center justify-content-between">
@@ -70,6 +73,7 @@
             </small>
         </div>
     </div>
+    </a>
 </div>
 @endif
 <style>

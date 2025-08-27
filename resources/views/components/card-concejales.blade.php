@@ -1,5 +1,6 @@
 <div class="col-12 col-md-6 col-xl-4">
-<div class="card border-0 shadow-sm h-100 hover-shadow dashboard-card concejales-card">
+ <a href="{{ route('crearConcejal') }}" class="text-decoration-none">
+    <div class="card border-0 shadow-sm h-100 hover-shadow dashboard-card concejales-card">
         <div class="card-body p-4">
             <div class="d-flex align-items-center justify-content-between">
                 <div>
@@ -25,7 +26,8 @@
             
             
         </div>
-    </div>
+        </div>
+    </a>
 </div>
 <style>
 .hover-shadow {

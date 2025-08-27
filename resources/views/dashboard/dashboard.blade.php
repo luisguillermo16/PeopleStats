@@ -62,18 +62,7 @@
 <div class="row g-4">
     <div class="col-12">
         <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white border-0 py-3">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-lightning-charge me-2"></i>
-                    <span class="d-none d-sm-inline">Acciones Rápidas</span>
-                    <span class="d-sm-none">Acciones</span>
-                </h5>
-            </div>
-            <div class="card-body p-4">
-                <div class="row g-3">
-                <x-acciones-rapidas />
-                </div>
-            </div>
+           
         </div>
     </div>
 </div>

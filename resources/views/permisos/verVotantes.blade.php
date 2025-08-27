@@ -165,7 +165,7 @@
             </div>
         </div>
     </div>
-
+ @if(auth()->user()->hasRole('aspirante-alcaldia'))
     <div class="col-6 col-sm-4 col-md-3">
         <div class="card text-center border-success square-card">
             <div class="card-body d-flex flex-column justify-content-center align-items-center p-2">
@@ -182,7 +182,7 @@
         </div>
     </div>
 </div>
-
+@endif
 {{-- Vista Desktop/Tablet - Tabla --}}
 <div class="d-none d-md-block">
     <div class="table-responsive">
