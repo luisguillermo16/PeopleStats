@@ -44,6 +44,74 @@
         </p>
     </div>
 </div>
+{{-- Tarjetas cuadradas compactas con descripción --}}
+<div class="row g-2 mb-3">
+    <div class="col-6 col-sm-4 col-md-3">
+        <div class="card text-center border-primary square-card">
+            <div class="card-body d-flex flex-column justify-content-center align-items-center p-2">
+                <i class="bi bi-people fs-3 text-primary"></i>
+                <h5 class="mb-1 mt-1">{{ $totalVotantesFiltrados }}</h5>
+                <small class="text-muted text-center fs-7">
+                    @if(request()->hasAny(['search', 'lider', 'concejal']))
+                        Votantes Filtrados
+                    @else
+                        Total Votantes
+                    @endif
+                </small>
+            </div>
+        </div>
+    </div>
+
+    @if(auth()->user()->hasRole('aspirante-alcaldia'))
+    <div class="col-6 col-sm-4 col-md-3">
+        <div class="card text-center border-info square-card">
+            <div class="card-body d-flex flex-column justify-content-center align-items-center p-2">
+                <i class="bi bi-person-badge fs-3 text-info"></i>
+                <h5 class="mb-1 mt-1">{{ $totalConcejalesFiltrados }}</h5>
+                <small class="text-muted text-center fs-7">
+                    @if(request()->hasAny(['search', 'lider', 'concejal']))
+                        Concejales Activos
+                    @else
+                        Concejales
+                    @endif
+                </small>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    <div class="col-6 col-sm-4 col-md-3">
+        <div class="card text-center border-warning square-card">
+            <div class="card-body d-flex flex-column justify-content-center align-items-center p-2">
+                <i class="bi bi-grid-3x3-gap fs-3 text-warning"></i>
+                <h5 class="mb-1 mt-1">{{ $totalMesasFiltradas }}</h5>
+                <small class="text-muted text-center fs-7">
+                    @if(request()->hasAny(['search', 'lider', 'concejal']))
+                        Mesas Activas
+                    @else
+                        Mesas
+                    @endif
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-6 col-sm-4 col-md-3">
+        <div class="card text-center border-success square-card">
+            <div class="card-body d-flex flex-column justify-content-center align-items-center p-2">
+                <i class="bi bi-person-badge fs-3 text-success"></i>
+                <h5 class="mb-1 mt-1">{{ $totalLideresFiltrados }}</h5>
+                <small class="text-muted text-center fs-7">
+                    @if(request()->hasAny(['search', 'lider', 'concejal']))
+                        Líderes Activos
+                    @else
+                        Líderes
+                    @endif
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
 
 {{-- Sistema de Filtros Responsive --}}
 <div class="p-3 p-md-4 border bg-light rounded mb-4">
@@ -56,12 +124,10 @@
                         <i class="bi bi-search text-muted"></i>
                     </span>
                     <input type="text" class="form-control border-start-0" 
-                           placeholder="Buscar por nombre o cédula..." 
-                           name="search" value="{{ request('search') }}">
+                        placeholder="Buscar por nombre o cédula..." 
+                        name="search" value="{{ request('search') }}">
                 </div>
             </div>
-            
-         
             
             <!-- Filtro por líder -->
             <div class="col-6 col-md-3 col-lg-2">
@@ -114,75 +180,7 @@
     </form>
 </div>
 
-{{-- Tarjetas cuadradas compactas con descripción --}}
-<div class="row g-2 mb-3">
-    <div class="col-6 col-sm-4 col-md-3">
-        <div class="card text-center border-primary square-card">
-            <div class="card-body d-flex flex-column justify-content-center align-items-center p-2">
-                <i class="bi bi-people fs-3 text-primary"></i>
-                <h5 class="mb-1 mt-1">{{ $totalVotantesFiltrados }}</h5>
-                <small class="text-muted text-center fs-7">
-                    @if(request()->hasAny(['search', 'lider', 'concejal']))
-                        Votantes Filtrados
-                    @else
-                        Total Votantes
-                    @endif
-                </small>
-            </div>
-        </div>
-    </div>
 
-    @if(auth()->user()->hasRole('aspirante-alcaldia'))
-    <div class="col-6 col-sm-4 col-md-3">
-        <div class="card text-center border-info square-card">
-            <div class="card-body d-flex flex-column justify-content-center align-items-center p-2">
-                <i class="bi bi-person-badge fs-3 text-info"></i>
-                <h5 class="mb-1 mt-1">{{ $totalConcejalesFiltrados }}</h5>
-                <small class="text-muted text-center fs-7">
-                    @if(request()->hasAny(['search', 'lider', 'concejal']))
-                        Concejales Activos
-                    @else
-                        Concejales
-                    @endif
-                </small>
-            </div>
-        </div>
-    </div>
-    @endif
-
-    <div class="col-6 col-sm-4 col-md-3">
-        <div class="card text-center border-warning square-card">
-            <div class="card-body d-flex flex-column justify-content-center align-items-center p-2">
-                <i class="bi bi-grid-3x3-gap fs-3 text-warning"></i>
-                <h5 class="mb-1 mt-1">{{ $totalMesasFiltradas }}</h5>
-                <small class="text-muted text-center fs-7">
-                    @if(request()->hasAny(['search', 'lider', 'concejal']))
-                        Mesas Activas
-                    @else
-                        Mesas
-                    @endif
-                </small>
-            </div>
-        </div>
-    </div>
- @if(auth()->user()->hasRole('aspirante-alcaldia'))
-    <div class="col-6 col-sm-4 col-md-3">
-        <div class="card text-center border-success square-card">
-            <div class="card-body d-flex flex-column justify-content-center align-items-center p-2">
-                <i class="bi bi-person-badge fs-3 text-success"></i>
-                <h5 class="mb-1 mt-1">{{ $totalLideresFiltrados }}</h5>
-                <small class="text-muted text-center fs-7">
-                    @if(request()->hasAny(['search', 'lider', 'concejal']))
-                        Líderes Activos
-                    @else
-                        Líderes
-                    @endif
-                </small>
-            </div>
-        </div>
-    </div>
-</div>
-@endif
 {{-- Vista Desktop/Tablet - Tabla --}}
 <div class="d-none d-md-block">
     <div class="table-responsive">

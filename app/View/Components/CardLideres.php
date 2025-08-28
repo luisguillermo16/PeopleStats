@@ -32,12 +32,7 @@ class CardLideres extends Component
             $this->totalLideres = 0;
         }
 
-        // Estado y porcentaje de progreso (objetivo = 50 líderes)
-        $objetivo = 50;
-        $this->estado = $this->totalLideres >= $objetivo ? 'Estable' : 'Faltan';
-        $this->progreso = $objetivo > 0
-            ? round(($this->totalLideres / $objetivo) * 100, 2)
-            : 0;
+       
     }
 
     public function render()

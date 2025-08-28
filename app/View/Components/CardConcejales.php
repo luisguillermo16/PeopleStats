@@ -25,11 +25,7 @@ class CardConcejales extends Component
         // Determinar estado (dummy por ahora)
         $this->estado = $this->totalConcejales >= 24 ? 'Estable' : 'Faltan';
 
-        // Porcentaje progreso (ejemplo máximo 24 concejales)
-        $objetivo = 50;
-        $this->progreso = $objetivo > 0
-            ? round(($this->totalConcejales / $objetivo) * 100, 2)
-            : 0;
+        
     }
 
     public function render()

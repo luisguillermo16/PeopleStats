@@ -328,7 +328,7 @@
                         autocomplete="email"
                         inputmode="email"
                         required>
-                    <i class="fas fa-envelope input-icon"></i>
+                  
                 </div>
                 @error('email')
                     <div class="invalid-feedback">{{ $message }}</div>
@@ -343,7 +343,7 @@
                         placeholder="••••••••••"
                         autocomplete="current-password"
                         required>
-                    <i class="fas fa-lock input-icon"></i>
+                   
                 </div>
                 @error('password')
                     <div class="invalid-feedback">{{ $message }}</div>

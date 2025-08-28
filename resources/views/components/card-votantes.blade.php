@@ -19,19 +19,14 @@
                     </div>
                     <div class="d-flex align-items-end">
                         <h2 class="mb-0 fw-bold text-success counter" 
-                            data-target="{{ $totalVotantes }}">0</h2>
-                            
+                            data-target="{{ $totalVotantes }}">0</h2>     
                     </div>
                 </div>
             </div>
-            <div class="progress mt-3" style="height: 4px;">
-                <div class="progress-bar bg-success" style="width: {{ $porcentajeObjetivo }}%"></div>
-            </div>
-            <small class="text-muted mt-2 d-block">
-                <i class="bi bi-info-circle me-1"></i>
-                <span class="d-none d-sm-inline">{{ $porcentajeObjetivo }}% del objetivo alcanzado</span>
-                <span class="d-sm-none">{{ $porcentajeObjetivo }}% objetivo</span>
-            </small>
+         <!-- 🔹 Texto "Ver más" al estilo View All -->
+        <div class="text-end text-success counter">
+            <span class="ver-mas">Ver más →</span>
+        </div>
         </div>
     </div>
     </a>
@@ -53,7 +48,7 @@
                                 <span class="d-none d-lg-inline">Total de Votantes Únicos</span>
                                 <span class="d-lg-none">Votantes Únicos</span>
                             </h6>
-                          
+                            <small class="text-muted">Registrados en el sistema por ti</small>
                         </div>
                     </div>
                     <div class="d-flex align-items-end">
@@ -63,14 +58,9 @@
                     </div>
                 </div>
             </div>
-            <div class="progress mt-3" style="height: 4px;">
-                <div class="progress-bar bg-success" style="width: {{ $porcentajeObjetivo }}%"></div>
-            </div>
-            <small class="text-muted mt-2 d-block">
-                <i class="bi bi-info-circle me-1"></i>
-                <span class="d-none d-sm-inline">{{ $porcentajeObjetivo }}% del objetivo alcanzado</span>
-                <span class="d-sm-none">{{ $porcentajeObjetivo }}% objetivo</span>
-            </small>
+            <div class="text-end text-success counter">
+            <span class="ver-mas">Ver más →</span>
+        </div>
         </div>
     </div>
     </a>

@@ -42,12 +42,13 @@
         <x-tendencia-semanal />
 
     @elseif ($rol == 'lider')
-        {{-- Barra de búsqueda arriba --}}
+       
+        {{-- Tarjeta de votantes --}}
+        <x-card-votantes />
+         {{-- Barra de búsqueda arriba --}}
         <div class="col-12 mb-3">
             <x-buscar-cedula />
         </div>
-        {{-- Tarjeta de votantes --}}
-        <x-card-votantes />
         {{-- Gráficas lado a lado en desktop, apiladas en móvil --}}
         <div class="d-flex flex-column flex-lg-row gap-3">
             <x-estadistica-barrios/>

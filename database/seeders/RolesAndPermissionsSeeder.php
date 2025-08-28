@@ -66,7 +66,6 @@ class RolesAndPermissionsSeeder extends Seeder
         // Rol Líder
         $roleLider = Role::firstOrCreate(['name' => 'lider']);
         $roleLider->syncPermissions([
-           
             'ingresar votantes',
             'ver dashboard'
         ]);

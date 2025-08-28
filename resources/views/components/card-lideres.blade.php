@@ -22,6 +22,9 @@
                     </div>
                 </div>
             </div>
+            <div class="text-end text-warning counter">
+            <span class="ver-mas">Ver más →</span>
+            </div>
         </div>
     </div>
     </a>

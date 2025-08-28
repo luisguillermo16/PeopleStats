@@ -18,12 +18,13 @@
                     </div>
                     <div class="d-flex align-items-end">
                         <h2 class="mb-0 fw-bold text-primary counter"
-                           data-target="{{ $totalConcejales }}">0</h2>
-                      
+                        data-target="{{ $totalConcejales }}">0</h2>
                     </div>
                 </div>
             </div>
-            
+             <div class="text-end text-primary counter">
+            <span class="ver-mas">Ver más →</span>
+            </div>
             
         </div>
         </div>

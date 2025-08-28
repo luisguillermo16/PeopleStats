@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // Animación de estado de búsqueda
-        feedback.textContent = "Verificando cédula...";
+      
         feedback.classList.remove('text-success', 'text-danger');
         feedback.classList.add('text-info');
 
@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(response => response.json())
             .then(data => {
                 if (data.exists) {
-                    feedback.textContent = "Este votante ya está registrado en el sistema.";
+                 
                     feedback.classList.remove('text-info', 'text-success');
                     feedback.classList.add('text-danger');
 
@@ -69,9 +69,9 @@ document.addEventListener('DOMContentLoaded', function () {
                         confirmButtonColor: '#d33'
                     });
                 } else {
-                    feedback.textContent = "Cédula disponible. Puedes continuar con el registro.";
-                    feedback.classList.remove('text-info', 'text-danger');
-                    feedback.classList.add('text-success');
+                    
+                    feedback.classList.remove('text-in', 'text-danger');
+                    
 
                     Swal.fire({
                         icon: 'success',
@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             })
             .catch(error => {
-                feedback.textContent = "Error al verificar la cédula.";
+             
                 feedback.classList.remove('text-info', 'text-success');
                 feedback.classList.add('text-danger');
 

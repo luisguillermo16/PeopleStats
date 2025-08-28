@@ -30,11 +30,7 @@ class CardVotantes extends Component
 
       
 
-        $objetivo = 15000;
-        $this->porcentajeObjetivo = $objetivo > 0
-            ? round(($this->totalVotantes / $objetivo) * 100, 2)
-            : 0;
-            $this->rol = $user->getRoleNames()->first();
+       
           
     }
 
