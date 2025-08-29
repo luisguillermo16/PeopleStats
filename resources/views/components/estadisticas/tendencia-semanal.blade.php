@@ -4,19 +4,105 @@
             <h5><i class="bi bi-graph-up me-2"></i>Tendencia Semanal</h5>
         </div>
         <div class="card-body" style="height: 380px;">
-            <canvas id="trendChart"></canvas>
+            <canvas id="{{ $chartId }}"></canvas>
+            <div id="debug-{{ $chartId }}" style="display: none; margin-top: 10px; font-size: 12px; color: #666;"></div>
         </div>
     </div>
 </div>
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<!-- Intentar cargar Chart.js desde múltiples fuentes -->
 <script>
-    const trendLabels = @json($labels);         // ej: ["mié", "jue", ...]
-    const trendData = @json($data);            // ej: [0,0,0,0,190,0,0]
-    const trendDates = @json($labelsFull ?? $labels); // fechas ISO para tooltip si las pasaste
+// Función para cargar Chart.js
+function loadChartJS() {
+    return new Promise((resolve, reject) => {
+        // Verificar si ya está cargado
+        if (typeof Chart !== 'undefined') {
+            console.log('TendenciaSemanal: Chart.js already loaded');
+            resolve();
+            return;
+        }
 
-    const ctxTrend = document.getElementById('trendChart').getContext('2d');
+        // Intentar cargar desde CDN principal
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js';
+        script.onload = () => {
+            console.log('TendenciaSemanal: Chart.js loaded from cdnjs');
+            resolve();
+        };
+        script.onerror = () => {
+            console.warn('TendenciaSemanal: Failed to load from cdnjs, trying jsdelivr');
+            
+            // Intentar CDN alternativo
+            const script2 = document.createElement('script');
+            script2.src = 'https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js';
+            script2.onload = () => {
+                console.log('TendenciaSemanal: Chart.js loaded from jsdelivr');
+                resolve();
+            };
+            script2.onerror = () => {
+                console.error('TendenciaSemanal: Failed to load Chart.js from all sources');
+                reject(new Error('No se pudo cargar Chart.js'));
+            };
+            document.head.appendChild(script2);
+        };
+        document.head.appendChild(script);
+    });
+}
+
+// Cargar Chart.js y luego inicializar el gráfico
+loadChartJS().then(() => {
+    console.log('TendenciaSemanal: Chart.js loaded successfully, initializing chart...');
+    initializeChart();
+}).catch((error) => {
+    console.error('TendenciaSemanal: Failed to load Chart.js:', error);
+    const debugDiv = document.getElementById('debug-{{ $chartId }}');
+    if (debugDiv) {
+        debugDiv.style.display = 'block';
+        debugDiv.innerHTML = '<strong>Error:</strong> No se pudo cargar Chart.js. Verifique su conexión a internet.';
+    }
+});
+
+function initializeChart() {
+    console.log('TendenciaSemanal: Starting chart initialization...');
+    
+    const trendLabels = @json($labels);
+    const trendData = @json($data);
+    const trendDates = @json($labelsFull ?? $labels);
+    const chartId = @json($chartId);
+    
+    console.log('TendenciaSemanal: Data received:', {
+        labels: trendLabels,
+        data: trendData,
+        dates: trendDates,
+        chartId: chartId
+    });
+
+    const canvas = document.getElementById(chartId);
+    if (!canvas) {
+        console.error('TendenciaSemanal: Canvas element not found:', chartId);
+        return;
+    }
+    console.log('TendenciaSemanal: Canvas found:', canvas);
+
+    const ctxTrend = canvas.getContext('2d');
+    if (!ctxTrend) {
+        console.error('TendenciaSemanal: Could not get 2D context for canvas:', chartId);
+        return;
+    }
+    console.log('TendenciaSemanal: 2D context obtained');
+
+    // Verificar si Chart está disponible
+    if (typeof Chart === 'undefined') {
+        console.error('TendenciaSemanal: Chart.js not loaded!');
+        const debugDiv = document.getElementById('debug-' + chartId);
+        if (debugDiv) {
+            debugDiv.style.display = 'block';
+            debugDiv.innerHTML = '<strong>Error:</strong> Chart.js no se cargó correctamente. Verifique la conexión a internet.';
+        }
+        return;
+    }
+    console.log('TendenciaSemanal: Chart.js is available');
 
     // Crear gradiente
     const gradient = ctxTrend.createLinearGradient(0, 0, 0, 380);
@@ -32,69 +118,103 @@
     const pointBorder = trendData.map((v, i) => i === maxIndex ? '#fff' : '#fff');
     const pointRadius = trendData.map((v, i) => i === maxIndex ? 7 : 5);
 
-    new Chart(ctxTrend, {
-        type: 'line',
-        data: {
-            labels: trendLabels,
-            datasets: [{
-                label: 'Votantes Registrados',
-                data: trendData,
-                borderColor: '#36A2EB',
-                backgroundColor: gradient,
-                tension: 0.32,
-                borderWidth: 2,
-                fill: true,
-                pointBackgroundColor: pointBg,
-                pointBorderColor: pointBorder,
-                pointRadius: pointRadius,
-                pointHoverRadius: 8,
-                segment: {
-                  borderJoinStyle: 'round'
-                }
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { boxWidth: 12 }
+    console.log('TendenciaSemanal: Creating chart with data:', {
+        labels: trendLabels,
+        data: trendData,
+        maxVal: maxVal,
+        maxIndex: maxIndex
+    });
+
+    try {
+        const chart = new Chart(ctxTrend, {
+            type: 'line',
+            data: {
+                labels: trendLabels,
+                datasets: [{
+                    label: 'Votantes Registrados',
+                    data: trendData,
+                    borderColor: '#36A2EB',
+                    backgroundColor: gradient,
+                    tension: 0.32,
+                    borderWidth: 2,
+                    fill: true,
+                    pointBackgroundColor: pointBg,
+                    pointBorderColor: pointBorder,
+                    pointRadius: pointRadius,
+                    pointHoverRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { 
+                    mode: 'index', 
+                    intersect: false 
                 },
-                tooltip: {
-                    callbacks: {
-                        title: function(items) {
-                            const idx = items[0].dataIndex;
-                            // si tienes trendDates (ISO), úsala; sino muestra label corto
-                            return trendDates && trendDates[idx] ? trendDates[idx] : items[0].label;
-                        },
-                        label: function(ctx) {
-                            return ` ${ctx.dataset.label}: ${ctx.parsed.y} votantes`;
-                        },
-                        afterBody: function(items) {
-                            // mensaje extra si es el pico
-                            const idx = items[0].dataIndex;
-                            if (idx === maxIndex) return ['Pico de la semana ✅'];
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { 
+                            boxWidth: 12,
+                            usePointStyle: true
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            title: function(items) {
+                                const idx = items[0].dataIndex;
+                                return trendDates && trendDates[idx] ? trendDates[idx] : items[0].label;
+                            },
+                            label: function(ctx) {
+                                return ` ${ctx.dataset.label}: ${ctx.parsed.y} votantes`;
+                            },
+                            afterBody: function(items) {
+                                const idx = items[0].dataIndex;
+                                if (idx === maxIndex) return ['Pico de la semana ✅'];
+                                return [];
+                            }
                         }
                     }
                 },
-                annotation: undefined
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: { precision: 0 }
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { 
+                            precision: 0,
+                            stepSize: 1
+                        }
+                    },
+                    x: {
+                        grid: { 
+                            display: false 
+                        }
+                    }
                 },
-                x: {
-                    grid: { display: false }
+                animation: {
+                    duration: 700,
+                    easing: 'easeOutQuart'
                 }
-            },
-            animation: {
-                duration: 700,
-                easing: 'easeOutQuart'
             }
+        });
+        
+        console.log('TendenciaSemanal: Chart created successfully:', chart);
+        
+    } catch (error) {
+        console.error('TendenciaSemanal: Error creating chart:', error);
+        
+        // Mostrar mensaje de error en el canvas
+        ctxTrend.font = '16px Arial';
+        ctxTrend.fillStyle = '#666';
+        ctxTrend.textAlign = 'center';
+        ctxTrend.fillText('Error al cargar el gráfico', canvas.width / 2, canvas.height / 2);
+        
+        // Mostrar detalles del error en el div de debug
+        const debugDiv = document.getElementById('debug-' + chartId);
+        if (debugDiv) {
+            debugDiv.style.display = 'block';
+            debugDiv.innerHTML = '<strong>Error:</strong> ' + error.message;
         }
-    });
+    }
+}
 </script>
 @endpush
