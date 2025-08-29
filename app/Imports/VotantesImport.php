@@ -120,11 +120,23 @@ class VotantesImport implements ToModel, WithHeadingRow
         $alcaldeId = $this->lider->alcalde_id 
             ?? optional(User::find($this->lider->concejal_id))->alcalde_id;
 
-        if ($alcaldeId && Votante::where('cedula', $cedula)
-            ->where('alcalde_id', $alcaldeId)
-            ->exists()) {
-            $this->registrarError($cedula, $nombre, "Ya fue registrada en esta campaña.");
-            return null;
+        if ($alcaldeId) {
+            $votanteExistente = Votante::where('cedula', $cedula)
+                ->where('alcalde_id', $alcaldeId)
+                ->first();
+
+            if ($votanteExistente) {
+                // Obtener información del líder que ya registró este votante
+                $liderExistente = User::find($votanteExistente->lider_id);
+                $liderNombre = $liderExistente ? $liderExistente->name : 'Desconocido';
+                
+                $this->registrarError(
+                    $cedula, 
+                    $nombre, 
+                    "Ya fue registrada en esta campaña por el líder: {$liderNombre}. No se puede duplicar votantes entre diferentes líderes."
+                );
+                return null;
+            }
         }
         // =============================
         // Crear Votante

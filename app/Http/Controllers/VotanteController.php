@@ -53,13 +53,14 @@ class VotanteController extends Controller
 
     /**
      * Valida que una cédula no exista en la rama del alcalde
+     * Retorna array con información detallada
      */
     private function validarCedulaUnicaEnRama($cedula, $lider, $votanteId = null)
     {
         $alcaldeId = $this->getAlcaldeIdDeRama($lider);
         
         if (!$alcaldeId) {
-            return false; // Sin alcalde no puede validar
+            return ['valido' => false, 'mensaje' => 'No se pudo determinar la campaña del alcalde.']; 
         }
 
         $query = Votante::where('cedula', $cedula)
@@ -70,7 +71,20 @@ class VotanteController extends Controller
             $query->where('id', '!=', $votanteId);
         }
 
-        return !$query->exists();
+        $votanteExistente = $query->first();
+
+        if ($votanteExistente) {
+            // Obtener información del líder que ya registró este votante
+            $liderExistente = User::find($votanteExistente->lider_id);
+            $liderNombre = $liderExistente ? $liderExistente->name : 'Desconocido';
+            
+            return [
+                'valido' => false, 
+                'mensaje' => "Esta cédula ya fue registrada en esta campaña por el líder: {$liderNombre}. No se puede duplicar votantes entre diferentes líderes."
+            ];
+        }
+
+        return ['valido' => true, 'mensaje' => 'Cédula disponible.'];
     }
 
     /**
@@ -195,10 +209,11 @@ class VotanteController extends Controller
         ]);
 
         // Validación específica: cédula única por rama de alcalde
-        if (!$this->validarCedulaUnicaEnRama($request->cedula, $lider)) {
+        $validacionCedula = $this->validarCedulaUnicaEnRama($request->cedula, $lider);
+        if (!$validacionCedula['valido']) {
             return redirect()->back()
                 ->withInput()
-                ->withErrors(['cedula' => 'Esta cédula ya ha sido registrada en esta campaña por otro líder.']);
+                ->withErrors(['cedula' => $validacionCedula['mensaje']]);
         }
 
         // Validar que la mesa pertenece al lugar seleccionado
@@ -401,10 +416,11 @@ public function index(Request $request)
         ]);
 
         // Validación específica: cédula única por rama (excluyendo el actual)
-        if (!$this->validarCedulaUnicaEnRama($request->cedula, $lider, $votante->id)) {
+        $validacionCedula = $this->validarCedulaUnicaEnRama($request->cedula, $lider, $votante->id);
+        if (!$validacionCedula['valido']) {
             return redirect()->back()
                 ->withInput()
-                ->withErrors(['cedula' => 'Esta cédula ya ha sido registrada en esta campaña por otro líder.'])
+                ->withErrors(['cedula' => $validacionCedula['mensaje']])
                 ->with('editModalId', $votante->id);
         }
 
@@ -464,12 +480,14 @@ public function index(Request $request)
 
         if ($lider) {
             // Verificar si existe en la rama del alcalde
-            $existe = !$this->validarCedulaUnicaEnRama($cedula, $lider);
+            $validacionCedula = $this->validarCedulaUnicaEnRama($cedula, $lider);
+            $existe = !$validacionCedula['valido'];
+            $mensaje = $validacionCedula['mensaje'];
         }
 
         return response()->json([
             'exists' => $existe,
-            'message' => $existe ? 'Esta cédula ya está registrada en esta campaña.' : 'Cédula disponible.'
+            'message' => $mensaje
         ]);
     }
 
