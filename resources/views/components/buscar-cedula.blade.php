@@ -62,21 +62,20 @@ document.addEventListener('DOMContentLoaded', function () {
                     feedback.classList.add('text-danger');
 
                     Swal.fire({
-                        icon: 'warning',
-                        title: 'Votante Duplicado',
-                        text: data.message || 'Este votante ya está registrado en esta campaña.',
-                        confirmButtonColor: '#ffc107',
-                        confirmButtonText: 'Entendido'
+                        icon: 'error',
+                        title: 'Ya registrado',
+                        text: 'Este votante ya está registrado en el sistema.',
+                        confirmButtonColor: '#d33'
                     });
                 } else {
-                    feedback.classList.remove('text-info', 'text-danger');
-                    feedback.classList.add('text-success');
+                    feedback.classList.remove('text-in', 'text-danger');
+                    
 
                     Swal.fire({
                         icon: 'success',
-                        title: 'Cédula Disponible',
-                        text: data.message || 'Esta cédula no está registrada. Puedes continuar con el registro.',
-                        confirmButtonColor: '#28a745'
+                        title: 'Disponible',
+                        text: 'Esta cédula no está registrada. Puedes continuar con el registro.',
+                        confirmButtonColor: '#3085d6'
                     });
                 }
             })

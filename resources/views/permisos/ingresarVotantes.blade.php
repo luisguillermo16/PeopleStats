@@ -572,43 +572,20 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             
             if (errores.length) {
-                // Separar errores de duplicados de otros errores
-                const duplicados = errores.filter(error => error.includes('Ya fue registrada en esta campaña'));
-                const otrosErrores = errores.filter(error => !error.includes('Ya fue registrada en esta campaña'));
+                htmlContent += `
+                    <h5 style="color: #dc3545; margin: 15px 0 8px 0; display: flex; align-items: center;">
+                        <span style="margin-right: 8px;">❌</span>
+                        Errores Encontrados (${errores.length})
+                    </h5>
+                    <div style="max-height: 150px; overflow-y: auto; background: #f8d7da; padding: 10px; border-radius: 4px;">
+                        <ul style="text-align: left; margin: 0; padding-left: 20px;">
+                `;
                 
-                if (duplicados.length) {
-                    htmlContent += `
-                        <h5 style="color: #ffc107; margin: 15px 0 8px 0; display: flex; align-items: center;">
-                            <span style="margin-right: 8px;">⚠️</span>
-                            Votantes Duplicados (${duplicados.length})
-                        </h5>
-                        <div style="max-height: 120px; overflow-y: auto; background: #fff3cd; padding: 10px; border-radius: 4px; margin-bottom: 10px; border: 1px solid #ffeaa7;">
-                            <ul style="text-align: left; margin: 0; padding-left: 20px;">
-                    `;
-                    
-                    duplicados.forEach(error => {
-                        htmlContent += `<li style="padding: 2px 0; font-size: 13px; color: #856404;">${error}</li>`;
-                    });
-                    
-                    htmlContent += `</ul></div>`;
-                }
+                errores.forEach(error => {
+                    htmlContent += `<li style="padding: 2px 0; font-size: 13px;">${error}</li>`;
+                });
                 
-                if (otrosErrores.length) {
-                    htmlContent += `
-                        <h5 style="color: #dc3545; margin: 15px 0 8px 0; display: flex; align-items: center;">
-                            <span style="margin-right: 8px;">❌</span>
-                            Otros Errores (${otrosErrores.length})
-                        </h5>
-                        <div style="max-height: 120px; overflow-y: auto; background: #f8d7da; padding: 10px; border-radius: 4px;">
-                            <ul style="text-align: left; margin: 0; padding-left: 20px;">
-                    `;
-                    
-                    otrosErrores.forEach(error => {
-                        htmlContent += `<li style="padding: 2px 0; font-size: 13px;">${error}</li>`;
-                    });
-                    
-                    htmlContent += `</ul></div>`;
-                }
+                htmlContent += `</ul></div>`;
             }
             
             let icon, title;

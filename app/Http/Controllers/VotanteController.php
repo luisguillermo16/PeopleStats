@@ -53,14 +53,13 @@ class VotanteController extends Controller
 
     /**
      * Valida que una cédula no exista en la rama del alcalde
-     * Retorna array con información detallada para mejor UX
      */
     private function validarCedulaUnicaEnRama($cedula, $lider, $votanteId = null)
     {
         $alcaldeId = $this->getAlcaldeIdDeRama($lider);
         
         if (!$alcaldeId) {
-            return ['valido' => false, 'mensaje' => 'No se pudo determinar la campaña del alcalde.']; 
+            return false; // Sin alcalde no puede validar
         }
 
         $query = Votante::where('cedula', $cedula)
@@ -71,20 +70,7 @@ class VotanteController extends Controller
             $query->where('id', '!=', $votanteId);
         }
 
-        $votanteExistente = $query->first();
-
-        if ($votanteExistente) {
-            // Obtener información del líder que ya registró este votante
-            $liderExistente = User::find($votanteExistente->lider_id);
-            $liderNombre = $liderExistente ? $liderExistente->name : 'Desconocido';
-            
-            return [
-                'valido' => false, 
-                'mensaje' => "Esta cédula ya fue registrada en esta campaña por el líder: {$liderNombre}. No se puede duplicar votantes entre diferentes líderes."
-            ];
-        }
-
-        return ['valido' => true, 'mensaje' => 'Cédula disponible.'];
+        return !$query->exists();
     }
 
     /**
@@ -209,11 +195,10 @@ class VotanteController extends Controller
         ]);
 
         // Validación específica: cédula única por rama de alcalde
-        $validacionCedula = $this->validarCedulaUnicaEnRama($request->cedula, $lider);
-        if (!$validacionCedula['valido']) {
+        if (!$this->validarCedulaUnicaEnRama($request->cedula, $lider)) {
             return redirect()->back()
                 ->withInput()
-                ->withErrors(['cedula' => $validacionCedula['mensaje']]);
+                ->withErrors(['cedula' => 'Esta cédula ya ha sido registrada en esta campaña por otro líder.']);
         }
 
         // Validar que la mesa pertenece al lugar seleccionado
@@ -416,11 +401,10 @@ public function index(Request $request)
         ]);
 
         // Validación específica: cédula única por rama (excluyendo el actual)
-        $validacionCedula = $this->validarCedulaUnicaEnRama($request->cedula, $lider, $votante->id);
-        if (!$validacionCedula['valido']) {
+        if (!$this->validarCedulaUnicaEnRama($request->cedula, $lider, $votante->id)) {
             return redirect()->back()
                 ->withInput()
-                ->withErrors(['cedula' => $validacionCedula['mensaje']])
+                ->withErrors(['cedula' => 'Esta cédula ya ha sido registrada en esta campaña por otro líder.'])
                 ->with('editModalId', $votante->id);
         }
 
@@ -480,19 +464,12 @@ public function index(Request $request)
 
         if ($lider) {
             // Verificar si existe en la rama del alcalde
-            $validacionCedula = $this->validarCedulaUnicaEnRama($cedula, $lider);
-            $existe = !$validacionCedula['valido'];
-        }
-
-        $mensaje = 'Cédula disponible.';
-        if ($existe && $lider) {
-            $validacionCedula = $this->validarCedulaUnicaEnRama($cedula, $lider);
-            $mensaje = $validacionCedula['mensaje'];
+            $existe = !$this->validarCedulaUnicaEnRama($cedula, $lider);
         }
 
         return response()->json([
             'exists' => $existe,
-            'message' => $mensaje
+            'message' => $existe ? 'Esta cédula ya está registrada en esta campaña.' : 'Cédula disponible.'
         ]);
     }
 
@@ -524,32 +501,16 @@ public function index(Request $request)
 
         $lider = $this->getLider();
 
-        if (!$lider) {
-            return redirect()->back()->with('error', 'No se encontró el líder asociado al usuario.');
-        }
-
         $import = new VotantesImport($lider);
         Excel::import($import, $request->file('excel_file'));
-
-        // Preparar mensaje de resultado
-        $mensaje = "Importación completada. ";
-        if ($import->importados > 0) {
-            $mensaje .= "Se importaron {$import->importados} votantes correctamente. ";
-        }
-        if ($import->saltados > 0) {
-            $mensaje .= "Se omitieron {$import->saltados} registros por errores de validación.";
-        }
 
         // Guardamos en sesión para mostrar en la vista
         session()->flash('import_result', [
             'importados' => $import->importadosDetalle,
-            'errores'    => $import->errores,
-            'total_importados' => $import->importados,
-            'total_errores' => $import->saltados
+            'errores'    => $import->errores
         ]);
 
-        $tipoMensaje = $import->saltados > 0 ? 'warning' : 'success';
-        return redirect()->route('ingresarVotantes')->with($tipoMensaje, $mensaje);
+        return redirect()->route('ingresarVotantes')->with('success', 'Votantes importados correctamente.');
     }
 
     /**
@@ -574,34 +535,7 @@ public function index(Request $request)
         return response()->stream($callback, 200, $headers);
     }
 
-    /**
-     * Validar múltiples cédulas para importación
-     */
-    public function validarCedulasImportacion(Request $request)
-    {
-        $request->validate([
-            'cedulas' => 'required|array',
-            'cedulas.*' => 'required|string'
-        ]);
 
-        $lider = $this->getLider();
-        if (!$lider) {
-            return response()->json(['error' => 'No se encontró el líder asociado.'], 400);
-        }
-
-        $resultados = [];
-        foreach ($request->cedulas as $cedula) {
-            $validacion = $this->validarCedulaUnicaEnRama($cedula, $lider);
-            $resultados[$cedula] = $validacion;
-        }
-
-        return response()->json([
-            'resultados' => $resultados,
-            'total' => count($request->cedulas),
-            'duplicados' => count(array_filter($resultados, fn($r) => !$r['valido'])),
-            'disponibles' => count(array_filter($resultados, fn($r) => $r['valido']))
-        ]);
-    }
 
     // =============================
     // MÉTODO DE DEBUG
