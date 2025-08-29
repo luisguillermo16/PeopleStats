@@ -55,7 +55,7 @@ class VotanteDuplicadoTest extends TestCase
     }
 
     /** @test */
-    public function no_puede_registrar_votante_duplicado_en_misma_campaña()
+    public function no_puede_registrar_votante_duplicado_en_misma_campaña_independiente_del_concejal()
     {
         // Líder 1 registra un votante
         $this->actingAs($this->lider1);
@@ -87,6 +87,12 @@ class VotanteDuplicadoTest extends TestCase
         // Verificar que el mensaje de error sea específico
         $this->assertStringContainsString(
             'Ya fue registrada en esta campaña por el líder',
+            session('errors')->first('cedula')
+        );
+        
+        // Verificar que el mensaje mencione "entre diferentes concejales"
+        $this->assertStringContainsString(
+            'entre diferentes concejales',
             session('errors')->first('cedula')
         );
     }

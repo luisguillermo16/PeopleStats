@@ -52,7 +52,7 @@ class VotanteController extends Controller
     }
 
     /**
-     * Valida que una cédula no exista en la rama del alcalde
+     * Valida que una cédula no exista en la misma campaña (alcalde_id)
      * Retorna array con información detallada
      */
     private function validarCedulaUnicaEnRama($cedula, $lider, $votanteId = null)
@@ -63,6 +63,7 @@ class VotanteController extends Controller
             return ['valido' => false, 'mensaje' => 'No se pudo determinar la campaña del alcalde.']; 
         }
 
+        // Validar solo por cédula y alcalde_id (campaña)
         $query = Votante::where('cedula', $cedula)
                         ->where('alcalde_id', $alcaldeId);
 
@@ -80,7 +81,7 @@ class VotanteController extends Controller
             
             return [
                 'valido' => false, 
-                'mensaje' => "Esta cédula ya fue registrada en esta campaña por el líder: {$liderNombre}. No se puede duplicar votantes entre diferentes líderes."
+                'mensaje' => "Esta cédula ya fue registrada en esta campaña por el líder: {$liderNombre}. No se puede duplicar votantes entre diferentes concejales."
             ];
         }
 

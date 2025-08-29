@@ -21,7 +21,7 @@ class VerificarDuplicadosVotantes extends Command
      *
      * @var string
      */
-    protected $description = 'Verifica duplicados de votantes por campaña electoral';
+    protected $description = 'Verifica duplicados de votantes por campaña electoral (alcalde_id)';
 
     /**
      * Execute the console command.

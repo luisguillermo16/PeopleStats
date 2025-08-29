@@ -1,20 +1,20 @@
 # 🔒 Validación de Duplicados - PeopleStats
 
 ## 🎯 Objetivo
-Prevenir que un votante sea registrado por múltiples líderes en la misma campaña electoral.
+Prevenir que un votante sea registrado por múltiples líderes en la misma campaña electoral, independientemente del concejal.
 
 ## ✅ Implementación
 
 ### **Validación por Campaña Electoral**
 - **Criterio**: `alcalde_id` (cada alcalde = una campaña)
-- **Lógica**: No se pueden duplicar cédulas dentro de la misma campaña
-- **Permitido**: Misma cédula en campañas diferentes
+- **Lógica**: No se pueden duplicar cédulas dentro de la misma campaña, sin importar el concejal
+- **Permitido**: Misma cédula en campañas diferentes (diferentes alcaldes)
 
 ### **Mensajes de Error Mejorados**
 ```
 ❌ ANTES: "Esta cédula ya ha sido registrada en esta campaña."
 
-✅ AHORA: "Esta cédula ya fue registrada en esta campaña por el líder: Juan Pérez. No se puede duplicar votantes entre diferentes líderes."
+✅ AHORA: "Esta cédula ya fue registrada en esta campaña por el líder: Juan Pérez. No se puede duplicar votantes entre diferentes concejales."
 ```
 
 ### **Puntos de Validación**
@@ -55,14 +55,14 @@ php artisan test tests/Feature/VotanteDuplicadoTest.php
 ## 📊 Ejemplo de Uso
 
 ### **Escenario 1: Duplicado en misma campaña**
-- **Líder A** (concejal 1) registra cédula `123456789`
-- **Líder B** (concejal 2) intenta registrar misma cédula
+- **Líder A** (concejal 1, alcalde 1) registra cédula `123456789`
+- **Líder B** (concejal 2, alcalde 1) intenta registrar misma cédula
 - **Resultado**: ❌ Error - "Ya fue registrada por el líder: Líder A"
 
 ### **Escenario 2: Cédula en campaña diferente**
-- **Líder A** (alcalde 1) registra cédula `123456789`
-- **Líder C** (alcalde 2) registra misma cédula
-- **Resultado**: ✅ Permitido - Diferentes campañas
+- **Líder A** (concejal 1, alcalde 1) registra cédula `123456789`
+- **Líder C** (concejal 1, alcalde 2) registra misma cédula
+- **Resultado**: ✅ Permitido - Diferentes campañas (diferentes alcaldes)
 
 ## 🎨 Interfaz Mejorada
 

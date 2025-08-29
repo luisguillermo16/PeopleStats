@@ -115,7 +115,7 @@ class VotantesImport implements ToModel, WithHeadingRow
         $this->cedulasVistas[] = $cedula;
 
         // =============================
-        // Validar duplicados en la campaña (por alcalde)
+        // Validar duplicados en la campaña (por alcalde_id)
         // =============================
         $alcaldeId = $this->lider->alcalde_id 
             ?? optional(User::find($this->lider->concejal_id))->alcalde_id;
@@ -133,7 +133,7 @@ class VotantesImport implements ToModel, WithHeadingRow
                 $this->registrarError(
                     $cedula, 
                     $nombre, 
-                    "Ya fue registrada en esta campaña por el líder: {$liderNombre}. No se puede duplicar votantes entre diferentes líderes."
+                    "Ya fue registrada en esta campaña por el líder: {$liderNombre}. No se puede duplicar votantes entre diferentes concejales."
                 );
                 return null;
             }
