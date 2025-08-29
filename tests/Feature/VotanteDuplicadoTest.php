@@ -55,7 +55,7 @@ class VotanteDuplicadoTest extends TestCase
     }
 
     /** @test */
-    public function no_puede_registrar_votante_duplicado_en_misma_campaña_independiente_del_concejal()
+    public function no_puede_registrar_votante_duplicado_globalmente()
     {
         // Líder 1 registra un votante
         $this->actingAs($this->lider1);
@@ -77,7 +77,7 @@ class VotanteDuplicadoTest extends TestCase
             'alcalde_id' => $this->alcalde->id
         ]);
 
-        // Líder 2 intenta registrar el mismo votante
+        // Líder 2 (concejal diferente) intenta registrar el mismo votante
         $this->actingAs($this->lider2);
         
         $response = $this->post('/votantes', $votanteData);
@@ -86,19 +86,67 @@ class VotanteDuplicadoTest extends TestCase
         
         // Verificar que el mensaje de error sea específico
         $this->assertStringContainsString(
-            'Ya fue registrada en esta campaña por el líder',
+            'Ya fue registrada por el líder',
             session('errors')->first('cedula')
         );
         
-        // Verificar que el mensaje mencione "entre diferentes concejales"
+        // Verificar que el mensaje mencione "en ninguna campaña"
         $this->assertStringContainsString(
-            'entre diferentes concejales',
+            'en ninguna campaña',
             session('errors')->first('cedula')
         );
     }
 
     /** @test */
-    public function puede_registrar_votante_con_misma_cedula_en_campaña_diferente()
+    public function no_puede_registrar_votante_con_misma_cedula_en_concejal_diferente()
+    {
+        // Líder 1 registra votante en concejal 1
+        $this->actingAs($this->lider1);
+        
+        $votanteData1 = [
+            'nombre' => 'Juan Pérez',
+            'cedula' => '123456789',
+            'telefono' => '3001234567',
+            'mesa_id' => 1,
+            'lugar_votacion_id' => $this->lugarVotacion->id,
+            'barrio_id' => $this->barrio->id,
+        ];
+
+        $response = $this->post('/votantes', $votanteData1);
+        $response->assertRedirect();
+
+        // Líder 2 (concejal 2) intenta registrar votante con misma cédula
+        $this->actingAs($this->lider2);
+        
+        $votanteData2 = [
+            'nombre' => 'Juan Pérez',
+            'cedula' => '123456789',
+            'telefono' => '3001234567',
+            'mesa_id' => 1,
+            'lugar_votacion_id' => $this->lugarVotacion->id,
+            'barrio_id' => $this->barrio->id,
+        ];
+
+        $response = $this->post('/votantes', $votanteData2);
+        $response->assertRedirect();
+        $response->assertSessionHasErrors(['cedula']);
+
+        // Verificar que solo existe el primer votante
+        $this->assertDatabaseHas('votantes', [
+            'cedula' => '123456789',
+            'alcalde_id' => $this->alcalde->id,
+            'concejal_id' => $this->concejal1->id
+        ]);
+
+        $this->assertDatabaseMissing('votantes', [
+            'cedula' => '123456789',
+            'alcalde_id' => $this->alcalde->id,
+            'concejal_id' => $this->concejal2->id
+        ]);
+    }
+
+    /** @test */
+    public function no_puede_registrar_votante_con_misma_cedula_en_campaña_diferente()
     {
         // Crear otro alcalde
         $alcalde2 = User::factory()->create();
@@ -133,7 +181,7 @@ class VotanteDuplicadoTest extends TestCase
         $response = $this->post('/votantes', $votanteData1);
         $response->assertRedirect();
 
-        // Líder 3 registra votante con misma cédula en campaña 2
+        // Líder 3 intenta registrar votante con misma cédula en campaña 2
         $this->actingAs($lider3);
         
         $votanteData2 = [
@@ -147,15 +195,15 @@ class VotanteDuplicadoTest extends TestCase
 
         $response = $this->post('/votantes', $votanteData2);
         $response->assertRedirect();
-        $response->assertSessionMissing('errors');
+        $response->assertSessionHasErrors(['cedula']);
 
-        // Verificar que ambos votantes existen
+        // Verificar que solo existe el primer votante
         $this->assertDatabaseHas('votantes', [
             'cedula' => '123456789',
             'alcalde_id' => $this->alcalde->id
         ]);
 
-        $this->assertDatabaseHas('votantes', [
+        $this->assertDatabaseMissing('votantes', [
             'cedula' => '123456789',
             'alcalde_id' => $alcalde2->id
         ]);

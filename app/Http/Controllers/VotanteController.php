@@ -52,20 +52,13 @@ class VotanteController extends Controller
     }
 
     /**
-     * Valida que una cédula no exista en la misma campaña (alcalde_id)
+     * Valida que una cédula no exista en ninguna campaña (cédula única global)
      * Retorna array con información detallada
      */
     private function validarCedulaUnicaEnRama($cedula, $lider, $votanteId = null)
     {
-        $alcaldeId = $this->getAlcaldeIdDeRama($lider);
-        
-        if (!$alcaldeId) {
-            return ['valido' => false, 'mensaje' => 'No se pudo determinar la campaña del alcalde.']; 
-        }
-
-        // Validar solo por cédula y alcalde_id (campaña)
-        $query = Votante::where('cedula', $cedula)
-                        ->where('alcalde_id', $alcaldeId);
+        // Validar cédula única global - no se permite duplicar en ningún caso
+        $query = Votante::where('cedula', $cedula);
 
         // Si estamos editando, excluir el votante actual
         if ($votanteId) {
@@ -79,9 +72,20 @@ class VotanteController extends Controller
             $liderExistente = User::find($votanteExistente->lider_id);
             $liderNombre = $liderExistente ? $liderExistente->name : 'Desconocido';
             
+            // Obtener información del alcalde y concejal
+            $alcaldeExistente = User::find($votanteExistente->alcalde_id);
+            $alcaldeNombre = $alcaldeExistente ? $alcaldeExistente->name : 'Desconocido';
+            
+            $concejalInfo = '';
+            if ($votanteExistente->concejal_id) {
+                $concejalExistente = User::find($votanteExistente->concejal_id);
+                $concejalNombre = $concejalExistente ? $concejalExistente->name : 'Desconocido';
+                $concejalInfo = " bajo el concejal: {$concejalNombre}";
+            }
+            
             return [
                 'valido' => false, 
-                'mensaje' => "Esta cédula ya fue registrada en esta campaña por el líder: {$liderNombre}. No se puede duplicar votantes entre diferentes concejales."
+                'mensaje' => "Esta cédula ya fue registrada por el líder: {$liderNombre} en la campaña: {$alcaldeNombre}{$concejalInfo}. No se puede duplicar votantes en ninguna campaña."
             ];
         }
 

@@ -21,7 +21,7 @@ class VerificarDuplicadosVotantes extends Command
      *
      * @var string
      */
-    protected $description = 'Verifica duplicados de votantes por campaña electoral (alcalde_id)';
+    protected $description = 'Verifica duplicados de votantes globales (cédula única en todo el sistema)';
 
     /**
      * Execute the console command.
@@ -32,14 +32,17 @@ class VerificarDuplicadosVotantes extends Command
         
         $alcaldeId = $this->option('alcalde-id');
         
-        // Construir query base
-        $query = Votante::select('cedula', 'alcalde_id', DB::raw('COUNT(*) as total'))
-            ->whereNotNull('alcalde_id')
-            ->groupBy('cedula', 'alcalde_id')
+        // Construir query base - buscar duplicados globales por cédula
+        $query = Votante::select('cedula', DB::raw('COUNT(*) as total'))
+            ->groupBy('cedula')
             ->having('total', '>', 1);
             
         if ($alcaldeId) {
-            $query->where('alcalde_id', $alcaldeId);
+            // Si se especifica alcalde, filtrar solo duplicados de esa campaña
+            $query = Votante::select('cedula', DB::raw('COUNT(*) as total'))
+                ->where('alcalde_id', $alcaldeId)
+                ->groupBy('cedula')
+                ->having('total', '>', 1);
         }
         
         $duplicados = $query->get();
@@ -53,11 +56,10 @@ class VerificarDuplicadosVotantes extends Command
         $this->newLine();
         
         foreach ($duplicados as $duplicado) {
-            $this->info("📋 Cédula: {$duplicado->cedula} | Alcalde ID: {$duplicado->alcalde_id} | Total: {$duplicado->total}");
+            $this->info("📋 Cédula: {$duplicado->cedula} | Total duplicados: {$duplicado->total}");
             
-            // Obtener detalles de los votantes duplicados
+            // Obtener detalles de todos los votantes con esta cédula
             $votantes = Votante::where('cedula', $duplicado->cedula)
-                ->where('alcalde_id', $duplicado->alcalde_id)
                 ->orderBy('created_at')
                 ->get();
             
@@ -65,8 +67,18 @@ class VerificarDuplicadosVotantes extends Command
                 $lider = User::find($votante->lider_id);
                 $liderNombre = $lider ? $lider->name : 'Desconocido';
                 
+                $alcalde = User::find($votante->alcalde_id);
+                $alcaldeNombre = $alcalde ? $alcalde->name : 'Desconocido';
+                
+                $concejalInfo = '';
+                if ($votante->concejal_id) {
+                    $concejal = User::find($votante->concejal_id);
+                    $concejalNombre = $concejal ? $concejal->name : 'Desconocido';
+                    $concejalInfo = " | Concejal: {$concejalNombre}";
+                }
+                
                 $status = $index === 0 ? '✅ ORIGINAL' : '❌ DUPLICADO';
-                $this->line("   {$status} | ID: {$votante->id} | Líder: {$liderNombre} | Creado: {$votante->created_at}");
+                $this->line("   {$status} | ID: {$votante->id} | Líder: {$liderNombre} | Alcalde: {$alcaldeNombre}{$concejalInfo} | Creado: {$votante->created_at}");
             }
             
             $this->newLine();
