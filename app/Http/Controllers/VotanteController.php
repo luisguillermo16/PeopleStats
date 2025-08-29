@@ -13,7 +13,7 @@ use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\VotantesImport;
 use Illuminate\Support\Facades\Log;
-use App\Jobs\ImportarVotantesJob;
+
 use App\Models\Mesa;
 
 class VotanteController extends Controller
