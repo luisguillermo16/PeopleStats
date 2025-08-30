@@ -85,7 +85,7 @@ class VotanteController extends Controller
             
             return [
                 'valido' => false, 
-                'mensaje' => "Esta cédula ya fue registrada por el líder: {$liderNombre} en la campaña: {$alcaldeNombre}{$concejalInfo}. No se puede duplicar votantes en ninguna campaña."
+                'mensaje' => "Esta cédula ya fue registrada por el líder: {$liderNombre} del {$concejalInfo}. No se puede duplicar votantes ."
             ];
         }
 
@@ -516,25 +516,101 @@ public function index(Request $request)
     // =============================
     // IMPORTAR EXCEL - MEJORADO
     // =============================
-    public function import(Request $request)
-    {
-        $request->validate([
-            'excel_file' => 'required|mimes:xlsx,xls'
-        ]);
+    /**
+ * IMPORTAR EXCEL - MEJORADO CON RESPUESTA JSON PARA AJAX
+ */
+public function import(Request $request)
+{
+    $request->validate([
+        'excel_file' => 'required|mimes:xlsx,xls'
+    ]);
 
-        $lider = $this->getLider();
+    $lider = $this->getLider();
+    
+    if (!$lider) {
+        return response()->json([
+            'success' => false,
+            'message' => 'No se encontró el líder asociado al usuario.'
+        ], 400);
+    }
 
+    try {
+        // Inicializar la importación
         $import = new VotantesImport($lider);
+        
+        // Ejecutar la importación
         Excel::import($import, $request->file('excel_file'));
 
-        // Guardamos en sesión para mostrar en la vista
-        session()->flash('import_result', [
-            'importados' => $import->importadosDetalle,
-            'errores'    => $import->errores
+        // Preparar respuesta
+        $response = [
+            'success' => true,
+            'message' => 'Procesamiento completado',
+            'data' => [
+                'importados' => $import->importadosDetalle,
+                'errores' => $import->errores,
+                'total_procesados' => $import->importados + $import->saltados,
+                'total_exitosos' => $import->importados,
+                'total_errores' => $import->saltados,
+                'tasa_exito' => $import->importados + $import->saltados > 0 
+                    ? round(($import->importados / ($import->importados + $import->saltados)) * 100, 2) 
+                    : 0
+            ]
+        ];
+
+        // Para peticiones AJAX, devolver JSON
+        if ($request->ajax() || $request->expectsJson()) {
+            return response()->json($response);
+        }
+
+        // Para peticiones normales, usar sesión como antes
+        session()->flash('import_result', $response['data']);
+        return redirect()->route('ingresarVotantes')->with('success', 'Procesamiento completado');
+
+    } catch (\Exception $e) {
+        \Log::error('Error en importación de votantes: ' . $e->getMessage(), [
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'trace' => $e->getTraceAsString()
         ]);
 
-        return redirect()->route('ingresarVotantes')->with('success', 'Votantes importados correctamente.');
+        $errorResponse = [
+            'success' => false,
+            'message' => 'Error durante la importación: ' . $e->getMessage(),
+            'data' => [
+                'importados' => [],
+                'errores' => ['Error del sistema: ' . $e->getMessage()],
+                'total_procesados' => 0,
+                'total_exitosos' => 0,
+                'total_errores' => 1,
+                'tasa_exito' => 0
+            ]
+        ];
+
+        if ($request->ajax() || $request->expectsJson()) {
+            return response()->json($errorResponse, 500);
+        }
+
+        return redirect()->back()
+            ->with('error', 'Error durante la importación: ' . $e->getMessage());
     }
+}
+
+/**
+ * ENDPOINT PARA VERIFICAR PROGRESO (OPCIONAL - Para implementaciones futuras más avanzadas)
+ */
+public function checkImportProgress(Request $request)
+{
+    $jobId = $request->get('job_id');
+    
+    // Aquí podrías implementar un sistema de seguimiento de progreso usando Redis o cache
+    // Para esta implementación básica, no es necesario
+    
+    return response()->json([
+        'progress' => 100,
+        'status' => 'completed',
+        'message' => 'Importación completada'
+    ]);
+}
 
     /**
      * Template de descarga

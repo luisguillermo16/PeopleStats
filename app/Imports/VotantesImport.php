@@ -160,13 +160,21 @@ class VotantesImport implements ToModel, WithHeadingRow
         $votante->lider_id = $this->lider->id;
 
         // Asignar concejal/alcalde según jerarquía
-        if ($this->lider->concejal_id) {
-            $votante->concejal_id = $this->lider->concejal_id;
+if ($this->lider->concejal_id) {
+    $votante->concejal_id = $this->lider->concejal_id;
 
-            if (isset($row['alcalde_id']) && intval($row['alcalde_id']) === 1) {
-                $votante->alcalde_id = $this->lider->alcalde_id;
-            }
-        } elseif ($this->lider->alcalde_id) {
+    // ✅ Detección flexible de la columna "¿Vota Alcalde?"
+    $votaAlcalde = strtolower(trim(
+        $row['¿vota_alcalde?'] 
+        ?? $row['vota_alcalde'] 
+        ?? $row['alcalde_id'] 
+        ?? ''
+    ));
+
+    if (in_array($votaAlcalde, ['si', 'sí', '1'], true)) {
+        $votante->alcalde_id = $this->lider->alcalde_id;
+    }
+} elseif ($this->lider->alcalde_id) {
             $votante->alcalde_id = $this->lider->alcalde_id;
 
             if ($concejal) {
